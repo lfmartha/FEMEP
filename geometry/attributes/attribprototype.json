@@ -1,0 +1,220 @@
+{
+    "prototypes": [
+        {
+            "type": "Material",
+            "symbol": "Material",
+            "name": "untitled",
+            "properties": {
+                "YoungsModulus": 0.0,
+                "PoisonsRatio": 0.0,
+                "Conductivity": 0.0,
+                "SpecificHeat": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": false,
+            "applyOnFace": true
+        },
+        {
+            "type": "Thickness",
+            "symbol": "Thickness",
+            "name": "untitled",
+            "properties": {
+                "Value": 0.0
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": false,
+            "applyOnFace": true
+        },
+        {
+            "type": "Support Conditions",
+            "symbol": "Support",
+            "name": "untitled",
+            "properties": {
+                "Dx": false,
+                "Dx pos": {
+                    "list": [
+                        "Left",
+                        "Right"
+                    ],
+                    "index": 0
+                },
+                "Dx value": 0.0,
+                "Dy": false,
+                "Dy pos": {
+                    "list": [
+                        "Down",
+                        "Up"
+                    ],
+                    "index": 0
+                },
+                "Dy value": 0.0,
+                "Rz": false,
+                "Rz value": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": true,
+            "applyOnEdge": true,
+            "applyOnFace": false
+        },
+        {
+            "type": "Concentrated Load",
+            "symbol": "Arrow",
+            "name": "untitled",
+            "properties": {
+                "Fx": 0.0,
+                "Fy": 0.0,
+                "Mz": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": true,
+            "applyOnEdge": false,
+            "applyOnFace": false
+        },
+        {
+            "type": "Uniform Load",
+            "symbol": "Arrow",
+            "name": "untitled",
+            "properties": {
+                "Qx": 0.0,
+                "Qy": 0.0,
+                "Direction": {
+                    "list": [
+                        "Global",
+                        "Local"
+                    ],
+                    "index": 0
+                },
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": true,
+            "applyOnFace": false
+        },
+        {
+            "type": "Pressure",
+            "symbol": "Arrow",
+            "name": "untitled",
+            "properties": {
+                "Px": 0.0,
+                "Py": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": false,
+            "applyOnFace": true
+        },
+        {
+            "type": "Temperature",
+            "symbol": "Temperature",
+            "name": "untitled",
+            "properties": {
+                "Value": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": true,
+            "applyOnEdge": true,
+            "applyOnFace": true
+        },
+        {
+            "type": "Nodal Heat Flux",
+            "symbol": "Flux",
+            "name": "untitled",
+            "properties": {
+                "Value": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": true,
+            "applyOnEdge": false,
+            "applyOnFace": false
+        },
+        {
+            "type": "Uniform Heat Flux",
+            "symbol": "Flux",
+            "name": "untitled",
+            "properties": {
+                "Value": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": true,
+            "applyOnFace": false
+        },
+        {
+            "type": "Inner Heat Flux",
+            "symbol": "Flux",
+            "name": "untitled",
+            "properties": {
+                "Value": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": false,
+            "applyOnFace": true
+        },
+        {
+            "type": "General Model",
+            "symbol": "test",
+            "name": "untitled",
+            "properties": {
+                "int": 0,
+                "float": 0.0,
+                "string": "Danilo Bomfim",
+                "bool": true,
+                "options": {
+                    "list": [
+                        "a",
+                        "b",
+                        "c",
+                        "d"
+                    ],
+                    "index": 0
+                },
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": true,
+            "applyOnEdge": true,
+            "applyOnFace": true
+        }
+    ]
+}
