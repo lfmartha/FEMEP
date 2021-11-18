@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="PAth">
+    <file>femep-icon.png</file>
+  </qresource>
+</RCC>

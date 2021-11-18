@@ -1,0 +1,337 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Attribute_Schema",
+    "description": "Describes the format of an attribute",
+    "type": "object",
+    "anyOf": [
+        {
+            "$ref": "#/definitions/Material"
+        },
+        {
+            "$ref": "#/definitions/Thickness"
+        },
+        {
+            "$ref": "#/definitions/Concentrated Load"
+        },
+        {
+            "$ref": "#/definitions/Uniform Load"
+        },
+        {
+            "$ref": "#/definitions/Temperature"
+        }
+    ],
+    "definitions": {
+        "Material": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "Material"
+                },
+                "symbol": {
+                    "const": "Material"
+                },
+                "name": {
+                    "description": "the name will only be given when creating a new attribute",
+                    "type": "string"
+                },
+                "properties": {
+                    "type": "object",
+                    "properties": {
+                        "YoungsModulus": {
+                            "type": "number"
+                        },
+                        "PoisonsRatio": {
+                            "type": "number"
+                        },
+                        "Conductivity": {
+                            "type": "number"
+                        },
+                        "SpecificHeat": {
+                            "type": "number"
+                        },
+                        "Color": {
+                            "$ref": "#/definitions/Color"
+                        }
+                    },
+                    "required": [
+                        "YoungsModulus",
+                        "PoisonsRatio",
+                        "Conductivity",
+                        "SpecificHeat",
+                        "Color"
+                    ]
+                },
+                "applyOnVertex": {
+                    "description": "indicates whether the attribute can be applied to a vertex",
+                    "const": false
+                },
+                "applyOnEdge": {
+                    "description": "indicates whether the attribute can be applied to an edge",
+                    "const": false
+                },
+                "applyOnFace": {
+                    "description": "indicates whether the attribute can be applied to a facer",
+                    "const": true
+                }
+            },
+            "required": [
+                "type",
+                "symbol",
+                "name",
+                "properties",
+                "applyOnVertex",
+                "applyOnEdge",
+                "applyOnFace"
+            ]
+        },
+        "Thickness": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "Thickness"
+                },
+                "symbol": {
+                    "const": "Thickness"
+                },
+                "name": {
+                    "description": "the name will only be given when creating a new attribute",
+                    "type": "string"
+                },
+                "properties": {
+                    "type": "object",
+                    "properties": {
+                        "Value": {
+                            "type": "number"
+                        }
+                    },
+                    "required": [
+                        "Value"
+                    ]
+                },
+                "applyOnVertex": {
+                    "description": "indicates whether the attribute can be applied to a vertex",
+                    "const": false
+                },
+                "applyOnEdge": {
+                    "description": "indicates whether the attribute can be applied to an edge",
+                    "const": false
+                },
+                "applyOnFace": {
+                    "description": "indicates whether the attribute can be applied to a facer",
+                    "const": true
+                }
+            },
+            "required": [
+                "type",
+                "symbol",
+                "name",
+                "properties",
+                "applyOnVertex",
+                "applyOnEdge",
+                "applyOnFace"
+            ]
+        },
+        "Concentrated Load": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "Concentrated Load"
+                },
+                "symbol": {
+                    "const": "Arrow"
+                },
+                "name": {
+                    "description": "the name will only be given when creating a new attribute",
+                    "type": "string"
+                },
+                "properties": {
+                    "type": "object",
+                    "properties": {
+                        "Fx": {
+                            "type": "number"
+                        },
+                        "Fy": {
+                            "type": "number"
+                        },
+                        "Mz": {
+                            "type": "number"
+                        },
+                        "Color": {
+                            "$ref": "#/definitions/Color"
+                        }
+                    },
+                    "required": [
+                        "Fx",
+                        "Fy",
+                        "Mz",
+                        "Color"
+                    ]
+                },
+                "applyOnVertex": {
+                    "description": "indicates whether the attribute can be applied to a vertex",
+                    "const": true
+                },
+                "applyOnEdge": {
+                    "description": "indicates whether the attribute can be applied to an edge",
+                    "const": false
+                },
+                "applyOnFace": {
+                    "description": "indicates whether the attribute can be applied to a facer",
+                    "const": false
+                }
+            },
+            "required": [
+                "type",
+                "symbol",
+                "name",
+                "properties",
+                "applyOnVertex",
+                "applyOnEdge",
+                "applyOnFace"
+            ]
+        },
+        "Uniform Load": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "Uniform Load"
+                },
+                "symbol": {
+                    "const": "Arrow"
+                },
+                "name": {
+                    "description": "the name will only be given when creating a new attribute",
+                    "type": "string"
+                },
+                "properties": {
+                    "type": "object",
+                    "properties": {
+                        "Qx": {
+                            "type": "number"
+                        },
+                        "Qy": {
+                            "type": "number"
+                        },
+                        "Direction": {
+                            "type": "object",
+                            "properties": {
+                                "list": {
+                                    "type": "array",
+                                    "items": {
+                                        "anyOf": [
+                                            {
+                                                "const": "Global"
+                                            },
+                                            {
+                                                "const": "Local"
+                                            }
+                                        ]
+                                    },
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                },
+                                "index": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "list",
+                                "index"
+                            ]
+                        },
+                        "Color": {
+                            "$ref": "#/definitions/Color"
+                        }
+                    },
+                    "required": [
+                        "Qx",
+                        "Qy",
+                        "Direction",
+                        "Color"
+                    ]
+                },
+                "applyOnVertex": {
+                    "description": "indicates whether the attribute can be applied to a vertex",
+                    "const": false
+                },
+                "applyOnEdge": {
+                    "description": "indicates whether the attribute can be applied to an edge",
+                    "const": true
+                },
+                "applyOnFace": {
+                    "description": "indicates whether the attribute can be applied to a facer",
+                    "const": false
+                }
+            },
+            "required": [
+                "type",
+                "symbol",
+                "name",
+                "properties",
+                "applyOnVertex",
+                "applyOnEdge",
+                "applyOnFace"
+            ]
+        },
+        "Temperature": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "Temperature"
+                },
+                "symbol": {
+                    "const": "Temperature"
+                },
+                "name": {
+                    "description": "the name will only be given when creating a new attribute",
+                    "type": "string"
+                },
+                "properties": {
+                    "type": "object",
+                    "properties": {
+                        "Value": {
+                            "type": "number"
+                        },
+                        "Color": {
+                            "$ref": "#/definitions/Color"
+                        }
+                    },
+                    "required": [
+                        "Value",
+                        "Color"
+                    ]
+                },
+                "applyOnVertex": {
+                    "description": "indicates whether the attribute can be applied to a vertex",
+                    "const": true
+                },
+                "applyOnEdge": {
+                    "description": "indicates whether the attribute can be applied to an edge",
+                    "const": true
+                },
+                "applyOnFace": {
+                    "description": "indicates whether the attribute can be applied to a facer",
+                    "const": true
+                }
+            },
+            "required": [
+                "type",
+                "symbol",
+                "name",
+                "properties",
+                "applyOnVertex",
+                "applyOnEdge",
+                "applyOnFace"
+            ]
+        },
+        "Color": {
+            "description": "list showing the three color values according to the RGB pattern",
+            "type": "array",
+            "items": {
+                "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+        }
+    }
+}

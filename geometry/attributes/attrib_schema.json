@@ -1,0 +1,87 @@
+{
+    "att_schema": {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "Attribute",
+        "description": "Describes the format of an attribute",
+        "type": "object",
+        "properties": {
+            "type": {
+                "type": "string"
+            },
+            "symbol": {
+                "description": "string that associates the attribute with a specific symbol",
+                "type": "string"
+            },
+            "name": {
+                "description": "the name will only be given when creating a new attribute",
+                "const": "untitled"
+            },
+            "properties": {
+                "description": "Contains all values the attribute can have",
+                "type": "object"
+            },
+            "applyOnVertex": {
+                "description": "indicates whether the attribute can be applied to a vertex",
+                "type": "boolean"
+            },
+            "applyOnEdge": {
+                "description": "indicates whether the attribute can be applied to an edge",
+                "type": "boolean"
+            },
+            "applyOnFace": {
+                "description": "indicates whether the attribute can be applied to a facer",
+                "type": "boolean"
+            }
+        },
+        "required": [
+            "type",
+            "symbol",
+            "name",
+            "properties",
+            "applyOnVertex",
+            "applyOnEdge",
+            "applyOnFace"
+        ]
+    },
+    "options_schema": {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "Options",
+        "description": "Describes the format of the options properties",
+        "type": "object",
+        "properties": {
+            "list": {
+                "description": "List containing all possible values",
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                    "anyOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
+                }
+            },
+            "index": {
+                "description": "list index corresponds to chosen value",
+                "type": "integer"
+            }
+        },
+        "required": [
+            "list",
+            "index"
+        ],
+        "additionalProperties": false
+    },
+    "color_schema": {
+        "description": "list showing the three color values according to the RGB pattern",
+        "type": "array",
+        "items": {
+            "type": "number"
+        },
+        "minItems": 3,
+        "maxItems": 3
+    }
+}

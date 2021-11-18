@@ -1,0 +1,92 @@
+{
+    "classes": [
+        {
+            "type": "Material",
+            "symbol": "Material",
+            "name": "untitled",
+            "properties": {
+                "YoungsModulus": 0.0,
+                "PoisonsRatio": 0.0,
+                "Conductivity": 0.0,
+                "SpecificHeat": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": false,
+            "applyOnFace": true
+        },
+        {
+            "type": "Thickness",
+            "symbol": "Thickness",
+            "name": "untitled",
+            "properties": {
+                "Value": 0.0
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": false,
+            "applyOnFace": true
+        },
+        {
+            "type": "Concentrated Load",
+            "symbol": "Arrow",
+            "name": "untitled",
+            "properties": {
+                "Fx": 0.0,
+                "Fy": 0.0,
+                "Mz": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": true,
+            "applyOnEdge": false,
+            "applyOnFace": false
+        },
+        {
+            "type": "Uniform Load",
+            "symbol": "Arrow",
+            "name": "untitled",
+            "properties": {
+                "Qx": 0.0,
+                "Qy": 0.0,
+                "Direction": {
+                    "list": [
+                        "Global",
+                        "Local"
+                    ],
+                    "index": 0
+                },
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": true,
+            "applyOnFace": false
+        },
+        {
+            "type": "Temperature",
+            "symbol": "Temperature",
+            "name": "untitled",
+            "properties": {
+                "Value": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": true,
+            "applyOnEdge": true,
+            "applyOnFace": true
+        }
+    ]
+}
