@@ -28,7 +28,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         super().setupUi(self)
 
         self.setMouseTracking(True)
-
+        # É so um teste rsrsrs
         # set window icon
         self.setWindowIcon(QtGui.QIcon("icons/femepwindow-icon.png"))
         AppUserModelID = ctypes.windll.shell32.GetCurrentProcessExplicitAppUserModelID
