@@ -28,6 +28,16 @@ class HeController:
         self.file = None
         self.isChanged = False
 
+    def resetDataStructure(self):
+        self.undoredo = UndoRedo(10)
+        self.attManager = AttribManager()
+        self.hemodel.clearAll()
+        self.select_segment = True
+        self.select_point = True
+        self.select_patch = True
+        self.file = None
+        self.isChanged = False
+
     def setHeModel(self, _hemodel):
         self.hemodel = _hemodel
 
