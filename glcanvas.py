@@ -825,7 +825,7 @@ class Canvas(QtOpenGL.QGLWidget):
                 else:
                     self.collector.insertPoint(xW, yW, pick_tol)
                     self.collector.addTempPoint(xW, yW)
-                    self.pt0W = QtCore.QPoint(xW, yW)
+                    self.pt0W = QtCore.QPointF(xW, yW)
 
                     # set text in LineEdit
                     self.Apptools.setFirstLineEditText(xW, yW, self)
@@ -870,7 +870,7 @@ class Canvas(QtOpenGL.QGLWidget):
 
                 # Add point to collected segment
                 self.collector.insertPoint(xW, yW, pick_tol)
-                self.pt0W = QtCore.QPoint(xW, yW)
+                self.pt0W = QtCore.QPointF(xW, yW)
 
                 # set text in LineEdit
                 self.Apptools.setFirstLineEditText(xW, yW, self)
