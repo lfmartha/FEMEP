@@ -39,9 +39,9 @@ class Canvas(QtOpenGL.QGLWidget):
         self.mousebuttonPressed = False  # if true, mouse button is pressed
 
         # QPoint is a Qt class that defines a point in a plane
-        self.pt0W = QtCore.QPoint(0.0, 0.0)  # first point to calculate dist
-        self.pt0 = QtCore.QPoint(0.0, 0.0)  # first mouse position
-        self.pt1 = QtCore.QPoint(0.0, 0.0)  # current mouse position
+        self.pt0W = QtCore.QPointF(0.0, 0.0)  # first point to calculate dist
+        self.pt0 = QtCore.QPointF(0.0, 0.0)  # first mouse position
+        self.pt1 = QtCore.QPointF(0.0, 0.0)  # current mouse position
         self.pickTolFac = 0.01  # factor for pick tolerance
         self.mouseMoveTol = 2  # tolerance for mouse move
 
