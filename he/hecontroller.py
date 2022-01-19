@@ -82,6 +82,8 @@ class HeController:
             # copy edge_split attributes
             mvse.edge1.segment.attributes = edge_target.segment.attributes.copy()
             mvse.edge2.segment.attributes = edge_target.segment.attributes.copy()
+            mvse.edge1.segment.nsudv = edge_target.segment.nsudv
+            mvse.edge2.segment.nsudv = edge_target.segment.nsudv
 
         else:
             # if it do not intersect, then find the face where it lies on.
@@ -302,11 +304,6 @@ class HeController:
                         flip.execute()
                         self.undoredo.insertOperation(flip)
 
-                    # copy existent_face attributes
-                    if existent_face.patch is not None:
-                        mef.face.patch.attributes = existent_face.patch.attributes.copy()
-                        mef.face.patch.isDeleted = existent_face.patch.isDeleted
-
                     # insert the entities into the hemodel data structure
                     insertEdge = InsertEdge(mef.edge, self.hemodel)
                     insertEdge.execute()
@@ -329,6 +326,11 @@ class HeController:
                     # update mesh face
                     if existent_face.patch.mesh is not None:
                         self.delMesh(existent_face)
+
+                    # copy existent_face attributes
+                    if existent_face.patch is not None:
+                        mef.face.patch.attributes = existent_face.patch.attributes.copy()
+                        mef.face.patch.isDeleted = existent_face.patch.isDeleted
 
             else:
                 # case 1.2: points are the same, then it is a closed segment
@@ -404,11 +406,6 @@ class HeController:
                     flip.execute()
                     self.undoredo.insertOperation(flip)
 
-                # copy existent_face attributes
-                if existent_face.patch is not None:
-                    mef.face.patch.attributes = existent_face.patch.attributes.copy()
-                    mef.face.patch.isDeleted = existent_face.patch.isDeleted
-
                 # insert the entities into the hemodel data structure
                 insertEdge2 = InsertEdge(mef.edge, self.hemodel)
                 insertEdge2.execute()
@@ -431,6 +428,11 @@ class HeController:
                 # update mesh face
                 if existent_face.patch.mesh is not None:
                     self.delMesh(existent_face)
+
+                # copy existent_face attributes
+                if existent_face.patch is not None:
+                    mef.face.patch.attributes = existent_face.patch.attributes.copy()
+                    mef.face.patch.isDeleted = existent_face.patch.isDeleted
 
         elif initpoint_belongs and not endpoint_belongs:
             # case 2: only the initial point of the segment belongs to a vertex of the model
@@ -919,6 +921,8 @@ class HeController:
                 # copy edge_split attributes
                 mvse.edge1.segment.attributes = existent_edge.segment.attributes.copy()
                 mvse.edge2.segment.attributes = existent_edge.segment.attributes.copy()
+                mvse.edge1.segment.nsudv = existent_edge.segment.nsudv
+                mvse.edge2.segment.nsudv = existent_edge.segment.nsudv
 
                 # update the next segment to be splitted
                 existent_edge = mvse.edge2
@@ -935,6 +939,8 @@ class HeController:
             # copy edge_split attributes
             mvse.edge1.segment.attributes = existent_edge.segment.attributes.copy()
             mvse.edge2.segment.attributes = existent_edge.segment.attributes.copy()
+            mvse.edge1.segment.nsudv = existent_edge.segment.nsudv
+            mvse.edge2.segment.nsudv = existent_edge.segment.nsudv
 
     def splitEdge(self, _pt, _split_edge, _seg1, _seg2):
 
@@ -1068,8 +1074,10 @@ class HeController:
         # copy attributes
         if len(kvje.edge1.segment.attributes) > 0:
             kvje.new_edge.segment.attributes = kvje.edge1.segment.attributes.copy()
+            kvje.new_edge.segment.nsudv = kvje.edge1.segment.nsudv
         else:
             kvje.new_edge.segment.attributes = kvje.edge2.segment.attributes.copy()
+            kvje.new_edge.segment.nsudv = kvje.edge2.segment.nsudv
 
         # insert joinned edge in model data structure
         insertEdge = InsertEdge(kvje.new_edge, self.hemodel)
