@@ -216,8 +216,6 @@ class Prop_EdgeDisplay(QMainWindow, Ui_prop_edge):
                 elif type(value) == dict:
                     value = properties[key]["list"][properties[key]["index"]]
 
-                print("oi")
-
                 propLabel = QtWidgets.QLabel(content)
                 propLabel.setGeometry(QtCore.QRect(0, index*20, 200, 20))
                 propLabel.setFont(font1)
