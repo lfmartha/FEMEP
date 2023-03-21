@@ -1,8 +1,8 @@
 import json
 from OpenGL.error import Error
 from geometry.point import Point
-from geometry.segments.line import Line
-from geometry.segments.polyline import Polyline
+from geometry.curves.line import Line
+from geometry.curves.polyline import Polyline
 from geometry.patch import Patch
 from he.topologicalEntities.vertex import Vertex
 from he.topologicalEntities.face import Face
@@ -300,7 +300,7 @@ class HeFile():
                         segment.attributes.append(attribute)
 
             if edge_dict['attributes']['nsudv'] is not None:
-                segment.setNumberOfSubdivisions(
+                segment.setNumberSdv(
                     edge_dict['attributes']['nsudv'])
                 segment.attributes.append(edge_dict['attributes']['nsudv'])
 
