@@ -102,7 +102,7 @@ class HeView:
         dmin = _tol
 
         for i in range(0, len(self.hemodel.segments)):
-            xC, yC, dist = self.hemodel.segments[i].closestPoint(_x, _y)
+            status, xC, yC, dist = self.hemodel.segments[i].closestPoint(_x, _y)
             if dist < dmin:
                 xClst = xC
                 yClst = yC
@@ -112,19 +112,20 @@ class HeView:
         if id_target < 0:
             return False, xClst, yClst
 
-        # try to attract to a corner of the segment
-        seg_pts = self.hemodel.segments[id_target].getPoints()
-
-        dmin = _tol*2
-        for pt in seg_pts:
-            pt_x = pt.getX()
-            pt_y = pt.getY()
-            d = math.sqrt((_x-pt_x)*(_x-pt_x)+(_y-pt_y)*(_y-pt_y))
-
-            if d < dmin:
-                xClst = pt_x
-                yClst = pt_y
-                dmin = d
+        # If curve of target segment is a line or a polyline, try to
+        # attract to a corner of the segment
+        targetSeg = self.hemodel.segments[id_target]
+        if targetSeg.curve.type == 'LINE' or targetSeg.curve.type == 'POLYLINE':
+            seg_pts = targetSeg.getPoints()
+            dmin = _tol*2
+            for pt in seg_pts:
+                pt_x = pt.getX()
+                pt_y = pt.getY()
+                d = math.sqrt((_x-pt_x)*(_x-pt_x)+(_y-pt_y)*(_y-pt_y))
+                if d < dmin:
+                    xClst = pt_x
+                    yClst = pt_y
+                    dmin = d
 
         # If found a closest point, return its coordinates
         return True, xClst, yClst
