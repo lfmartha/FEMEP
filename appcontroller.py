@@ -9,6 +9,11 @@ from gui.femepui import Ui_MainWindow
 from gui.gridui import GridDisplay
 from gui.lineui import LineDisplay
 from gui.polylineui import PolylineDisplay
+from gui.cubicsplineui import CubicSplineDisplay
+from gui.circleui import CircleDisplay
+from gui.circlearcui import CircleArcDisplay
+from gui.ellipseui import EllipseDisplay
+from gui.ellipsearcui import EllipseArcDisplay
 from gui.selectui import SelectDisplay
 from gui.pointui import PointDisplay
 from gui.attributeui import AttributeDisplay
@@ -49,6 +54,11 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.grid_display = GridDisplay()
         self.line_display = LineDisplay()
         self.polyline_display = PolylineDisplay()
+        self.cubicspline_display = CubicSplineDisplay()
+        self.circle_display = CircleDisplay()
+        self.circlearc_display = CircleArcDisplay()
+        self.ellipse_display = EllipseDisplay()
+        self.ellipsearc_display = EllipseArcDisplay()
         self.select_display = SelectDisplay()
         self.point_display = PointDisplay()
         self.attribute_display = AttributeDisplay(frame=self.leftToolbarFrame)
@@ -82,6 +92,11 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.actionPoint.triggered.connect(self.on_actionPoint)
         self.actionLine.triggered.connect(self.on_actionLine)
         self.actionPolyline.triggered.connect(self.on_actionPolyline)
+        self.actionCubicSpline.triggered.connect(self.on_actionCubicSpline)
+        self.actionCircle.triggered.connect(self.on_actionCircle)
+        self.actionCircleArc.triggered.connect(self.on_actionCircleArc)
+        self.actionEllipse.triggered.connect(self.on_actionEllipse)
+        self.actionEllipseArc.triggered.connect(self.on_actionEllipseArc)
         self.actionSelect.triggered.connect(self.on_actionSelect)
         self.actionDelete.triggered.connect(self.delSelectedEntities)
         self.actionFit.triggered.connect(self.fitWorldToViewport)
@@ -105,13 +120,55 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.actionNsudv.triggered.connect(self.on_action_nsudv)
         self.actionMesh.triggered.connect(self.on_action_Mesh)
 
-        # QpushButtons
+        # Grid QpushButton
         self.grid_display.gridOKpushButton.clicked.connect(self.setgrid)
-        self.line_display.addlinepushButton.clicked.connect(self.add_line)
-        self.polyline_display.addlinepushButton.clicked.connect(
-            self.add_polyline)
-        self.polyline_display.endsegmenttpushButton.clicked.connect(
-            self.end_segment)
+
+        # Line QpushButtons
+        self.line_display.InitialPointpushButton.clicked.connect(self.add_lineInitialPoint)
+        self.line_display.addLinepushButton.clicked.connect(self.add_line)
+
+        # Polyline QpushButtons
+        self.polyline_display.InitialPointpushButton.clicked.connect(self.add_polylineInitialPoint)
+        self.polyline_display.addPolylinepushButton.clicked.connect(self.add_polylineEndPoint)
+        self.polyline_display.endPolylinepushButton.clicked.connect(self.end_polyline)
+
+        # Cubic Spline QpushButtons
+        self.cubicspline_display.InitialPointpushButton.clicked.connect(self.add_cubicsplineInitialPoint)
+        self.cubicspline_display.addCubicSplinepushButton.clicked.connect(self.add_cubicsplineEndPoint)
+        self.cubicspline_display.endCubicSplinepushButton.clicked.connect(self.end_cubicspline)
+
+        # Circle QpushButtons
+        self.circle_display.setCenterpushButton.clicked.connect(self.set_circleCenter)
+        self.circle_display.addCirclepushButton.clicked.connect(self.add_circle)
+
+        # Circle Arc QpushButtons
+        self.circlearc_display.setCenterpushButton.clicked.connect(self.set_circlearcCenter)
+        self.circlearc_display.setFirstArcPointpushButton.clicked.connect(self.set_circlearcFirstArcPoint)
+        self.circlearc_display.addCircleArcpushButton.clicked.connect(self.add_circlearc)
+
+        # Ellipse QpushButtons
+        self.ellipse_display.setCenterpushButton.clicked.connect(self.set_ellipseCenter)
+        self.ellipse_display.setFirstAxispushButton.clicked.connect(self.set_ellipseFirstAxis)
+        self.ellipse_display.addEllipsepushButton.clicked.connect(self.add_ellipse)
+
+        # Ellipse Arc QpushButtons
+        self.ellipsearc_display.setCenterpushButton.clicked.connect(self.set_ellipsearcCenter)
+        self.ellipsearc_display.setFirstAxispushButton.clicked.connect(self.set_ellipsearcFirstAxis)
+        self.ellipsearc_display.setSecondAxispushButton.clicked.connect(self.set_ellipsearcSecondAxis)
+        self.ellipsearc_display.setFirstArcPointpushButton.clicked.connect(self.set_ellipsearcFirstArcPoint)
+        self.ellipsearc_display.addEllipseArcpushButton.clicked.connect(self.add_ellipsearc)
+
+        # Subdivisions QpushButtons
+        self.nsudv_display.nsudvpushButton.clicked.connect(self.setNumberSdv)
+        self.nsudv_display.knotrefinementpushButton.clicked.connect(self.refineNumberSdv)
+        self.nsudv_display.rescuepushButton.clicked.connect(self.BackToOriginalNurbs)
+
+        # Prop QpushButtons
+        self.prop_face_display.closepushbutton.clicked.connect(self.close_propFace)
+        self.prop_edge_display.closepushbutton.clicked.connect(self.close_propEdge)
+        self.prop_edge_display.degreeChange.clicked.connect(self.degreeChange)
+        self.prop_vertex_display.closepushbutton.clicked.connect(self.close_propVertex)
+
         self.point_display.addpointpushButton.clicked.connect(self.add_point)
         self.select_display.propertiespushButton.clicked.connect(
             self.properties)
@@ -125,18 +182,11 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.unSetAttribute)
         self.attribute_display.renamepushButton.clicked.connect(
             self.renameAttribute)
-        self.prop_face_display.closepushbutton.clicked.connect(
-            self.close_propFace)
-        self.prop_edge_display.closepushbutton.clicked.connect(
-            self.close_propEdge)
-        self.prop_vertex_display.closepushbutton.clicked.connect(
-            self.close_propVertex)
+
         self.mesh_display.genMeshpushButton.clicked.connect(self.generateMesh)
         self.mesh_display.delMeshpushButton.clicked.connect(self.delMesh)
         self.exportFile_display.exportpushButton.clicked.connect(
             self.exportFile)
-        self.nsudv_display.nsudvpushButton.clicked.connect(
-            self.setNumberOfSubdivisions)
 
         # checkBoxes
         self.snapcheckBox.clicked.connect(self.change_snapgrid)
@@ -149,6 +199,26 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.setAttPropertiesDisplay)
         self.mesh_display.meshcomboBox.activated.connect(self.setMeshOptions)
         self.mesh_display.shapecomboBox.activated.connect(self.setDiagOptions)
+
+        # Circle comboBox
+        self.circle_display.RadiuscomboBox.activated.connect(self.setCircleRadiusOptions)
+
+        # Circle Arc comboBox
+        self.circlearc_display.FirstArcPointcomboBox.activated.connect(self.setCircleArcFirstArcPointOptions)
+        self.circlearc_display.SecondArcPointcomboBox.activated.connect(self.setCircleArcSecondArcPointOptions)
+        
+        # Ellipse comboBoxes
+        self.ellipse_display.FirstAxiscomboBox.activated.connect(self.setEllipseFirstAxisOptions)
+        self.ellipse_display.SecondAxiscomboBox.activated.connect(self.setEllipseSecondAxisOptions)
+
+        # Ellipse Arc comboBoxes
+        self.ellipsearc_display.FirstAxiscomboBox.activated.connect(self.setEllipseArcFirstAxisOptions)
+        self.ellipsearc_display.SecondAxiscomboBox.activated.connect(self.setEllipseArcSecondAxisOptions)
+        self.ellipsearc_display.FirstArcPointcomboBox.activated.connect(self.setEllipseArcFirstArcPointOptions)
+        self.ellipsearc_display.SecondArcPointcomboBox.activated.connect(self.setEllipseArcSecondArcPointOptions)
+
+        # Subdivisions comboBox
+        self.nsudv_display.nsudvcomboBox.activated.connect(self.setNumSubdivisionsOptions)
 
     def resizeEvent(self, a0: QtGui.QResizeEvent):
         self.attribute_display.resizeEvent(a0)
@@ -215,6 +285,21 @@ class AppController(QMainWindow, Ui_MainWindow):
         elif self.actionPolyline.isChecked():
             canvas.setMouseAction('COLLECTION')
             canvas.setGeoType('POLYLINE')
+        elif self.actionCubicSpline.isChecked():
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('CUBICSPLINE')
+        elif self.actionCircle.isChecked():
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('CIRCLE')
+        elif self.actionCircleArc.isChecked():
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('CIRCLEARC')
+        elif self.actionEllipse.isChecked():
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('ELLIPSE')
+        elif self.actionEllipseArc.isChecked():
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('ELLIPSEARC')
         elif self.actionPoint.isChecked():
             canvas.setMouseAction('COLLECTION')
             canvas.setGeoType('POINT')
@@ -231,10 +316,14 @@ class AppController(QMainWindow, Ui_MainWindow):
     def tabBarClicked(self, _index):
 
         # setup interface
-        self.setEnableLineEdits(self.current_canvas)
         self.current_canvas.collector.endGeoCollection()
         self.clearDispText(self.line_display)
         self.clearDispText(self.polyline_display)
+        self.clearDispText(self.cubicspline_display)
+        self.clearDispText(self.circle_display)
+        self.clearDispText(self.circlearc_display)
+        self.clearDispText(self.ellipse_display)
+        self.clearDispText(self.ellipsearc_display)
 
         self.tabWidget.setCurrentIndex(_index)
         tab = self.tabWidget.currentWidget()
@@ -274,9 +363,13 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # setup interface
         if self.current_canvas == self.canvas_list[currentIndex]:
-            self.setEnableLineEdits(self.current_canvas)
             self.clearDispText(self.line_display)
             self.clearDispText(self.polyline_display)
+            self.clearDispText(self.cubicspline_display)
+            self.clearDispText(self.circle_display)
+            self.clearDispText(self.circlearc_display)
+            self.clearDispText(self.ellipse_display)
+            self.clearDispText(self.ellipsearc_display)
 
         self.tabWidget.removeTab(_index)
         self.canvas_list.pop(currentIndex)
@@ -365,6 +458,9 @@ class AppController(QMainWindow, Ui_MainWindow):
             canvas.setMouseAction('COLLECTION')
             canvas.setGeoType('LINE')
 
+        # set LineEdits
+        self.set_curves_lineEdits()
+
     def on_actionPolyline(self):
 
         # setup checked buttons
@@ -383,6 +479,119 @@ class AppController(QMainWindow, Ui_MainWindow):
         for canvas in self.canvas_list:
             canvas.setMouseAction('COLLECTION')
             canvas.setGeoType('POLYLINE')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionCubicSpline(self):
+
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionCubicSpline.setChecked(True)
+
+        # Turn on CubicSpline display
+        self.closeAllDisplayers()
+        self.cubicspline_display.setParent(self.leftToolbarFrame)
+        self.cubicspline_display.show()
+
+        # clear txts
+        self.clearDispText(self.cubicspline_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('CUBICSPLINE')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionCircle(self):
+
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionCircle.setChecked(True)
+
+        # Turn on Circle display
+        self.closeAllDisplayers()
+        self.circle_display.setParent(self.leftToolbarFrame)
+        self.circle_display.show()
+
+        # clear txts
+        self.clearDispText(self.circle_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('CIRCLE')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionCircleArc(self):
+
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionCircleArc.setChecked(True)
+
+        # Turn on CircleArc display
+        self.closeAllDisplayers()
+        self.circlearc_display.setParent(self.leftToolbarFrame)
+        self.circlearc_display.show()
+
+        # clear txts
+        self.clearDispText(self.circlearc_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('CIRCLEARC')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionEllipse(self):
+
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionEllipse.setChecked(True)
+
+        # Turn on Ellipse display
+        self.closeAllDisplayers()
+        self.ellipse_display.setParent(self.leftToolbarFrame)
+        self.ellipse_display.show()
+
+        # clear txts
+        self.clearDispText(self.ellipse_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('ELLIPSE')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionEllipseArc(self):
+
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionEllipseArc.setChecked(True)
+
+        # Turn on EllipseArc display
+        self.closeAllDisplayers()
+        self.ellipsearc_display.setParent(self.leftToolbarFrame)
+        self.ellipsearc_display.show()
+
+        # clear txts
+        self.clearDispText(self.ellipsearc_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('ELLIPSEARC')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
 
     def on_actionGrid(self):
 
@@ -512,6 +721,38 @@ class AppController(QMainWindow, Ui_MainWindow):
         # clear txts
         self.clearDispText(self.point_display)
 
+    # Line pushButton methods
+    def add_lineInitialPoint(self):
+        if len(self.canvas_list) == 0:
+             return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get point from Line initial point lineEdits
+        try:
+            x = float(self.line_display.InitialPointXlineEdit.text())
+            y = float(self.line_display.InitialPointYlineEdit.text())
+        except:
+            self.clearDispText(self.line_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        pick_tol = 0
+        # start collection and set the initial point
+        if not canvas.collector.isActive():
+            canvas.collector.startGeoCollection()
+            canvas.collector.insertPoint(x, y, False, pick_tol)
+        
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
     def add_line(self):
         if len(self.canvas_list) == 0:
             return
@@ -519,12 +760,10 @@ class AppController(QMainWindow, Ui_MainWindow):
         # get current canvas
         canvas = self.current_canvas
 
-        # Get points from lineEdits
+        # get point from Line end point lineEdits
         try:
-            x1 = float(self.line_display.firstpointXlineEdit.text())
-            y1 = float(self.line_display.firstpointYlineEdit.text())
-            x2 = float(self.line_display.endpointXlineEdit.text())
-            y2 = float(self.line_display.endpointYlineEdit.text())
+            x = float(self.line_display.EndPointXlineEdit.text())
+            y = float(self.line_display.EndPointYlineEdit.text())
         except:
             self.clearDispText(self.line_display)
             msg = QMessageBox(self)
@@ -533,24 +772,9 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        # check if the points given are equal
-        if x1 == x2 and y1 == y2:
-            self.clearDispText(self.line_display)
-            msg = QMessageBox()
-            msg.setWindowTitle('Warning')
-            msg.setText(
-                'The first point is equal to the second.Thus, it is not possible to make a line')
-            msg.exec()
-            return
-
         pick_tol = 0
-        # start collection and add the first point
-        if not canvas.collector.isActive():
-            canvas.collector.startGeoCollection()
-            canvas.collector.insertPoint(x1, y1, pick_tol)
-
-        # add the end point
-        canvas.collector.insertPoint(x2, y2, pick_tol)
+        # set the end point
+        canvas.collector.insertPoint(x, y, False, pick_tol)
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
@@ -559,82 +783,92 @@ class AppController(QMainWindow, Ui_MainWindow):
         canvas.updatedDsp = False
         canvas.update()
 
-        # Set enable first point Line Edit
-        self.line_display.firstpointXlineEdit.setEnabled(True)
-        self.line_display.firstpointYlineEdit.setEnabled(True)
+        # set LineEdits
+        self.set_curves_lineEdits()
 
-        # clear txts
-        self.clearDispText(self.line_display)
-
-    def add_polyline(self):
+    # Polyline pushButton methods
+    def add_polylineInitialPoint(self):
         if len(self.canvas_list) == 0:
-            return
+             return
 
-        # Get points from lineEdit
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get point from Polyline initial point lineEdits
         try:
-            x1 = float(self.polyline_display.firstpointXlineEdit.text())
-            y1 = float(self.polyline_display.firstpointYlineEdit.text())
-            x2 = float(self.polyline_display.endpointXlineEdit.text())
-            y2 = float(self.polyline_display.endpointYlineEdit.text())
+            x = float(self.polyline_display.InitialPointXlineEdit.text())
+            y = float(self.polyline_display.InitialPointYlineEdit.text())
         except:
+            self.clearDispText(self.polyline_display)
             msg = QMessageBox(self)
             msg.setWindowTitle('Warning')
             msg.setText('These data fields only accept numbers')
             msg.exec()
             return
 
-        # check if the points given are equal
-        if x1 == x2 and y1 == y2:
+        pick_tol = 0
+        # start collection and set the initial point
+        if not canvas.collector.isActive():
+            canvas.collector.startGeoCollection()
+            canvas.collector.insertPoint(x, y, False, pick_tol)
+        
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def add_polylineEndPoint(self):
+        if len(self.canvas_list) == 0:
+             return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get point from Polyline end point lineEdits
+        try:
+            x = float(self.polyline_display.EndPointXlineEdit.text())
+            y = float(self.polyline_display.EndPointYlineEdit.text())
+        except:
+            self.clearDispText(self.polyline_display)
             msg = QMessageBox(self)
             msg.setWindowTitle('Warning')
-            msg.setText(
-                'The first point is equal to the second. Thus, it is not possible to make a line')
+            msg.setText('These data fields only accept numbers')
             msg.exec()
             return
 
         pick_tol = 0
-        canvas = self.current_canvas
-        if not canvas.collector.isActive():
-            # start collection
-            canvas.collector.startGeoCollection()
-            canvas.collector.insertPoint(x1, y1, pick_tol)
-            canvas.collector.insertPoint(x2, y2, pick_tol)
+        # set the end point
+        canvas.collector.insertPoint(x, y, False, pick_tol)
 
-            # Set enable first point Line Edit
-            self.polyline_display.firstpointXlineEdit.setEnabled(False)
-            self.polyline_display.firstpointYlineEdit.setEnabled(False)
-
-        else:
-            canvas.collector.insertPoint(x2, y2, pick_tol)
-
-        # set texts in the first point
-        self.polyline_display.firstpointXlineEdit.setText(str(x2))
-        self.polyline_display.firstpointYlineEdit.setText(str(y2))
-
-        # Actives the drawing in the canvas
-        canvas.mouseButton = QtCore.Qt.LeftButton
-        canvas.collector.addTempPoint(x2, y2)
+        canvas.updatedDsp = False
         canvas.update()
 
-        # clear texts in the end point of the line
-        self.polyline_display.endpointXlineEdit.clear()
-        self.polyline_display.endpointYlineEdit.clear()
+        # set LineEdits
+        self.set_curves_lineEdits()
 
-    def end_segment(self):
+    def end_polyline(self):
         if len(self.canvas_list) == 0:
             return
 
+        # get current canvas
         canvas = self.current_canvas
-        if not canvas.collector.isActive():
+
+        # get point from Polyline end point lineEdits
+        try:
+            x = float(self.polyline_display.EndPointXlineEdit.text())
+            y = float(self.polyline_display.EndPointYlineEdit.text())
+        except:
+            self.clearDispText(self.polyline_display)
             msg = QMessageBox(self)
             msg.setWindowTitle('Warning')
-            msg.setText('The segment has no lines added')
+            msg.setText('These data fields only accept numbers')
             msg.exec()
             return
 
-        # Set enable first point Line Edit
-        self.polyline_display.firstpointXlineEdit.setEnabled(True)
-        self.polyline_display.firstpointYlineEdit.setEnabled(True)
+        pick_tol = 0
+        # set the end point
+        canvas.collector.insertPoint(x, y, False, pick_tol)
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
@@ -643,8 +877,573 @@ class AppController(QMainWindow, Ui_MainWindow):
         canvas.updatedDsp = False
         canvas.update()
 
-        # clear texts
-        self.clearDispText(self.polyline_display)
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    # Cubicspline pushButton methods
+    def add_cubicsplineInitialPoint(self):
+        if len(self.canvas_list) == 0:
+             return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get point from Cubic Spline initial point lineEdits
+        try:
+            x = float(self.cubicspline_display.InitialPointXlineEdit.text())
+            y = float(self.cubicspline_display.InitialPointYlineEdit.text())
+        except:
+            self.clearDispText(self.cubicspline_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        pick_tol = 0
+        # start collection and set the initial point
+        if not canvas.collector.isActive():
+            canvas.collector.startGeoCollection()
+            canvas.collector.insertPoint(x, y, False, pick_tol)
+        
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def add_cubicsplineEndPoint(self):
+        if len(self.canvas_list) == 0:
+             return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get point from Cubic Spline end point lineEdits
+        try:
+            x = float(self.cubicspline_display.EndPointXlineEdit.text())
+            y = float(self.cubicspline_display.EndPointYlineEdit.text())
+        except:
+            self.clearDispText(self.cubicspline_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        pick_tol = 0
+        # set the end point
+        canvas.collector.insertPoint(x, y, False, pick_tol)
+
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def end_cubicspline(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get point from Cubic Spline end point lineEdits
+        try:
+            x = float(self.cubicspline_display.EndPointXlineEdit.text())
+            y = float(self.cubicspline_display.EndPointYlineEdit.text())
+        except:
+            self.clearDispText(self.cubicspline_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        pick_tol = 0
+        # set the end point
+        canvas.collector.insertPoint(x, y, False, pick_tol)
+
+        # end collection:
+        segment = canvas.collector.getCollectedGeo()
+        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.collector.endGeoCollection()
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    # Circle pushButton methods
+    def set_circleCenter(self):
+        if len(self.canvas_list) == 0:
+             return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get point from Circle center lineEdits
+        try:
+            x = float(self.circle_display.CenterXlineEdit.text())
+            y = float(self.circle_display.CenterYlineEdit.text())
+        except:
+            self.clearDispText(self.circle_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        pick_tol = 0
+        # start collection and set the center point
+        if not canvas.collector.isActive():
+            canvas.collector.startGeoCollection()
+            canvas.collector.insertPoint(x, y, False, pick_tol)
+        
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def add_circle(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get values from Circle radius lineEdits
+        try:
+            x = float(self.circle_display.RadiusXlineEdit.text())
+            y = float(self.circle_display.RadiusYlineEdit.text())
+        except:
+            self.clearDispText(self.circle_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        # check comboBox
+        Radius_option = self.circle_display.RadiuscomboBox.currentText()
+        if Radius_option == "Coordinates":
+            LenAndAng = False
+        elif Radius_option == "Radius and Angle":
+            LenAndAng = True
+
+        pick_tol = 0
+        # set the radius
+        canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+
+        # end collection:
+        segment = canvas.collector.getCollectedGeo()
+        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.collector.endGeoCollection()
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    # Circle Arc pushButton methods
+    def set_circlearcCenter(self):
+        if len(self.canvas_list) == 0:
+             return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get point from Circle Arc center lineEdits
+        try:
+            x = float(self.circlearc_display.CenterXlineEdit.text())
+            y = float(self.circlearc_display.CenterYlineEdit.text())
+        except:
+            self.clearDispText(self.circlearc_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        pick_tol = 0
+        # start collection and set the center point
+        if not canvas.collector.isActive():
+            canvas.collector.startGeoCollection()
+            canvas.collector.insertPoint(x, y, False, pick_tol)
+        
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def set_circlearcFirstArcPoint(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get values from Circle Arc first arc point lineEdits
+        try:
+            x = float(self.circlearc_display.FirstArcPointXlineEdit.text())
+            y = float(self.circlearc_display.FirstArcPointYlineEdit.text())
+        except:
+            self.clearDispText(self.circlearc_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+       # check comboBox
+        FirstAxis_option = self.circlearc_display.FirstArcPointcomboBox.currentText()
+        if FirstAxis_option == "Coordinates":
+            LenAndAng = False
+        elif FirstAxis_option == "Radius and Angle":
+            LenAndAng = True
+
+        pick_tol = 0
+        # set the first arc point
+        canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def add_circlearc(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get values from Circle Arc second arc point lineEdits
+        try:
+            x = float(self.circlearc_display.SecondArcPointXlineEdit.text())
+            y = float(self.circlearc_display.SecondArcPointYlineEdit.text())
+        except:
+            self.clearDispText(self.circlearc_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        # check comboBox
+        Radius_option = self.circlearc_display.SecondArcPointcomboBox.currentText()
+        if Radius_option == "Coordinates":
+            LenAndAng = False
+        elif Radius_option == "Radius and Angle":
+            LenAndAng = True
+
+        pick_tol = 0
+        # set the radius
+        canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+
+        # end collection:
+        segment = canvas.collector.getCollectedGeo()
+        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.collector.endGeoCollection()
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    # Ellipse pushButton methods
+    def set_ellipseCenter(self):
+        if len(self.canvas_list) == 0:
+             return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get point from Ellipse center lineEdits
+        try:
+            x = float(self.ellipse_display.CenterXlineEdit.text())
+            y = float(self.ellipse_display.CenterYlineEdit.text())
+        except:
+            self.clearDispText(self.ellipse_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        pick_tol = 0
+        # start collection and set the center point
+        if not canvas.collector.isActive():
+            canvas.collector.startGeoCollection()
+            canvas.collector.insertPoint(x, y, False, pick_tol)
+        
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def set_ellipseFirstAxis(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get values from Ellipse first axis lineEdits
+        try:
+            x = float(self.ellipse_display.FirstAxisXlineEdit.text())
+            y = float(self.ellipse_display.FirstAxisYlineEdit.text())
+        except:
+            self.clearDispText(self.ellipse_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+       # check comboBox
+        FirstAxis_option = self.ellipse_display.FirstAxiscomboBox.currentText()
+        if FirstAxis_option == "Coordinates":
+            LenAndAng = False
+        elif FirstAxis_option == "Length and Angle":
+            LenAndAng = True
+
+        pick_tol = 0
+        # set the first axis
+        canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def add_ellipse(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get values from Ellipse second axis lineEdits
+        try:
+            x = float(self.ellipse_display.SecondAxisXlineEdit.text())
+            y = float(self.ellipse_display.SecondAxisYlineEdit.text())
+        except:
+            self.clearDispText(self.ellipse_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        # check comboBox
+        SecondAxis_option = self.ellipse_display.SecondAxiscomboBox.currentText()
+        if SecondAxis_option == "Coordinates":
+            LenAndAng = False
+        elif SecondAxis_option == "Length and Angle":
+            LenAndAng = True
+
+        pick_tol = 0
+        # set the second axis
+        canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+
+        # end collection:
+        segment = canvas.collector.getCollectedGeo()
+        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.collector.endGeoCollection()
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    # Ellipse Arc pushButton methods
+    def set_ellipsearcCenter(self):
+        if len(self.canvas_list) == 0:
+             return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get point from Ellipse Arc center lineEdits
+        try:
+            x = float(self.ellipsearc_display.CenterXlineEdit.text())
+            y = float(self.ellipsearc_display.CenterYlineEdit.text())
+        except:
+            self.clearDispText(self.ellipsearc_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        pick_tol = 0
+        # start collection and set the center point
+        if not canvas.collector.isActive():
+            canvas.collector.startGeoCollection()
+            canvas.collector.insertPoint(x, y, False, pick_tol)
+        
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def set_ellipsearcFirstAxis(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get values from Ellipse Arc first axis lineEdits
+        try:
+            x = float(self.ellipsearc_display.FirstAxisXlineEdit.text())
+            y = float(self.ellipsearc_display.FirstAxisYlineEdit.text())
+        except:
+            self.clearDispText(self.ellipsearc_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+       # check comboBox
+        FirstAxis_option = self.ellipsearc_display.FirstAxiscomboBox.currentText()
+        if FirstAxis_option == "Coordinates":
+            LenAndAng = False
+        elif FirstAxis_option == "Length and Angle":
+            LenAndAng = True
+
+        pick_tol = 0
+        # set the first axis
+        canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def set_ellipsearcSecondAxis(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get values from Ellipse Arc second axis lineEdits
+        try:
+            x = float(self.ellipsearc_display.SecondAxisXlineEdit.text())
+            y = float(self.ellipsearc_display.SecondAxisYlineEdit.text())
+        except:
+            self.clearDispText(self.ellipsearc_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+       # check comboBox
+        SecondAxis_option = self.ellipsearc_display.SecondAxiscomboBox.currentText()
+        if SecondAxis_option == "Coordinates":
+            LenAndAng = False
+        elif SecondAxis_option == "Length and Angle":
+            LenAndAng = True
+
+        pick_tol = 0
+        # set the second axis
+        canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def set_ellipsearcFirstArcPoint(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get values from Ellipse Arc first point lineEdits
+        try:
+            x = float(self.ellipsearc_display.FirstArcPointXlineEdit.text())
+            y = float(self.ellipsearc_display.FirstArcPointYlineEdit.text())
+        except:
+            self.clearDispText(self.ellipsearc_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+       # check comboBox
+        FirstArcPoint_option = self.ellipsearc_display.FirstArcPointcomboBox.currentText()
+        if FirstArcPoint_option == "Coordinates":
+            LenAndAng = False
+        elif FirstArcPoint_option == "Length and Angle":
+            LenAndAng = True
+
+        pick_tol = 0
+        # set the first arc point
+        canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        if LenAndAng:
+            length = canvas.collector.geo.LenCenterToPt(y)
+            self.ellipsearc_display.FirstArcPointXlineEdit.setText(str(round(length, 3)))
+        self.set_curves_lineEdits()
+
+    def add_ellipsearc(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get values from Ellipse Arc second point lineEdits
+        try:
+            x = float(self.ellipsearc_display.SecondArcPointXlineEdit.text())
+            y = float(self.ellipsearc_display.SecondArcPointYlineEdit.text())
+        except:
+            self.clearDispText(self.ellipsearc_display)
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('These data fields only accept numbers')
+            msg.exec()
+            return
+
+        # check comboBox
+        SecondArcPoint_option = self.ellipsearc_display.SecondArcPointcomboBox.currentText()
+        if SecondArcPoint_option == "Coordinates":
+            LenAndAng = False
+        elif SecondArcPoint_option == "Length and Angle":
+            LenAndAng = True
+
+        pick_tol = 0
+        # set the second arc point
+        canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+
+        # end collection:
+        segment = canvas.collector.getCollectedGeo()
+        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.collector.endGeoCollection()
+        canvas.updatedDsp = False
+        canvas.update()
+
+        # set LineEdits
+        self.set_curves_lineEdits()
 
     def delSelectedEntities(self):
         if len(self.canvas_list) == 0:
@@ -878,19 +1677,37 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.nsudv_display.valuelineEdit.setText("0")
         self.nsudv_display.ratiolineEdit.setText("1.0")
 
-    def setNumberOfSubdivisions(self):
+    def setNumberSdv(self):
 
-        try:
-            number = int(self.nsudv_display.valuelineEdit.text())
-            ratio = float(self.nsudv_display.ratiolineEdit.text())
-        except:
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Warning')
-            msg.setText('These data fields only accept numbers')
-            msg.exec()
-            return
+        Subdivision_option = self.nsudv_display.nsudvcomboBox.currentText()
+        if Subdivision_option == "Set Subdivisions":
+            try:
+                number = int(self.nsudv_display.valuelineEdit.text())
+                ratio = float(self.nsudv_display.ratiolineEdit.text())
+            except:
+                msg = QMessageBox(self)
+                msg.setWindowTitle('Warning')
+                msg.setText('These data fields only accept numbers')
+                msg.exec()
+                return
+        
+        elif Subdivision_option == "Get from Knot Vector":
+            number = None
+            ratio = None
 
-        self.current_hecontroller.setNumberOfSubdivisions(number, ratio)
+        self.current_hecontroller.setNumberSdv(number, ratio)
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
+    def refineNumberSdv(self):
+
+        self.current_hecontroller.refineNumberSdv()
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
+    def BackToOriginalNurbs(self):
+
+        self.current_hecontroller.BackToOriginalNurbs()
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
@@ -1193,6 +2010,12 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.select_display.show()
         self.current_canvas.prop_disp = False
 
+    def degreeChange(self):
+        degree = int(self.prop_edge_display.degreelineEdit.text())
+        self.current_hecontroller.degreeChange(degree)
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
     def close_propEdge(self):
         check, _ = self.properties()
 
@@ -1297,14 +2120,14 @@ class AppController(QMainWindow, Ui_MainWindow):
         else:
             shape_type = self.mesh_display.shapecomboBox.currentText()
 
-        try:
-            self.current_canvas.generateMesh(
-                mesh_type, shape_type, elem_type, diag_type, bc_flag)
-        except:
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Warning')
-            msg.setText('It was not possible to generate the mesh')
-            msg.exec()
+        # try:
+        self.current_canvas.generateMesh(
+            mesh_type, shape_type, elem_type, diag_type, bc_flag)
+        # except:
+        #     msg = QMessageBox(self)
+        #     msg.setWindowTitle('Warning')
+        #     msg.setText('It was not possible to generate the mesh')
+        #     msg.exec()
 
     def delMesh(self):
         self.current_canvas.delMesh()
@@ -1314,6 +2137,11 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.actionAttmanager.setChecked(False)
         self.actionSelect.setChecked(False)
         self.actionPolyline.setChecked(False)
+        self.actionCubicSpline.setChecked(False)
+        self.actionCircle.setChecked(False)
+        self.actionCircleArc.setChecked(False)
+        self.actionEllipse.setChecked(False)
+        self.actionEllipseArc.setChecked(False)
         self.actionLine.setChecked(False)
         self.actionPoint.setChecked(False)
         self.actionNsudv.setChecked(False)
@@ -1323,6 +2151,16 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.line_display.show()
         elif self.actionPolyline.isChecked():
             self.polyline_display.show()
+        elif self.actionCubicSpline.isChecked():
+            self.cubicspline_display.show()
+        elif self.actionCircle.isChecked():
+            self.circle_display.show()
+        elif self.actionCircleArc.isChecked():
+            self.circlearc_display.show()
+        elif self.actionEllipse.isChecked():
+            self.ellipse_display.show()
+        elif self.actionEllipseArc.isChecked():
+            self.ellipsearc_display.show()
         elif self.actionSelect.isChecked():
             self.select_display.show()
         elif self.actionPoint.isChecked():
@@ -1337,6 +2175,11 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.point_display.close()
         self.line_display.close()
         self.polyline_display.close()
+        self.cubicspline_display.close()
+        self.circle_display.close()
+        self.circlearc_display.close()
+        self.ellipse_display.close()
+        self.ellipsearc_display.close()
         self.grid_display.close()
         self.prop_vertex_display.close()
         self.prop_edge_display.close()
@@ -1353,52 +2196,659 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.canvas_list[currentIndex].prop_disp = False
 
     def clearDispText(self, _display):
-        if _display == self.line_display or _display == self.polyline_display:
-            _display.firstpointXlineEdit.clear()
-            _display.firstpointYlineEdit.clear()
-            _display.endpointXlineEdit.clear()
-            _display.endpointYlineEdit.clear()
+        if _display == self.line_display:
+            _display.InitialPointXlineEdit.clear()
+            _display.InitialPointYlineEdit.clear()
+            _display.EndPointXlineEdit.clear()
+            _display.EndPointYlineEdit.clear()
+
+        elif _display == self.polyline_display:
+            _display.InitialPointXlineEdit.clear()
+            _display.InitialPointYlineEdit.clear()
+            _display.EndPointXlineEdit.clear()
+            _display.EndPointYlineEdit.clear()
+
+        elif _display == self.cubicspline_display:
+            _display.InitialPointXlineEdit.clear()
+            _display.InitialPointYlineEdit.clear()
+            _display.EndPointXlineEdit.clear()
+            _display.EndPointYlineEdit.clear()
+
+        elif _display == self.circle_display:
+            _display.CenterXlineEdit.clear()
+            _display.CenterYlineEdit.clear()
+            _display.RadiusXlineEdit.clear()
+            _display.RadiusYlineEdit.clear()
+
+        elif _display == self.circlearc_display:
+            _display.CenterXlineEdit.clear()
+            _display.CenterYlineEdit.clear()
+            _display.FirstArcPointXlineEdit.clear()
+            _display.FirstArcPointYlineEdit.clear()
+            _display.SecondArcPointXlineEdit.clear()
+            _display.SecondArcPointYlineEdit.clear()
+
+        elif _display == self.ellipse_display:
+            _display.CenterXlineEdit.clear()
+            _display.CenterYlineEdit.clear()
+            _display.FirstAxisXlineEdit.clear()
+            _display.FirstAxisYlineEdit.clear()
+            _display.SecondAxisXlineEdit.clear()
+            _display.SecondAxisYlineEdit.clear()
+
+        elif _display == self.ellipsearc_display:
+            _display.CenterXlineEdit.clear()
+            _display.CenterYlineEdit.clear()
+            _display.FirstAxisXlineEdit.clear()
+            _display.FirstAxisYlineEdit.clear()
+            _display.SecondAxisXlineEdit.clear()
+            _display.SecondAxisYlineEdit.clear()
+            _display.FirstArcPointXlineEdit.clear()
+            _display.FirstArcPointYlineEdit.clear()
+            _display.SecondArcPointXlineEdit.clear()
+            _display.SecondArcPointYlineEdit.clear()
+
         elif _display == self.point_display:
             _display.xlineEdit.clear()
             _display.ylineEdit.clear()
 
-    def setFirstLineEditText(self, xW, yW, _canvas):
+    # Set Enable in lineEdits, pushButtons and comboBoxes
+    def set_curves_lineEdits(self):
+        # get current canvas
+        canvas = self.current_canvas
 
-        geo_type = _canvas.collector.getGeoType()
+        # get curve type
+        curve_type = canvas.collector.geoType
 
-        if geo_type == 'LINE':
-            self.line_display.firstpointXlineEdit.setText(str(round(xW, 3)))
-            self.line_display.firstpointYlineEdit.setText(str(round(yW, 3)))
-            self.line_display.firstpointXlineEdit.setEnabled(False)
-            self.line_display.firstpointYlineEdit.setEnabled(False)
-        elif geo_type == 'POLYLINE':
-            self.polyline_display.firstpointXlineEdit.setText(
-                str(round(xW, 3)))
-            self.polyline_display.firstpointYlineEdit.setText(
-                str(round(yW, 3)))
-            self.polyline_display.firstpointXlineEdit.setEnabled(False)
-            self.polyline_display.firstpointYlineEdit.setEnabled(False)
+        # get current number of control points
+        NumCtrlPt = canvas.collector.CurrentNumberOfControlPoints()
 
-    def setEndLineEditText(self, xW, yW, _canvas):
+        # set lineEdits
+        if curve_type == "LINE":
+            if NumCtrlPt == 0:
+                self.clearDispText(self.line_display)
+                self.line_display.InitialPointXlineEdit.setEnabled(True)
+                self.line_display.InitialPointYlineEdit.setEnabled(True)
+                self.line_display.InitialPointpushButton.setEnabled(True)
+                self.line_display.EndPointXlineEdit.setEnabled(False)
+                self.line_display.EndPointYlineEdit.setEnabled(False)
+                self.line_display.addLinepushButton.setEnabled(False)
 
-        geo_type = _canvas.collector.getGeoType()
+            elif NumCtrlPt == 1:
+                self.line_display.InitialPointXlineEdit.setEnabled(False)
+                self.line_display.InitialPointYlineEdit.setEnabled(False)
+                self.line_display.InitialPointpushButton.setEnabled(False)
+                self.line_display.EndPointXlineEdit.setEnabled(True)
+                self.line_display.EndPointYlineEdit.setEnabled(True)
+                self.line_display.addLinepushButton.setEnabled(True)
 
-        if geo_type == 'LINE':
-            self.line_display.endpointXlineEdit.setText(str(round(xW, 3)))
-            self.line_display.endpointYlineEdit.setText(str(round(yW, 3)))
-        elif geo_type == 'POLYLINE':
-            self.polyline_display.endpointXlineEdit.setText(str(round(xW, 3)))
-            self.polyline_display.endpointYlineEdit.setText(str(round(yW, 3)))
+        elif curve_type == "POLYLINE":
+            if NumCtrlPt == 0:
+                self.clearDispText(self.polyline_display)
+                self.polyline_display.InitialPointXlineEdit.setEnabled(True)
+                self.polyline_display.InitialPointYlineEdit.setEnabled(True)
+                self.polyline_display.InitialPointpushButton.setEnabled(True)
+                self.polyline_display.EndPointXlineEdit.setEnabled(False)
+                self.polyline_display.EndPointYlineEdit.setEnabled(False)
+                self.polyline_display.addPolylinepushButton.setEnabled(False)
+                self.polyline_display.endPolylinepushButton.setEnabled(False)
 
-    def setEnableLineEdits(self, _canvas):
+            else:
+                self.polyline_display.InitialPointXlineEdit.setEnabled(False)
+                self.polyline_display.InitialPointYlineEdit.setEnabled(False)
+                self.polyline_display.InitialPointpushButton.setEnabled(False)
+                self.polyline_display.EndPointXlineEdit.setEnabled(True)
+                self.polyline_display.EndPointYlineEdit.setEnabled(True)
+                self.polyline_display.addPolylinepushButton.setEnabled(True)
+                self.polyline_display.endPolylinepushButton.setEnabled(True)
 
-        geo_type = _canvas.collector.getGeoType()
+        elif curve_type == "CUBICSPLINE":
+            if NumCtrlPt == 0:
+                self.clearDispText(self.cubicspline_display)
+                self.cubicspline_display.InitialPointXlineEdit.setEnabled(True)
+                self.cubicspline_display.InitialPointYlineEdit.setEnabled(True)
+                self.cubicspline_display.InitialPointpushButton.setEnabled(True)
+                self.cubicspline_display.EndPointXlineEdit.setEnabled(False)
+                self.cubicspline_display.EndPointYlineEdit.setEnabled(False)
+                self.cubicspline_display.addCubicSplinepushButton.setEnabled(False)
+                self.cubicspline_display.endCubicSplinepushButton.setEnabled(False)
 
-        if geo_type == 'LINE':
-            self.clearDispText(self.line_display)
-            self.line_display.firstpointXlineEdit.setEnabled(True)
-            self.line_display.firstpointYlineEdit.setEnabled(True)
-        elif geo_type == 'POLYLINE':
-            self.clearDispText(self.polyline_display)
-            self.polyline_display.firstpointXlineEdit.setEnabled(True)
-            self.polyline_display.firstpointYlineEdit.setEnabled(True)
+            else:
+                self.cubicspline_display.InitialPointXlineEdit.setEnabled(False)
+                self.cubicspline_display.InitialPointYlineEdit.setEnabled(False)
+                self.cubicspline_display.InitialPointpushButton.setEnabled(False)
+                self.cubicspline_display.EndPointXlineEdit.setEnabled(True)
+                self.cubicspline_display.EndPointYlineEdit.setEnabled(True)
+                self.cubicspline_display.addCubicSplinepushButton.setEnabled(True)
+                self.cubicspline_display.endCubicSplinepushButton.setEnabled(True)
+
+        elif curve_type == "CIRCLE":
+            if NumCtrlPt == 0:
+                self.clearDispText(self.circle_display)
+                self.circle_display.CenterXlineEdit.setEnabled(True)
+                self.circle_display.CenterYlineEdit.setEnabled(True)
+                self.circle_display.setCenterpushButton.setEnabled(True)
+                self.circle_display.RadiuscomboBox.setEnabled(False)
+                self.circle_display.RadiusXlineEdit.setEnabled(False)
+                self.circle_display.RadiusYlineEdit.setEnabled(False)
+                self.circle_display.addCirclepushButton.setEnabled(False)
+
+            elif NumCtrlPt == 1:
+                self.circle_display.CenterXlineEdit.setEnabled(False)
+                self.circle_display.CenterYlineEdit.setEnabled(False)
+                self.circle_display.setCenterpushButton.setEnabled(False)
+                self.circle_display.RadiuscomboBox.setEnabled(True)
+                self.circle_display.RadiusXlineEdit.setEnabled(True)
+                self.circle_display.RadiusYlineEdit.setEnabled(True)
+                self.circle_display.addCirclepushButton.setEnabled(True)
+
+        elif curve_type == "CIRCLEARC":
+            if NumCtrlPt == 0:
+                self.clearDispText(self.circlearc_display)
+                self.circlearc_display.CenterXlineEdit.setEnabled(True)
+                self.circlearc_display.CenterYlineEdit.setEnabled(True)
+                self.circlearc_display.setCenterpushButton.setEnabled(True)
+                self.circlearc_display.FirstArcPointcomboBox.setEnabled(False)
+                self.circlearc_display.FirstArcPointXlineEdit.setEnabled(False)
+                self.circlearc_display.FirstArcPointYlineEdit.setEnabled(False)
+                self.circlearc_display.setFirstArcPointpushButton.setEnabled(False)
+                self.circlearc_display.SecondArcPointcomboBox.setEnabled(False)
+                self.circlearc_display.SecondArcPointXlineEdit.setEnabled(False)
+                self.circlearc_display.SecondArcPointYlineEdit.setEnabled(False)
+                self.circlearc_display.addCircleArcpushButton.setEnabled(False)
+
+            elif NumCtrlPt == 1:
+                self.circlearc_display.CenterXlineEdit.setEnabled(False)
+                self.circlearc_display.CenterYlineEdit.setEnabled(False)
+                self.circlearc_display.setCenterpushButton.setEnabled(False)
+                self.circlearc_display.FirstArcPointcomboBox.setEnabled(True)
+                self.circlearc_display.FirstArcPointXlineEdit.setEnabled(True)
+                self.circlearc_display.FirstArcPointYlineEdit.setEnabled(True)
+                self.circlearc_display.setFirstArcPointpushButton.setEnabled(True)
+                self.circlearc_display.SecondArcPointcomboBox.setEnabled(False)
+                self.circlearc_display.SecondArcPointXlineEdit.setEnabled(False)
+                self.circlearc_display.SecondArcPointYlineEdit.setEnabled(False)
+                self.circlearc_display.addCircleArcpushButton.setEnabled(False)
+
+            elif NumCtrlPt == 2:
+                self.circlearc_display.CenterXlineEdit.setEnabled(False)
+                self.circlearc_display.CenterYlineEdit.setEnabled(False)
+                self.circlearc_display.setCenterpushButton.setEnabled(False)
+                self.circlearc_display.FirstArcPointcomboBox.setEnabled(False)
+                self.circlearc_display.FirstArcPointXlineEdit.setEnabled(False)
+                self.circlearc_display.FirstArcPointYlineEdit.setEnabled(False)
+                self.circlearc_display.setFirstArcPointpushButton.setEnabled(False)
+                self.circlearc_display.SecondArcPointcomboBox.setEnabled(True)
+                SecondArcPoint_option = self.circlearc_display.SecondArcPointcomboBox.currentText()
+                if SecondArcPoint_option == "Coordinates":
+                    self.circlearc_display.SecondArcPointXlineEdit.setEnabled(True)
+                elif SecondArcPoint_option == "Radius and Angle":
+                    self.circlearc_display.SecondArcPointXlineEdit.setEnabled(False)
+                self.circlearc_display.SecondArcPointYlineEdit.setEnabled(True)
+                self.circlearc_display.addCircleArcpushButton.setEnabled(True)
+
+        elif curve_type == "ELLIPSE":
+            if NumCtrlPt == 0:
+                self.clearDispText(self.ellipse_display)
+                self.ellipse_display.CenterXlineEdit.setEnabled(True)
+                self.ellipse_display.CenterYlineEdit.setEnabled(True)
+                self.ellipse_display.setCenterpushButton.setEnabled(True)
+                self.ellipse_display.FirstAxiscomboBox.setEnabled(False)
+                self.ellipse_display.FirstAxisXlineEdit.setEnabled(False)
+                self.ellipse_display.FirstAxisYlineEdit.setEnabled(False)
+                self.ellipse_display.setFirstAxispushButton.setEnabled(False)
+                self.ellipse_display.SecondAxiscomboBox.setEnabled(False)
+                self.ellipse_display.SecondAxisXlineEdit.setEnabled(False)
+                self.ellipse_display.SecondAxisYlineEdit.setEnabled(False)
+                self.ellipse_display.addEllipsepushButton.setEnabled(False)
+
+            elif NumCtrlPt == 1:
+                self.ellipse_display.CenterXlineEdit.setEnabled(False)
+                self.ellipse_display.CenterYlineEdit.setEnabled(False)
+                self.ellipse_display.setCenterpushButton.setEnabled(False)
+                self.ellipse_display.FirstAxiscomboBox.setEnabled(True)
+                self.ellipse_display.FirstAxisXlineEdit.setEnabled(True)
+                self.ellipse_display.FirstAxisYlineEdit.setEnabled(True)
+                self.ellipse_display.setFirstAxispushButton.setEnabled(True)
+                self.ellipse_display.SecondAxiscomboBox.setEnabled(False)
+                self.ellipse_display.SecondAxisXlineEdit.setEnabled(False)
+                self.ellipse_display.SecondAxisYlineEdit.setEnabled(False)
+                self.ellipse_display.addEllipsepushButton.setEnabled(False)
+
+            elif NumCtrlPt == 2:
+                self.ellipse_display.CenterXlineEdit.setEnabled(False)
+                self.ellipse_display.CenterYlineEdit.setEnabled(False)
+                self.ellipse_display.setCenterpushButton.setEnabled(False)
+                self.ellipse_display.FirstAxiscomboBox.setEnabled(False)
+                self.ellipse_display.FirstAxisXlineEdit.setEnabled(False)
+                self.ellipse_display.FirstAxisYlineEdit.setEnabled(False)
+                self.ellipse_display.setFirstAxispushButton.setEnabled(False)
+                self.ellipse_display.SecondAxiscomboBox.setEnabled(True)
+                self.ellipse_display.SecondAxisXlineEdit.setEnabled(True)
+                SecondAxis_option = self.ellipse_display.SecondAxiscomboBox.currentText()
+                if SecondAxis_option == "Coordinates":
+                    self.ellipse_display.SecondAxisYlineEdit.setEnabled(True)
+                elif SecondAxis_option == "Length and Angle":
+                    self.ellipse_display.SecondAxisYlineEdit.setEnabled(False)
+                self.ellipse_display.addEllipsepushButton.setEnabled(True)
+
+        elif curve_type == "ELLIPSEARC":
+            if NumCtrlPt == 0:
+                self.clearDispText(self.ellipsearc_display)
+                self.ellipsearc_display.CenterXlineEdit.setEnabled(True)
+                self.ellipsearc_display.CenterYlineEdit.setEnabled(True)
+                self.ellipsearc_display.setCenterpushButton.setEnabled(True)
+                self.ellipsearc_display.FirstAxiscomboBox.setEnabled(False)
+                self.ellipsearc_display.FirstAxisXlineEdit.setEnabled(False)
+                self.ellipsearc_display.FirstAxisYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setFirstAxispushButton.setEnabled(False)
+                self.ellipsearc_display.SecondAxiscomboBox.setEnabled(False)
+                self.ellipsearc_display.SecondAxisXlineEdit.setEnabled(False)
+                self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setSecondAxispushButton.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointcomboBox.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setFirstArcPointpushButton.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointcomboBox.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointYlineEdit.setEnabled(False)
+                self.ellipsearc_display.addEllipseArcpushButton.setEnabled(False)
+
+            elif NumCtrlPt == 1:
+                self.ellipsearc_display.CenterXlineEdit.setEnabled(False)
+                self.ellipsearc_display.CenterYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setCenterpushButton.setEnabled(False)
+                self.ellipsearc_display.FirstAxiscomboBox.setEnabled(True)
+                self.ellipsearc_display.FirstAxisXlineEdit.setEnabled(True)
+                self.ellipsearc_display.FirstAxisYlineEdit.setEnabled(True)
+                self.ellipsearc_display.setFirstAxispushButton.setEnabled(True)
+                self.ellipsearc_display.SecondAxiscomboBox.setEnabled(False)
+                self.ellipsearc_display.SecondAxisXlineEdit.setEnabled(False)
+                self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setSecondAxispushButton.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointcomboBox.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setFirstArcPointpushButton.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointcomboBox.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointYlineEdit.setEnabled(False)
+                self.ellipsearc_display.addEllipseArcpushButton.setEnabled(False)
+
+            elif NumCtrlPt == 2:
+                self.ellipsearc_display.CenterXlineEdit.setEnabled(False)
+                self.ellipsearc_display.CenterYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setCenterpushButton.setEnabled(False)
+                self.ellipsearc_display.FirstAxiscomboBox.setEnabled(False)
+                self.ellipsearc_display.FirstAxisXlineEdit.setEnabled(False)
+                self.ellipsearc_display.FirstAxisYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setFirstAxispushButton.setEnabled(False)
+                self.ellipsearc_display.SecondAxiscomboBox.setEnabled(True)
+                self.ellipsearc_display.SecondAxisXlineEdit.setEnabled(True)
+                SecondAxis_option = self.ellipsearc_display.SecondAxiscomboBox.currentText()
+                if SecondAxis_option == "Coordinates":
+                    self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(True)
+                elif SecondAxis_option == "Length and Angle":
+                    self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setSecondAxispushButton.setEnabled(True)
+                self.ellipsearc_display.FirstArcPointcomboBox.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setFirstArcPointpushButton.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointcomboBox.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointYlineEdit.setEnabled(False)
+                self.ellipsearc_display.addEllipseArcpushButton.setEnabled(False)
+
+            elif NumCtrlPt == 3:
+                self.ellipsearc_display.CenterXlineEdit.setEnabled(False)
+                self.ellipsearc_display.CenterYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setCenterpushButton.setEnabled(False)
+                self.ellipsearc_display.FirstAxiscomboBox.setEnabled(False)
+                self.ellipsearc_display.FirstAxisXlineEdit.setEnabled(False)
+                self.ellipsearc_display.FirstAxisYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setFirstAxispushButton.setEnabled(False)
+                self.ellipsearc_display.SecondAxiscomboBox.setEnabled(False)
+                self.ellipsearc_display.SecondAxisXlineEdit.setEnabled(False)
+                self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setSecondAxispushButton.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointcomboBox.setEnabled(True)
+                FirstArcPoint_option = self.ellipsearc_display.FirstArcPointcomboBox.currentText()
+                if FirstArcPoint_option == "Coordinates":
+                    self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(True)
+                elif FirstArcPoint_option == "Length and Angle":
+                    self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointYlineEdit.setEnabled(True)
+                self.ellipsearc_display.setFirstArcPointpushButton.setEnabled(True)
+                self.ellipsearc_display.SecondArcPointcomboBox.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointYlineEdit.setEnabled(False)
+                self.ellipsearc_display.addEllipseArcpushButton.setEnabled(False)
+
+            elif NumCtrlPt == 4:
+                self.ellipsearc_display.CenterXlineEdit.setEnabled(False)
+                self.ellipsearc_display.CenterYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setCenterpushButton.setEnabled(False)
+                self.ellipsearc_display.FirstAxiscomboBox.setEnabled(False)
+                self.ellipsearc_display.FirstAxisXlineEdit.setEnabled(False)
+                self.ellipsearc_display.FirstAxisYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setFirstAxispushButton.setEnabled(False)
+                self.ellipsearc_display.SecondAxiscomboBox.setEnabled(False)
+                self.ellipsearc_display.SecondAxisXlineEdit.setEnabled(False)
+                self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setSecondAxispushButton.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointcomboBox.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(False)
+                self.ellipsearc_display.FirstArcPointYlineEdit.setEnabled(False)
+                self.ellipsearc_display.setFirstArcPointpushButton.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointcomboBox.setEnabled(True)
+                SecondArcPoint_option = self.ellipsearc_display.SecondArcPointcomboBox.currentText()
+                if SecondArcPoint_option == "Coordinates":
+                    self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(True)
+                elif SecondArcPoint_option == "Length and Angle":
+                    self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(False)
+                self.ellipsearc_display.SecondArcPointYlineEdit.setEnabled(True)
+                self.ellipsearc_display.addEllipseArcpushButton.setEnabled(True)
+
+    # Set texts in lineEdits
+    def set_curves_lineEdits_text(self, xW, yW):
+        # get current canvas
+        canvas = self.current_canvas
+
+        # get curve type
+        curve_type = canvas.collector.geoType
+
+        # get current number of control points
+        NumCtrlPt = canvas.collector.CurrentNumberOfControlPoints()
+
+        # set lineEdits text
+        if curve_type == "LINE":
+            if NumCtrlPt == 0:
+                self.line_display.InitialPointXlineEdit.setText(str(round(xW, 3)))
+                self.line_display.InitialPointYlineEdit.setText(str(round(yW, 3)))
+
+            elif NumCtrlPt == 1:
+                self.line_display.EndPointXlineEdit.setText(str(round(xW, 3)))
+                self.line_display.EndPointYlineEdit.setText(str(round(yW, 3)))
+
+        elif curve_type == "POLYLINE":
+            if NumCtrlPt == 0:
+                self.polyline_display.InitialPointXlineEdit.setText(str(round(xW, 3)))
+                self.polyline_display.InitialPointYlineEdit.setText(str(round(yW, 3)))
+
+            elif NumCtrlPt == 1:
+                self.polyline_display.EndPointXlineEdit.setText(str(round(xW, 3)))
+                self.polyline_display.EndPointYlineEdit.setText(str(round(yW, 3)))
+
+            else:
+                v1, v2 = canvas.collector.updateLineEditValues(NumCtrlPt, 0.0, False)
+                self.polyline_display.InitialPointXlineEdit.setText(str(round(v1, 3)))
+                self.polyline_display.InitialPointYlineEdit.setText(str(round(v2, 3)))
+                self.polyline_display.EndPointXlineEdit.setText(str(round(xW, 3)))
+                self.polyline_display.EndPointYlineEdit.setText(str(round(yW, 3)))
+
+        elif curve_type == "CUBICSPLINE":
+            if NumCtrlPt == 0:
+                self.cubicspline_display.InitialPointXlineEdit.setText(str(round(xW, 3)))
+                self.cubicspline_display.InitialPointYlineEdit.setText(str(round(yW, 3)))
+
+            elif NumCtrlPt == 1:
+                self.cubicspline_display.EndPointXlineEdit.setText(str(round(xW, 3)))
+                self.cubicspline_display.EndPointYlineEdit.setText(str(round(yW, 3)))
+
+            else:
+                v1, v2 = canvas.collector.updateLineEditValues(NumCtrlPt, 0.0, False)
+                self.cubicspline_display.InitialPointXlineEdit.setText(str(round(v1, 3)))
+                self.cubicspline_display.InitialPointYlineEdit.setText(str(round(v2, 3)))
+                self.cubicspline_display.EndPointXlineEdit.setText(str(round(xW, 3)))
+                self.cubicspline_display.EndPointYlineEdit.setText(str(round(yW, 3)))
+
+        elif curve_type == "CIRCLE":
+            if NumCtrlPt == 0:
+                self.circle_display.CenterXlineEdit.setText(str(round(xW, 3)))
+                self.circle_display.CenterYlineEdit.setText(str(round(yW, 3)))
+
+            elif NumCtrlPt == 1:
+                Radius_option = self.circle_display.RadiuscomboBox.currentText()
+                if Radius_option == "Coordinates":
+                    LenAndAng = False
+                elif Radius_option == "Radius and Angle":
+                    LenAndAng = True
+                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                self.circle_display.RadiusXlineEdit.setText(str(round(v1, 3)))
+                self.circle_display.RadiusYlineEdit.setText(str(round(v2, 3)))
+
+        elif curve_type == "CIRCLEARC":
+            if NumCtrlPt == 0:
+                self.circlearc_display.CenterXlineEdit.setText(str(round(xW, 3)))
+                self.circlearc_display.CenterYlineEdit.setText(str(round(yW, 3)))
+
+            elif NumCtrlPt == 1:
+                FirstArcPoint_option = self.circlearc_display.FirstArcPointcomboBox.currentText()
+                if FirstArcPoint_option == "Coordinates":
+                    LenAndAng = False
+                elif FirstArcPoint_option == "Radius and Angle":
+                    LenAndAng = True
+                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                self.circlearc_display.FirstArcPointXlineEdit.setText(str(round(v1, 3)))
+                self.circlearc_display.FirstArcPointYlineEdit.setText(str(round(v2, 3)))
+
+            elif NumCtrlPt == 2:
+                SecondArcPoint_option = self.circlearc_display.SecondArcPointcomboBox.currentText()
+                if SecondArcPoint_option == "Coordinates":
+                    LenAndAng = False
+                elif SecondArcPoint_option == "Radius and Angle":
+                    LenAndAng = True
+                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                self.circlearc_display.SecondArcPointXlineEdit.setText(str(round(v1, 3)))
+                self.circlearc_display.SecondArcPointYlineEdit.setText(str(round(v2, 3)))
+
+        elif curve_type == "ELLIPSE":
+            if NumCtrlPt == 0:
+                self.ellipse_display.CenterXlineEdit.setText(str(round(xW, 3)))
+                self.ellipse_display.CenterYlineEdit.setText(str(round(yW, 3)))
+
+            elif NumCtrlPt == 1:
+                FirstAxis_option = self.ellipse_display.FirstAxiscomboBox.currentText()
+                if FirstAxis_option == "Coordinates":
+                    LenAndAng = False
+                elif FirstAxis_option == "Length and Angle":
+                    LenAndAng = True
+                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                self.ellipse_display.FirstAxisXlineEdit.setText(str(round(v1, 3)))
+                self.ellipse_display.FirstAxisYlineEdit.setText(str(round(v2, 3)))
+
+            elif NumCtrlPt == 2:
+                SecondAxis_option = self.ellipse_display.SecondAxiscomboBox.currentText()
+                if SecondAxis_option == "Coordinates":
+                    LenAndAng = False
+                elif SecondAxis_option == "Length and Angle":
+                    LenAndAng = True
+                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                self.ellipse_display.SecondAxisXlineEdit.setText(str(round(v1, 3)))
+                self.ellipse_display.SecondAxisYlineEdit.setText(str(round(v2, 3)))
+
+        elif curve_type == "ELLIPSEARC":
+            if NumCtrlPt == 0:
+                self.ellipsearc_display.CenterXlineEdit.setText(str(round(xW, 3)))
+                self.ellipsearc_display.CenterYlineEdit.setText(str(round(yW, 3)))
+
+            elif NumCtrlPt == 1:
+                FirstAxis_option = self.ellipsearc_display.FirstAxiscomboBox.currentText()
+                if FirstAxis_option == "Coordinates":
+                    LenAndAng = False
+                elif FirstAxis_option == "Length and Angle":
+                    LenAndAng = True
+                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                self.ellipsearc_display.FirstAxisXlineEdit.setText(str(round(v1, 3)))
+                self.ellipsearc_display.FirstAxisYlineEdit.setText(str(round(v2, 3)))
+
+            elif NumCtrlPt == 2:
+                SecondAxis_option = self.ellipsearc_display.SecondAxiscomboBox.currentText()
+                if SecondAxis_option == "Coordinates":
+                    LenAndAng = False
+                elif SecondAxis_option == "Length and Angle":
+                    LenAndAng = True
+                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                self.ellipsearc_display.SecondAxisXlineEdit.setText(str(round(v1, 3)))
+                self.ellipsearc_display.SecondAxisYlineEdit.setText(str(round(v2, 3)))
+
+            elif NumCtrlPt == 3:
+                FirstArcPoint_option = self.ellipsearc_display.FirstArcPointcomboBox.currentText()
+                if FirstArcPoint_option == "Coordinates":
+                    LenAndAng = False
+                elif FirstArcPoint_option == "Length and Angle":
+                    LenAndAng = True
+                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                self.ellipsearc_display.FirstArcPointXlineEdit.setText(str(round(v1, 3)))
+                self.ellipsearc_display.FirstArcPointYlineEdit.setText(str(round(v2, 3)))
+
+            elif NumCtrlPt == 4:
+                SecondArcPoint_option = self.ellipsearc_display.SecondArcPointcomboBox.currentText()
+                if SecondArcPoint_option == "Coordinates":
+                    LenAndAng = False
+                elif SecondArcPoint_option == "Length and Angle":
+                    LenAndAng = True
+                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                self.ellipsearc_display.SecondArcPointXlineEdit.setText(str(round(v1, 3)))
+                self.ellipsearc_display.SecondArcPointYlineEdit.setText(str(round(v2, 3)))
+
+    # Check Circle comboBoxes options
+    def setCircleRadiusOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        Radius_option = self.circle_display.RadiuscomboBox.currentText()
+
+        if Radius_option == "Coordinates":
+            self.circle_display.RadiusXTitle.setText(_translate("MainWindow", "X:"))
+            self.circle_display.RadiusYTitle.setText(_translate("MainWindow", "Y:"))
+        elif Radius_option == "Radius and Angle":
+            self.circle_display.RadiusXTitle.setText(_translate("MainWindow", "Radius:"))
+            self.circle_display.RadiusYTitle.setText(_translate("MainWindow", "Angle:"))
+
+    # Check Circle Arc comboBoxes options
+    def setCircleArcFirstArcPointOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        FirstArcPoint_option = self.circlearc_display.FirstArcPointcomboBox.currentText()
+
+        if FirstArcPoint_option == "Coordinates":
+            self.circlearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "X:"))
+            self.circlearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Y:"))
+        elif FirstArcPoint_option == "Radius and Angle":
+            self.circlearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "Radius:"))
+            self.circlearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
+
+    def setCircleArcSecondArcPointOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        SecondArcPoint_option = self.circlearc_display.SecondArcPointcomboBox.currentText()
+
+        if SecondArcPoint_option == "Coordinates":
+            self.circlearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "X:"))
+            self.circlearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Y:"))
+            self.circlearc_display.SecondArcPointXlineEdit.setEnabled(True)
+        elif SecondArcPoint_option == "Radius and Angle":
+            self.circlearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "Radius:"))
+            self.circlearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.circlearc_display.SecondArcPointXlineEdit.setEnabled(False)
+
+    # Check Ellipse comboBoxes options
+    def setEllipseFirstAxisOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        FirstAxis_option = self.ellipse_display.FirstAxiscomboBox.currentText()
+
+        if FirstAxis_option == "Coordinates":
+            self.ellipse_display.FirstAxisXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipse_display.FirstAxisYTitle.setText(_translate("MainWindow", "Y:"))
+        elif FirstAxis_option == "Length and Angle":
+            self.ellipse_display.FirstAxisXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipse_display.FirstAxisYTitle.setText(_translate("MainWindow", "Angle:"))
+
+    def setEllipseSecondAxisOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        SecondAxis_option = self.ellipse_display.SecondAxiscomboBox.currentText()
+
+        if SecondAxis_option == "Coordinates":
+            self.ellipse_display.SecondAxisXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipse_display.SecondAxisYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipse_display.SecondAxisYlineEdit.setEnabled(True)
+        elif SecondAxis_option == "Length and Angle":
+            self.ellipse_display.SecondAxisXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipse_display.SecondAxisYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipse_display.SecondAxisYlineEdit.setEnabled(False)
+
+    # Check Ellipse Arc comboBoxes options
+    def setEllipseArcFirstAxisOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        FirstAxis_option = self.ellipsearc_display.FirstAxiscomboBox.currentText()
+
+        if FirstAxis_option == "Coordinates":
+            self.ellipsearc_display.FirstAxisXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipsearc_display.FirstAxisYTitle.setText(_translate("MainWindow", "Y:"))
+        elif FirstAxis_option == "Length and Angle":
+            self.ellipsearc_display.FirstAxisXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipsearc_display.FirstAxisYTitle.setText(_translate("MainWindow", "Angle:"))
+
+    def setEllipseArcSecondAxisOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        SecondAxis_option = self.ellipsearc_display.SecondAxiscomboBox.currentText()
+
+        if SecondAxis_option == "Coordinates":
+            self.ellipsearc_display.SecondAxisXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipsearc_display.SecondAxisYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(True)
+        elif SecondAxis_option == "Length and Angle":
+            self.ellipsearc_display.SecondAxisXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipsearc_display.SecondAxisYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(False)
+
+    def setEllipseArcFirstArcPointOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        FirstArcPoint_option = self.ellipsearc_display.FirstArcPointcomboBox.currentText()
+
+        if FirstArcPoint_option == "Coordinates":
+            self.ellipsearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipsearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(True)
+        elif FirstArcPoint_option == "Length and Angle":
+            self.ellipsearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipsearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(False)
+
+    def setEllipseArcSecondArcPointOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        SecondArcPoint_option = self.ellipsearc_display.SecondArcPointcomboBox.currentText()
+
+        if SecondArcPoint_option == "Coordinates":
+            self.ellipsearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipsearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(True)
+        elif SecondArcPoint_option == "Length and Angle":
+            self.ellipsearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipsearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(False)
+
+    # Check Number os Subdivisions comboBox options
+    def setNumSubdivisionsOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        Subdivision_option = self.nsudv_display.nsudvcomboBox.currentText()
+
+        if Subdivision_option == "Set Subdivisions":
+            self.nsudv_display.valueTitle.show()
+            self.nsudv_display.valuelineEdit.show()
+            self.nsudv_display.ratioTitle.show()
+            self.nsudv_display.ratiolineEdit.show()
+            self.nsudv_display.nsudvpushButton.setGeometry(QtCore.QRect(70, 140, 60, 25))
+            self.nsudv_display.nsudvpushButton.setText(_translate("MainWindow", "Set"))
+            self.nsudv_display.knotrefinementTitle.hide()
+            self.nsudv_display.knotrefinementpushButton.hide()
+            self.nsudv_display.rescuepushButton.hide()
+        elif Subdivision_option == "Get from Knot Vector":
+            self.nsudv_display.valueTitle.hide()
+            self.nsudv_display.valuelineEdit.hide()
+            self.nsudv_display.ratioTitle.hide()
+            self.nsudv_display.ratiolineEdit.hide()
+            self.nsudv_display.nsudvpushButton.setGeometry(QtCore.QRect(70, 100, 60, 25))
+            self.nsudv_display.nsudvpushButton.setText(_translate("MainWindow", "Get"))
+            self.nsudv_display.knotrefinementTitle.show()
+            self.nsudv_display.knotrefinementpushButton.show()
+            self.nsudv_display.rescuepushButton.show()
