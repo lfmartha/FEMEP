@@ -42,7 +42,7 @@ class Canvas(QtOpenGL.QGLWidget):
         self.pt0W = QtCore.QPointF(0.0, 0.0)  # first point to calculate dist
         self.pt0 = QtCore.QPointF(0.0, 0.0)  # first mouse position
         self.pt1 = QtCore.QPointF(0.0, 0.0)  # current mouse position
-        self.pickTolFac = 0.01  # factor for pick tolerance
+        self.pickTolFac = 0.01  # factor for pick tolerance w.r.t max window size
         self.mouseMoveTol = 2  # tolerance for mouse move
 
         # Pressed key properties
@@ -126,7 +126,12 @@ class Canvas(QtOpenGL.QGLWidget):
 
     def delSelectedEntities(self):
         if not ((self.view is None) and (self.view.isEmpty())):
-            self.hecontroller.delSelectedEntities()
+            error_text = self.hecontroller.delSelectedEntities()
+            if error_text is not None:
+                msg = QMessageBox(self.Apptools)
+                msg.setWindowTitle('Error')
+                msg.setText(error_text)
+                msg.exec()
             self.updatedDsp = False
             self.update()
 
@@ -186,6 +191,33 @@ class Canvas(QtOpenGL.QGLWidget):
         self.hecontroller.delSelectedMesh()
         self.updatedDsp = False
         self.update()
+
+    def snapMousePt(self, _xW, _yW, _pick_tol):
+        xW = _xW
+        yW = _yW
+
+        # Snap point to grid (if it is visible). Also check for
+        # snap-to-grid flag (which will be inverted by control key)
+        if self.viewGrid:
+            isSnapOn = self.grid.getSnapInfo()
+            if ((not self.controlKeyPressed and isSnapOn) or
+                (self.controlKeyPressed and not isSnapOn)):
+                    xW, yW = self.grid.snapTo(xW, yW)
+
+        if (self.view is not None) and not(self.view.isEmpty()):
+            # Try to attract point to a point
+            check, _x, _y = self.view.snapToPoint(xW,  yW, _pick_tol)
+            if check:
+                xW = _x
+                yW = _y
+            else:
+                # Try to attract point to a segment
+                check, _x, _y = self.view.snapToSegment(xW,  yW, _pick_tol)
+                if check:
+                    xW = _x
+                    yW = _y
+
+        return xW, yW
 
     # ---------------------------------------------------------------------
     # ---------------------------------------------------------------------
@@ -356,7 +388,7 @@ class Canvas(QtOpenGL.QGLWidget):
                     for i in range(0, len(mesh_segments)):
 
                         # Display segments lines
-                        Pts = mesh_segments[i].getPointsToDraw()
+                        Pts = mesh_segments[i].getPoints()
                         if mesh_segments[i].isSelected():
                             glColor3d(self.colorSelection[0],
                                       self.colorSelection[1], self.colorSelection[2])
@@ -376,7 +408,7 @@ class Canvas(QtOpenGL.QGLWidget):
         for i in range(0, len(segments)):
 
             # Display segments lines
-            Pts = segments[i].getPointsToDraw()
+            Pts = segments[i].getPoints()
             if segments[i].isSelected():
                 glColor3d(self.colorSelection[0],
                           self.colorSelection[1], self.colorSelection[2])
@@ -592,6 +624,7 @@ class Canvas(QtOpenGL.QGLWidget):
         # Display control points of segment being collected
         glPointSize(4.0)
         glBegin(GL_POINTS)
+
         ctrl_pts = self.collector.getPoints()
         for i in range(0, len(ctrl_pts)):
             glVertex2d(ctrl_pts[i].getX(), ctrl_pts[i].getY())
@@ -773,6 +806,7 @@ class Canvas(QtOpenGL.QGLWidget):
             self.setCursor(QtGui.QCursor(QtCore.Qt.SizeAllCursor))
             self.panmove_flag = True
             self.tempPanPoint.append(self.pt0)
+            return
 
         # Treat mouse move event according to current mouse action type
         if self.curMouseAction == 'SELECTION':
@@ -781,54 +815,38 @@ class Canvas(QtOpenGL.QGLWidget):
         if (self.curMouseAction == 'COLLECTION' and
                 self.mouseButton == QtCore.Qt.LeftButton):
 
+ 
             if not self.collector.isActive():
                 # In case of left mouse button
                 # if not doing any segment collection,
                 # start a new segment collection
                 self.collector.startGeoCollection()
+                pt0W = self.convertPtCoordsToUniverse(self.pt0)
                 max_size = max(abs(self.right-self.left),
                                abs(self.top-self.bottom))
                 pick_tol = max_size * self.pickTolFac
-                pt0W = self.convertPtCoordsToUniverse(self.pt0)
                 xW = pt0W.x()
                 yW = pt0W.y()
 
                 # Snap point to grid (if it is visible). Also check for
-                # snap-to-grid flag (which will be inverted by control key)
-                if self.viewGrid:
-                    isSnapOn = self.grid.getSnapInfo()
-                    if ((not self.controlKeyPressed and isSnapOn) or
-                            (self.controlKeyPressed and not isSnapOn)):
-                        xW, yW = self.grid.snapTo(xW, yW)
-
-                if (self.view is not None) and not(self.view.isEmpty()):
-                    # Try to attract point to a point
-                    check, _x, _y = self.view.snapToPoint(
-                        xW,  yW, pick_tol)
-                    if check:
-                        xW = _x
-                        yW = _y
-                    else:
-                        # Try to attract point to a segment
-                        check, _x, _y = self.view.snapToSegment(
-                            xW,  yW, pick_tol)
-                        if check:
-                            xW = _x
-                            yW = _y
+                # snap-to-grid flag (which will be inverted by control key).
+                # Try to attract point to a point.
+                # Try to attract point to a segment.
+                xW, yW = self.snapMousePt(xW, yW, pick_tol)
 
                 # Add point to collected geometry
                 if self.collector.getGeoType() == 'POINT':
-                    self.hecontroller.insertPoint(Point(xW, yW), 0.01)
+                    self.hecontroller.insertPoint(Point(xW, yW), pick_tol)
                     self.collector.endGeoCollection()
                     self.updatedDsp = False
                     self.update()
                 else:
-                    self.collector.insertPoint(xW, yW, pick_tol)
+                    self.collector.insertPoint(xW, yW, False, pick_tol)
                     self.collector.addTempPoint(xW, yW)
                     self.pt0W = QtCore.QPointF(xW, yW)
 
                     # set text in LineEdit
-                    self.Apptools.setFirstLineEditText(xW, yW, self)
+                    self.Apptools.set_curves_lineEdits()
 
             elif ((abs(self.pt0.x() - self.pt1.x()) <= self.mouseMoveTol) and
                   (abs(self.pt0.y() - self.pt1.y()) <= self.mouseMoveTol)):
@@ -839,27 +857,10 @@ class Canvas(QtOpenGL.QGLWidget):
                 yW = pt1W.y()
 
                 # Snap point to grid (if it is visible). Also check for
-                # snap-to-grid flag (which will be inverted by control key)
-                if self.viewGrid:
-                    isSnapOn = self.grid.getSnapInfo()
-                    if ((not self.controlKeyPressed and isSnapOn) or
-                            (self.controlKeyPressed and not isSnapOn)):
-                        xW, yW = self.grid.snapTo(xW, yW)
-
-                if (self.view) and not(self.view.isEmpty()):
-                    # Try to attract point to a point
-                    check, _x, _y = self.view.snapToPoint(
-                        xW,  yW, pick_tol)
-                    if check:
-                        xW = _x
-                        yW = _y
-                    else:
-                        # Try to attract point to a segment
-                        check, _x, _y = self.view.snapToSegment(
-                            xW,  yW, pick_tol)
-                        if check:
-                            xW = _x
-                            yW = _y
+                # snap-to-grid flag (which will be inverted by control key).
+                # Try to attract point to a point.
+                # Try to attract point to a segment.
+                xW, yW = self.snapMousePt(xW, yW, pick_tol)
 
                 # try to attract point to current segment
                 check, _x, _y = self.collector.SnaptoCurrentSegment(
@@ -869,11 +870,11 @@ class Canvas(QtOpenGL.QGLWidget):
                     yW = _y
 
                 # Add point to collected segment
-                self.collector.insertPoint(xW, yW, pick_tol)
+                self.collector.insertPoint(xW, yW, False, pick_tol)
                 self.pt0W = QtCore.QPointF(xW, yW)
 
                 # set text in LineEdit
-                self.Apptools.setFirstLineEditText(xW, yW, self)
+                self.Apptools.set_curves_lineEdits()
 
     def mouseMoveEvent(self, event):
 
@@ -887,71 +888,46 @@ class Canvas(QtOpenGL.QGLWidget):
             self.PanMove()
             if self.curMouseAction == 'COLLECTION':
                 self.mouseButton = QtCore.Qt.LeftButton
-        else:
-            # Line coords text
-            self.Apptools.lineXCoords.setText(f'X:  {str(round(pt1W.x(), 3))}')
-            self.Apptools.lineYCoords.setText(f'Y:  {str(round(pt1W.y(), 3))}')
-
+            return
+ 
         # Treat mouse move event according to current mouse action type
         if self.curMouseAction == 'SELECTION':
-            # Disregard mouse move event if left mouse button is not pressed
+            # Mouse cursor coords text
+            self.Apptools.lineXCoords.setText(f'X:  {str(round(pt1W.x(), 3))}')
+            self.Apptools.lineYCoords.setText(f'Y:  {str(round(pt1W.y(), 3))}')
+           # Disregard mouse move event if left mouse button is not pressed
             if ((self.mouseButton == QtCore.Qt.LeftButton)
                     and self.mousebuttonPressed):
                 self.update()
                 return
 
         if self.curMouseAction == 'COLLECTION':
+            max_size = max(abs(self.right-self.left),
+                           abs(self.top-self.bottom))
+            pick_tol = max_size * self.pickTolFac
+            xW = pt1W.x()
+            yW = pt1W.y()
+
+            # Snap point to grid (if it is visible). Also check for
+            # snap-to-grid flag (which will be inverted by control key).
+            # Try to attract point to a point.
+            # Try to attract point to a segment.
+            xW, yW = self.snapMousePt(xW, yW, pick_tol)
+
             # Only consider current point if left mouse button was used,
             # if not button pressed, and if current point is not at the
             # same location of button press point.
-
             if (self.mouseButton == QtCore.Qt.LeftButton
                     and not (self.mousebuttonPressed)):
-                if (abs(self.pt0.x() - self.pt1.x()) > self.mouseMoveTol
-                        or abs(self.pt0.y() - self.pt1.y()) > self.mouseMoveTol):
+                if (abs(self.pt0.x() - self.pt1.x()) > self.mouseMoveTol or
+                    abs(self.pt0.y() - self.pt1.y()) > self.mouseMoveTol):
                     if self.collector.isCollecting():
-                        xW = pt1W.x()
-                        yW = pt1W.y()
-
-                        # Snap point to grid (if it is visible). Also check for
-                        # Snap-to-grid flag (which will be inverted by control key)
-                        if self.viewGrid:
-                            isSnapOn = self.grid.getSnapInfo()
-                            if ((not self.controlKeyPressed and isSnapOn) or
-                                    (self.controlKeyPressed and not isSnapOn)):
-                                xW, yW = self.grid.snapTo(xW, yW)
-
-                        max_size = max(abs(self.right-self.left),
-                                       abs(self.top-self.bottom))
-                        pick_tol = max_size * self.pickTolFac
-
-                        if (self.view) and not(self.view.isEmpty()):
-
-                            # Try to attract point to a point
-                            check, _x, _y = self.view.snapToPoint(
-                                xW,  yW, pick_tol)
-                            if check:
-                                xW = _x
-                                yW = _y
-                            else:
-                                # Try to attract point to a segment
-                                check, _x, _y = self.view.snapToSegment(
-                                    xW,  yW, pick_tol)
-                                if check:
-                                    xW = _x
-                                    yW = _y
-
                         # try to attract point to current segment
                         check, _x, _y = self.collector.SnaptoCurrentSegment(
                             xW,  yW, pick_tol)
                         if check:
                             xW = _x
                             yW = _y
-
-                        self.Apptools.lineXCoords.setText(
-                            f'X:  {str(round(xW, 3))}')
-                        self.Apptools.lineYCoords.setText(
-                            f'Y:  {str(round(yW, 3))}')
 
                         # Add point as a temporary point for segment collection
                         self.collector.addTempPoint(xW, yW)
@@ -962,9 +938,11 @@ class Canvas(QtOpenGL.QGLWidget):
                         self.Apptools.lineLenght.setText(
                             f'Lenght: {str(dist)}')
 
-                        # set text in LineEdit
-                        self.Apptools.setEndLineEditText(xW, yW, self)
                         self.update()
+
+            self.Apptools.lineXCoords.setText(f'X:  {str(round(xW, 3))}')
+            self.Apptools.lineYCoords.setText(f'Y:  {str(round(yW, 3))}')
+            self.Apptools.set_curves_lineEdits_text(xW, yW)
 
     def mouseReleaseEvent(self, event):
 
@@ -1021,10 +999,6 @@ class Canvas(QtOpenGL.QGLWidget):
             #     collected points can finish collection of current segment
             endCollection = False
 
-            if self.mouseButton == QtCore.Qt.RightButton:
-                # set enable and clear line Edits
-                self.Apptools.setEnableLineEdits(self)
-
             if self.mouseButton == QtCore.Qt.LeftButton:
                 if not self.collector.isUnlimited():
                     if self.collector.hasFinished():
@@ -1039,28 +1013,27 @@ class Canvas(QtOpenGL.QGLWidget):
                     # collection of segment, reset current
                     # segment collection
                     self.collector.reset()
+                    self.Apptools.set_curves_lineEdits()
                     self.update()
 
             if endCollection:
-                segment = self.collector.getCollectedGeo()
+                curve = self.collector.getCollectedGeo()
                 max_size = max(abs(self.right-self.left),
                                abs(self.top-self.bottom))
                 pick_tol = max_size * self.pickTolFac
 
-                try:
-                    self.hecontroller.insertSegment(segment, 0.01)
-                except:
-                    msg = QMessageBox(self.Apptools)
-                    msg.setWindowTitle('Error')
-                    msg.setText('It was not possible to add the segment')
-                    msg.exec()
+                #try:
+                self.hecontroller.insertSegment(curve, pick_tol)
+                #except:
+                    # msg = QMessageBox(self.Apptools)
+                    # msg.setWindowTitle('Error')
+                    # msg.setText('It was not possible to add the segment')
+                    # msg.exec()
 
                 self.collector.endGeoCollection()
+                self.Apptools.set_curves_lineEdits()
                 self.updatedDsp = False
                 self.update()
-
-                # set enable and clear line Edits
-                self.Apptools.setEnableLineEdits(self)
 
     def wheelEvent(self, event):
         if event.angleDelta().y() > 0:
