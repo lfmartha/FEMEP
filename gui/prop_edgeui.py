@@ -6,15 +6,17 @@ class Ui_prop_edge(object):
 
     def setupUi(self, prop_edge):
         prop_edge.setObjectName("prop_edge_ui")
-        prop_edge.setMinimumSize(QtCore.QSize(200, 369))
+        prop_edge.setMinimumSize(QtCore.QSize(200, 400))
 
         self.frame = QtWidgets.QFrame(prop_edge)
-        self.frame.setMinimumSize(QtCore.QSize(200, 369))
+        self.frame.setMinimumSize(QtCore.QSize(200, 400))
         self.frame.setMaximumSize(QtCore.QSize(200, 16777215))
+
         self.verticalLayout = QtWidgets.QVBoxLayout(self.frame)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName("verticalLayout")
+
         self.propertiesFrame = QtWidgets.QTabWidget(self.frame)
         self.propertiesFrame.setMinimumSize(QtCore.QSize(200, 335))
         self.propertiesFrame.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
@@ -28,85 +30,92 @@ class Ui_prop_edge(object):
         self.propertiesFrame.setMovable(True)
         self.propertiesFrame.setTabBarAutoHide(False)
         self.propertiesFrame.setObjectName("propertiesFrame")
+
         self.verticalLayout.addWidget(self.propertiesFrame)
+
         self.closepushbutton = QtWidgets.QPushButton(self.frame)
-        self.closepushbutton.setMaximumSize(QtCore.QSize(80, 23))
+        self.closepushbutton.setMaximumSize(QtCore.QSize(80, 25))
         self.closepushbutton.setAutoDefault(True)
+
+        self.degreeChange = QtWidgets.QPushButton(self.frame)
+        self.degreeChange.setMaximumSize(QtCore.QSize(100, 25))
+        self.degreeChange.setAutoDefault(True)
+
+        self.degreelineEdit = QtWidgets.QLineEdit(self.frame)
+        self.degreelineEdit.setValidator(QtGui.QDoubleValidator())
+        self.degreelineEdit.setMaximumSize(QtCore.QSize(70, 20))
+        # self.degreelineEdit.setGeometry(QtCore.QRect(80, 390, 70, 20))
+        self.degreelineEdit.setStyleSheet("background-color: rgb(255, 255, 255);\n""color: rgb(0, 0, 0);\n""")
+        self.degreelineEdit.setObjectName("degreelineEdit")
+
         self.closegridLayout = QtWidgets.QGridLayout()
         self.closegridLayout.setContentsMargins(-1, 10, -1, 10)
         self.closegridLayout.setObjectName("closegridLayout")
         self.closegridLayout.addWidget(self.closepushbutton, 0, 0, 1, 1)
+        self.closegridLayout.addWidget(self.degreeChange, 0, 20, 1, 1)
+        self.closegridLayout.addWidget(self.degreelineEdit, 0, 40, 1, 1)
+
         self.verticalLayout.addLayout(self.closegridLayout)
-        self.dataStructure = QtWidgets.QWidget()
-        self.dataStructure.setObjectName("dataStructure")
-        self.dsLabel_type_1 = QtWidgets.QLabel(self.dataStructure)
-        self.dsLabel_type_1.setGeometry(QtCore.QRect(0, 20, 200, 20))
-        self.dsLabel_type_1.setMinimumSize(QtCore.QSize(200, 20))
-        font = QtGui.QFont()
-        font.setPointSize(8)
-        font.setBold(True)
-        font.setWeight(75)
-        self.dsLabel_type_1.setFont(font)
-        self.dsLabel_type_1.setStyleSheet(
-            "background-color: rgb(255, 255, 255);")
-        self.dsLabel_type_1.setAlignment(
-            QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        self.dsLabel_type_1.setObjectName("dsLabel_type_1")
-        self.dsLabel_firstpoint = QtWidgets.QLabel(self.dataStructure)
-        self.dsLabel_firstpoint.setGeometry(QtCore.QRect(0, 40, 200, 20))
-        self.dsLabel_firstpoint.setMinimumSize(QtCore.QSize(200, 20))
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        self.dsLabel_firstpoint.setFont(font)
-        self.dsLabel_firstpoint.setStyleSheet("")
-        self.dsLabel_firstpoint.setObjectName("dsLabel_firstpoint")
-        self.dsLabel_endpoint = QtWidgets.QLabel(self.dataStructure)
-        self.dsLabel_endpoint.setGeometry(QtCore.QRect(0, 60, 200, 20))
-        self.dsLabel_endpoint.setMinimumSize(QtCore.QSize(200, 20))
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        self.dsLabel_endpoint.setFont(font)
-        self.dsLabel_endpoint.setStyleSheet(
-            "background-color: rgb(255, 255, 255);")
-        self.dsLabel_endpoint.setObjectName("dsLabel_endpoint")
-        self.dsLabel_title_1 = QtWidgets.QLabel(self.dataStructure)
-        self.dsLabel_title_1.setGeometry(QtCore.QRect(0, 0, 200, 20))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        font.setBold(True)
-        font.setWeight(75)
-        self.dsLabel_title_1.setFont(font)
-        self.dsLabel_title_1.setAlignment(QtCore.Qt.AlignCenter)
-        self.dsLabel_title_1.setObjectName("dsLabel_title_1")
-        self.dsLabel_length = QtWidgets.QLabel(self.dataStructure)
-        self.dsLabel_length.setGeometry(QtCore.QRect(0, 80, 200, 20))
-        self.dsLabel_length.setMinimumSize(QtCore.QSize(200, 20))
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        self.dsLabel_length.setFont(font)
-        self.dsLabel_length.setStyleSheet("")
-        self.dsLabel_length.setObjectName("dsLabel_xcoord_2")
-        self.propertiesFrame.addTab(self.dataStructure, "")
-        self.scrollArea = QtWidgets.QScrollArea()
-        self.scrollArea.setGeometry(QtCore.QRect(0, 240, 200, 80))
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.scrollAreaDS = QtWidgets.QScrollArea()
+        self.scrollAreaDS.setGeometry(QtCore.QRect(0, 240, 200, 80))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(
-            self.scrollArea.sizePolicy().hasHeightForWidth())
-        self.scrollArea.setSizePolicy(sizePolicy)
-        self.scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self.scrollArea.setLineWidth(0)
-        self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self.scrollArea.setHorizontalScrollBarPolicy(
-            QtCore.Qt.ScrollBarAlwaysOff)
-        self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setObjectName("scrollArea")
-        self.propertiesFrame.addTab(self.scrollArea, "Attributes")
+        sizePolicy.setHeightForWidth(self.scrollAreaDS.sizePolicy().hasHeightForWidth())
+        self.scrollAreaDS.setSizePolicy(sizePolicy)
+        self.scrollAreaDS.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.scrollAreaDS.setLineWidth(0)
+        self.scrollAreaDS.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.scrollAreaDS.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.scrollAreaDS.setWidgetResizable(True)
+        self.scrollAreaDS.setObjectName("scrollAreaDS")
+
+        self.propertiesFrame.addTab(self.scrollAreaDS, "Data Structure")
+
+        self.scrollAreaAtt = QtWidgets.QScrollArea()
+        self.scrollAreaAtt.setGeometry(QtCore.QRect(0, 240, 200, 80))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.scrollAreaAtt.sizePolicy().hasHeightForWidth())
+        self.scrollAreaAtt.setSizePolicy(sizePolicy)
+        self.scrollAreaAtt.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.scrollAreaAtt.setLineWidth(0)
+        self.scrollAreaAtt.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.scrollAreaAtt.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.scrollAreaAtt.setWidgetResizable(True)
+        self.scrollAreaAtt.setObjectName("scrollAreaAtt")
+
+
+        #self.degreeChange = QtWidgets.QPushButton()
+        #self.degreelineEdit = QtWidgets.QLineEdit()
+        
+        # #index += 25
+        # self.newDegreeTitle = QtWidgets.QLabel(self.frame)
+        # #self.newDegreeTitle.setGeometry(QtCore.QRect(0, index, 75, 20))
+        # font = QtGui.QFont()
+        # font.setPointSize(8)
+        # self.newDegreeTitle.setFont(font)
+        # self.newDegreeTitle.setStyleSheet("color: rgb(0, 0, 0);\n""")
+        # self.newDegreeTitle.setAlignment(QtCore.Qt.AlignCenter)
+        # self.newDegreeTitle.setObjectName("newDegreeTitle")
+        # self.newDegreeTitle.setText("New Degree:")
+
+        # self.degreelineEdit = QtWidgets.QLineEdit(self.frame)
+        # self.degreelineEdit.setValidator(QtGui.QDoubleValidator())
+        # #self.degreelineEdit.setGeometry(QtCore.QRect(80, index, 70, 20))
+        # self.degreelineEdit.setStyleSheet("background-color: rgb(255, 255, 255);\n""color: rgb(0, 0, 0);\n""")
+        # self.degreelineEdit.setObjectName("degreelineEdit")
+
+        # #index += 30
+        # self.degreeChange = QtWidgets.QPushButton(self.frame)
+        # self.degreeChange.setAutoDefault(True)
+        # #self.degreeChange.setGeometry(QtCore.QRect(50, index, 100, 25))
+        # self.degreeChange.setText("Change degree")
+
+        self.propertiesFrame.addTab(self.scrollAreaAtt, "Attributes")
+        
         prop_edge.setCentralWidget(self.frame)
 
         self.retranslateUi(prop_edge)
@@ -114,14 +123,8 @@ class Ui_prop_edge(object):
 
     def retranslateUi(self, prop_edge):
         _translate = QtCore.QCoreApplication.translate
-        self.dsLabel_type_1.setText(_translate("MainWindow", "Type :"))
-        self.dsLabel_firstpoint.setText(
-            _translate("MainWindow", "First Point :"))
-        self.dsLabel_endpoint.setText(_translate("MainWindow", "End Point:"))
-        self.dsLabel_title_1.setText(_translate("MainWindow", "Geometry"))
         self.closepushbutton.setText(_translate("MainWindow", "Swap/Close"))
-        self.propertiesFrame.setTabText(self.propertiesFrame.indexOf(
-            self.dataStructure), _translate("MainWindow", "Data Structure"))
+        self.degreeChange.setText(_translate("MainWindow", "Change Degree"))
 
 
 class Prop_EdgeDisplay(QMainWindow, Ui_prop_edge):
@@ -137,39 +140,147 @@ class Prop_EdgeDisplay(QMainWindow, Ui_prop_edge):
 
     def set_edge_prop(self, _edge):
 
-        first_point = (round(_edge.segment.getXinit(), 3),
-                       round(_edge.segment.getYinit(), 3))
-        end_point = (round(_edge.segment.getXend(), 3),
-                     round(_edge.segment.getYend(), 3))
-        length = round(_edge.segment.length(0, 1), 3)
+        # get control points and knot vector
+        nurbs = _edge.segment.getNurbs()
+        Degree = nurbs.degree
+        CtrlPts = nurbs.ctrlpts
+        KnotVector = nurbs.knotvector
 
+        # creates Qwidget
+        scrollAreaContentDS = QtWidgets.QWidget()
+        LayoutDS = QtWidgets.QVBoxLayout(scrollAreaContentDS)
+
+        # set widget in scrollArea
+        self.scrollAreaDS.setWidget(scrollAreaContentDS)
+
+        # creates QFrame
+        contentDS = QtWidgets.QFrame(scrollAreaContentDS)
+
+        LayoutDS.setContentsMargins(0, 0, 0, 0)
+        LayoutDS.setSpacing(0)
+        LayoutDS.addWidget(contentDS)
+
+        dsLabel_title_1 = QtWidgets.QLabel(contentDS)
+        dsLabel_title_1.setGeometry(QtCore.QRect(0, 0, 200, 20))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        dsLabel_title_1.setFont(font)
+        dsLabel_title_1.setAlignment(QtCore.Qt.AlignCenter)
+        dsLabel_title_1.setObjectName("dsLabel_title_1")
+        dsLabel_title_1.setText("Geometry")
+
+        dsLabel_type_1 = QtWidgets.QLabel(contentDS)
+        dsLabel_type_1.setGeometry(QtCore.QRect(0, 20, 200, 20))
+        dsLabel_type_1.setMinimumSize(QtCore.QSize(200, 20))
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        font.setBold(True)
+        font.setWeight(75)
+        dsLabel_type_1.setFont(font)
+        dsLabel_type_1.setStyleSheet("background-color: rgb(255, 255, 255);")
+        dsLabel_type_1.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        dsLabel_type_1.setObjectName("dsLabel_type_1")
         if _edge.segment.getType() == 'LINE':
-            self.dsLabel_type_1.setText("Type : Line")
+            dsLabel_type_1.setText("Type: Line")
         elif _edge.segment.getType() == 'POLYLINE':
-            self.dsLabel_type_1.setText("Type : Polyline")
+            dsLabel_type_1.setText("Type: Polyline")
+        elif _edge.segment.getType() == 'CUBICSPLINE':
+            dsLabel_type_1.setText("Type: Cubic Spline")
+        elif _edge.segment.getType() == 'CIRCLE':
+            dsLabel_type_1.setText("Type: Circle")
+        elif _edge.segment.getType() == 'CIRCLEARC':
+            dsLabel_type_1.setText("Type: Circle Arc")
+        elif _edge.segment.getType() == 'ELLIPSE':
+            dsLabel_type_1.setText("Type: Ellipse")
+        elif _edge.segment.getType() == 'ELLIPSEARC':
+            dsLabel_type_1.setText("Type: Ellipse Arc")
 
-        self.dsLabel_firstpoint.setText(
-            f"First Point : {first_point}")
-        self.dsLabel_endpoint.setText(
-            f"End Point : {end_point}")
-        self.dsLabel_length.setText(f"Length : {length}")
+        dsLabel_length = QtWidgets.QLabel(contentDS)
+        dsLabel_length.setGeometry(QtCore.QRect(0, 40, 200, 20))
+        dsLabel_length.setMinimumSize(QtCore.QSize(200, 20))
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        dsLabel_length.setFont(font)
+        dsLabel_length.setStyleSheet("")
+        dsLabel_length.setObjectName("dsLabel_length")
+        length = round(_edge.segment.length(0, 1), 3)
+        dsLabel_length.setText(f"Length: {length}")
+
+        dsLabel_controlpoints = QtWidgets.QLabel(contentDS)
+        dsLabel_controlpoints.setGeometry(QtCore.QRect(0, 60, 200, 20))
+        dsLabel_controlpoints.setMinimumSize(QtCore.QSize(200, 20))
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        dsLabel_controlpoints.setFont(font)
+        dsLabel_controlpoints.setStyleSheet("")
+        dsLabel_controlpoints.setObjectName("dsLabel_controlpoints")
+        dsLabel_controlpoints.setText("Control Points:")
+
+        index = 80
+        for pt in CtrlPts:
+            LabelCtrlPt = QtWidgets.QLabel(contentDS)
+            LabelCtrlPt.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            LabelCtrlPt.setGeometry(QtCore.QRect(0, index, 200, 20))
+            LabelCtrlPt.setFont(font)
+            pt = (round(pt[0], 3), round(pt[1], 3))
+            LabelCtrlPt.setText(f"{pt}")
+            index += 20
+
+        dsLabel_knotvector = QtWidgets.QLabel(contentDS)
+        dsLabel_knotvector.setGeometry(QtCore.QRect(0, index, 200, 20))
+        dsLabel_knotvector.setMinimumSize(QtCore.QSize(200, 20))
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        dsLabel_knotvector.setFont(font)
+        dsLabel_knotvector.setStyleSheet("")
+        dsLabel_knotvector.setObjectName("dsLabel_knotvector")
+        dsLabel_knotvector.setText("Knot Vector:")
+
+        index = index + 20
+        for knot in KnotVector:
+            LabelKnot = QtWidgets.QLabel(contentDS)
+            LabelKnot.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            LabelKnot.setGeometry(QtCore.QRect(0, index, 200, 20))
+            LabelKnot.setFont(font)
+            knot = round(knot, 3)
+            LabelKnot.setText(f"{knot}")
+            index += 20
+
+        dsLabel_degree = QtWidgets.QLabel(contentDS)
+        dsLabel_degree.setGeometry(QtCore.QRect(0, index, 200, 20))
+        dsLabel_degree.setMinimumSize(QtCore.QSize(200, 20))
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        dsLabel_degree.setFont(font)
+        dsLabel_degree.setStyleSheet("")
+        dsLabel_degree.setObjectName("dsLabel_degree")
+        dsLabel_degree.setText(f"Degree: {Degree}")
+
+        index += 20
+        contentDS.setMinimumSize(QtCore.QSize(200, index))
 
         # get attributes
         attributes = _edge.segment.attributes
 
         # creates Qwidget
-        scrollAreaContent = QtWidgets.QWidget()
-        Layout = QtWidgets.QVBoxLayout(scrollAreaContent)
+        scrollAreaContentAtt = QtWidgets.QWidget()
+        LayoutAtt = QtWidgets.QVBoxLayout(scrollAreaContentAtt)
 
         # set widget in scrollArea
-        self.scrollArea.setWidget(scrollAreaContent)
+        self.scrollAreaAtt.setWidget(scrollAreaContentAtt)
 
         # creates QFrame
-        content = QtWidgets.QFrame(scrollAreaContent)
+        contentAtt = QtWidgets.QFrame(scrollAreaContentAtt)
 
-        Layout.setContentsMargins(0, 0, 0, 0)
-        Layout.setSpacing(0)
-        Layout.addWidget(content)
+        LayoutAtt.setContentsMargins(0, 0, 0, 0)
+        LayoutAtt.setSpacing(0)
+        LayoutAtt.addWidget(contentAtt)
 
         index = 0
         font = QtGui.QFont()
@@ -181,9 +292,8 @@ class Prop_EdgeDisplay(QMainWindow, Ui_prop_edge):
         font1.setBold(True)
         font1.setWeight(75)
         for att in attributes:
-            Label = QtWidgets.QLabel(content)
-            Label.setAlignment(
-                QtCore.Qt.AlignLeading | QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            Label = QtWidgets.QLabel(contentAtt)
+            Label.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
             Label.setGeometry(QtCore.QRect(0, index*20, 200, 20))
             Label.setFont(font)
             Label.setText(att['type'])
@@ -192,11 +302,10 @@ class Prop_EdgeDisplay(QMainWindow, Ui_prop_edge):
             if index % 2 == 0:
                 Label.setStyleSheet("")
             else:
-                Label.setStyleSheet(
-                    "background-color: rgb(255, 255, 255);")
+                Label.setStyleSheet("background-color: rgb(255, 255, 255);")
             index += 1
 
-            nameLabel = QtWidgets.QLabel(content)
+            nameLabel = QtWidgets.QLabel(contentAtt)
             nameLabel.setGeometry(QtCore.QRect(0, index*20, 200, 20))
             nameLabel.setFont(font1)
             nameLabel.setText(f"Name : {att['name']}")
@@ -212,11 +321,12 @@ class Prop_EdgeDisplay(QMainWindow, Ui_prop_edge):
 
                 value = properties[key]
                 if type(value) == list:
-                    continue
-                elif type(value) == dict:
-                    value = properties[key]["list"][properties[key]["index"]]
+                    if len(value) == 3:
+                        continue
+                    else:
+                        value = properties[key][0][properties[key][1]]
 
-                propLabel = QtWidgets.QLabel(content)
+                propLabel = QtWidgets.QLabel(contentAtt)
                 propLabel.setGeometry(QtCore.QRect(0, index*20, 200, 20))
                 propLabel.setFont(font1)
                 propLabel.setText(f"{key} : {value}")
@@ -224,8 +334,7 @@ class Prop_EdgeDisplay(QMainWindow, Ui_prop_edge):
                 if index % 2 == 0:
                     propLabel.setStyleSheet("")
                 else:
-                    propLabel.setStyleSheet(
-                        "background-color: rgb(255, 255, 255);")
+                    propLabel.setStyleSheet("background-color: rgb(255, 255, 255);")
                 index += 1
 
-        content.setMinimumSize(QtCore.QSize(200, 20*index))
+        contentAtt.setMinimumSize(QtCore.QSize(200, 20*index))
