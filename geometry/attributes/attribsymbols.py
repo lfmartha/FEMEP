@@ -1,6 +1,7 @@
 from geometry.point import Point
-from geometry.segments.line import Line
+from geometry.curves.line import Line
 from compgeom.compgeom import CompGeom
+from mesh.mesh1d import Mesh1D
 import math
 
 
@@ -315,7 +316,7 @@ class AttribSymbols:
             displc = _displc*(-1)
 
         while cont <= _end:
-            pt = _seg.getPoint(cont)
+            pt = _seg.evalPoint(cont)
             pt = pt - displc*0.2
             l, tr = AttribSymbols.arrowSymbol(
                 pt, _scale, _ang)
@@ -500,7 +501,7 @@ class AttribSymbols:
         seg_pts = _seg.getPoints()
         points.append(seg_pts[0])
         points.append(seg_pts[-1])
-        points.append(_seg.getPoint(0.5))
+        points.append(_seg.evalPoint(0.5))
 
         for pt in points:
             l, tr, sq, circ = AttribSymbols.supportPoint(
@@ -517,7 +518,7 @@ class AttribSymbols:
         properties = _attribute['properties']
         nsudv = properties['Value']
         ratio = properties['Ratio']
-        points = CompGeom.getNumberOfSudvisions(_seg, nsudv, ratio, False)
+        points = Mesh1D.subdivideSegment(_seg, nsudv, ratio, False)
 
         return points
 
@@ -549,7 +550,7 @@ class AttribSymbols:
         seg_pts = _seg.getPoints()
         points.append(seg_pts[0])
         points.append(seg_pts[-1])
-        points.append(_seg.getPoint(0.5))
+        points.append(_seg.evalPoint(0.5))
 
         for pt in points:
             l = AttribSymbols.temperaturePoint(pt, _scale)
@@ -586,9 +587,9 @@ class AttribSymbols:
         points = []
         seg_pts = _seg.getPoints()
         points.append(seg_pts[0])
-        points.append(_seg.getPoint(0.25))
-        points.append(_seg.getPoint(0.5))
-        points.append(_seg.getPoint(0.75))
+        points.append(_seg.evalPoint(0.25))
+        points.append(_seg.evalPoint(0.5))
+        points.append(_seg.evalPoint(0.75))
         points.append(seg_pts[-1])
         for pt in points:
             t, c = AttribSymbols.fluxPoint(pt, _scale)
