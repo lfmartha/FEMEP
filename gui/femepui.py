@@ -4,8 +4,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.setMinimumSize(QtCore.QSize(900, 600))
-        MainWindow.resize(900, 600)
+        MainWindow.setMinimumSize(QtCore.QSize(900, 650))
+        MainWindow.resize(900, 650)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -230,6 +230,47 @@ class Ui_MainWindow(object):
                          QtGui.QIcon.Normal, QtGui.QIcon.On)
         self.actionPolyline.setIcon(icon12)
         self.actionPolyline.setObjectName("actionPolyline")
+
+        self.actionCubicSpline = QtWidgets.QAction(MainWindow)
+        self.actionCubicSpline.setCheckable(True)
+        icon21 = QtGui.QIcon()
+        icon21.addPixmap(QtGui.QPixmap("icons/cubicspline.png"),
+                         QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.actionCubicSpline.setIcon(icon21)
+        self.actionCubicSpline.setObjectName("actionCubicSpline")
+
+        self.actionCircle = QtWidgets.QAction(MainWindow)
+        self.actionCircle.setCheckable(True)
+        icon22 = QtGui.QIcon()
+        icon22.addPixmap(QtGui.QPixmap("icons/circle.png"),
+                         QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.actionCircle.setIcon(icon22)
+        self.actionCircle.setObjectName("actionCircle")
+
+        self.actionCircleArc = QtWidgets.QAction(MainWindow)
+        self.actionCircleArc.setCheckable(True)
+        icon23 = QtGui.QIcon()
+        icon23.addPixmap(QtGui.QPixmap("icons/circlearc.png"),
+                         QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.actionCircleArc.setIcon(icon23)
+        self.actionCircleArc.setObjectName("actionCircleArc")
+
+        self.actionEllipse = QtWidgets.QAction(MainWindow)
+        self.actionEllipse.setCheckable(True)
+        icon24 = QtGui.QIcon()
+        icon24.addPixmap(QtGui.QPixmap("icons/ellipse.png"),
+                         QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.actionEllipse.setIcon(icon24)
+        self.actionEllipse.setObjectName("actionEllipse")
+
+        self.actionEllipseArc = QtWidgets.QAction(MainWindow)
+        self.actionEllipseArc.setCheckable(True)
+        icon25 = QtGui.QIcon()
+        icon25.addPixmap(QtGui.QPixmap("icons/ellipsearc.png"),
+                         QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.actionEllipseArc.setIcon(icon25)
+        self.actionEllipseArc.setObjectName("actionEllipseArc")
+
         self.actionDelete = QtWidgets.QAction(MainWindow)
         icon13 = QtGui.QIcon()
         icon13.addPixmap(QtGui.QPixmap("icons/delete-icon.png"),
@@ -335,6 +376,11 @@ class Ui_MainWindow(object):
         self.modelingToolBar.addAction(self.actionPoint)
         self.modelingToolBar.addAction(self.actionLine)
         self.modelingToolBar.addAction(self.actionPolyline)
+        self.modelingToolBar.addAction(self.actionCubicSpline)
+        self.modelingToolBar.addAction(self.actionCircle)
+        self.modelingToolBar.addAction(self.actionCircleArc)
+        self.modelingToolBar.addAction(self.actionEllipse)
+        self.modelingToolBar.addAction(self.actionEllipseArc)
         self.modelingToolBar.addSeparator()
         self.modelingToolBar.addAction(self.actionCreatePatch)
 
@@ -394,6 +440,32 @@ class Ui_MainWindow(object):
         self.actionPolyline.setToolTip(_translate(
             "MainWindow", "Polyline (Shift + P)"))
         self.actionPolyline.setShortcut(_translate("MainWindow", "Shift+P"))
+
+        self.actionCubicSpline.setText(_translate("MainWindow", "CubicSpline"))
+        self.actionCubicSpline.setToolTip(_translate(
+            "MainWindow", "CubicSpline (Shift + P)"))
+        self.actionCubicSpline.setShortcut(_translate("MainWindow", "Shift+P"))
+
+        self.actionCircle.setText(_translate("MainWindow", "Circle"))
+        self.actionCircle.setToolTip(_translate(
+            "MainWindow", "Circle (Shift + P)"))
+        self.actionCircle.setShortcut(_translate("MainWindow", "Shift+P"))
+
+        self.actionCircleArc.setText(_translate("MainWindow", "CircleArc"))
+        self.actionCircleArc.setToolTip(_translate(
+            "MainWindow", "CircleArc (Shift + P)"))
+        self.actionCircleArc.setShortcut(_translate("MainWindow", "Shift+P"))
+
+        self.actionEllipse.setText(_translate("MainWindow", "Ellipse"))
+        self.actionEllipse.setToolTip(_translate(
+            "MainWindow", "Ellipse (Shift + P)"))
+        self.actionEllipse.setShortcut(_translate("MainWindow", "Shift+P"))
+
+        self.actionEllipseArc.setText(_translate("MainWindow", "EllipseArc"))
+        self.actionEllipseArc.setToolTip(_translate(
+            "MainWindow", "EllipseArc (Shift + P)"))
+        self.actionEllipseArc.setShortcut(_translate("MainWindow", "Shift+P"))
+
         self.actionDelete.setText(_translate("MainWindow", "Delete (Del)"))
         self.actionDelete.setShortcut(_translate("MainWindow", "Del"))
         self.actionSelect.setText(_translate("MainWindow", "Select"))
