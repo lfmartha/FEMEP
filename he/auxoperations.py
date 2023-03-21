@@ -351,17 +351,17 @@ class DelMesh:
         self.patch.mesh = self.oldMesh
 
 
-class SetNumberOfSubdivisions:
+class SetNumberSdv:
     def __init__(self, _seg, _attribute):
         self.seg = _seg
         self.numberOfSubdivision = _attribute
-        self.oldnumber = _seg.getNumberOfSubdivisions()
+        self.oldnumber = _seg.getNumberSdv()
 
     def name(self):
         return 'SET_NUMBER_OF_SUBDIVISIONS'
 
     def execute(self):
-        self.seg.setNumberOfSubdivisions(self.numberOfSubdivision)
+        self.seg.setNumberSdv(self.numberOfSubdivision)
 
     def unexecute(self):
-        self.seg.setNumberOfSubdivisions(self.oldnumber)
+        self.seg.setNumberSdv(self.oldnumber)
