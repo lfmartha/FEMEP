@@ -1,4 +1,4 @@
-from geometry.point import Point
+from compgeom.pnt2d import Pnt2D
 from compgeom.tesselation import Tesselation
 from compgeom.compgeom import CompGeom
 
@@ -153,11 +153,11 @@ class Patch:
         pts = self.pts
         triangs = Tesselation.triangleParing(pts)
         for j in range(0, len(triangs)):
-            a = Point(pts[triangs[j][0]].getX(),
+            a = Pnt2D(pts[triangs[j][0]].getX(),
                       pts[triangs[j][0]].getY())
-            b = Point(pts[triangs[j][1]].getX(),
+            b = Pnt2D(pts[triangs[j][1]].getX(),
                       pts[triangs[j][1]].getY())
-            c = Point(pts[triangs[j][2]].getX(),
+            c = Pnt2D(pts[triangs[j][2]].getX(),
                       pts[triangs[j][2]].getY())
 
             Area += (a.getX()*b.getY() - a.getY()*b.getX()
