@@ -8,6 +8,7 @@ class Ui_mesh(object):
         meshui.resize(200, 369)
         meshui.setMaximumSize(QtCore.QSize(200, 16777215))
 
+        # Main Title
         self.mainTitlelabel = QtWidgets.QLabel(meshui)
         self.mainTitlelabel.setGeometry(QtCore.QRect(0, 10, 200, 20))
         font = QtGui.QFont()
@@ -17,6 +18,12 @@ class Ui_mesh(object):
         self.mainTitlelabel.setFont(font)
         self.mainTitlelabel.setAlignment(QtCore.Qt.AlignCenter)
         self.mainTitlelabel.setObjectName("mainTitlelabel")
+
+        # Mesh Type
+        self.meshTypesLabel = QtWidgets.QLabel(meshui)
+        self.meshTypesLabel.setGeometry(QtCore.QRect(0, 40, 200, 20))
+        self.meshTypesLabel.setObjectName("meshTypesLabel")
+
         self.meshcomboBox = QtWidgets.QComboBox(meshui)
         self.meshcomboBox.setGeometry(QtCore.QRect(10, 70, 180, 20))
         self.meshcomboBox.setObjectName("meshcomboBox")
@@ -25,17 +32,21 @@ class Ui_mesh(object):
         self.meshcomboBox.addItem("")
         self.meshcomboBox.addItem("")
         self.meshcomboBox.addItem("")
-        self.meshTypesLabel = QtWidgets.QLabel(meshui)
-        self.meshTypesLabel.setGeometry(QtCore.QRect(0, 40, 200, 20))
-        self.meshTypesLabel.setObjectName("meshTypesLabel")
+        self.meshcomboBox.addItem("")
+
+        # Element Type
         self.elemTypesLAbel = QtWidgets.QLabel(meshui)
         self.elemTypesLAbel.setGeometry(QtCore.QRect(0, 100, 200, 20))
         self.elemTypesLAbel.setObjectName("elemTypesLAbel")
+
+        # Shape Type
         self.shapecomboBox = QtWidgets.QComboBox(meshui)
         self.shapecomboBox.setGeometry(QtCore.QRect(25, 130, 150, 20))
         self.shapecomboBox.setObjectName("shapecomboBox")
         self.shapecomboBox.addItem("")
         self.shapecomboBox.addItem("")
+
+        
         self.elemcomboBox = QtWidgets.QComboBox(meshui)
         self.elemcomboBox.setGeometry(QtCore.QRect(25, 160, 150, 20))
         self.elemcomboBox.setObjectName("elemcomboBox")
@@ -73,46 +84,30 @@ class Ui_mesh(object):
     def retranslateUi(self, meshui):
         _translate = QtCore.QCoreApplication.translate
         self.mainTitlelabel.setText(_translate("MainWindow", "Mesh Manager"))
-        self.meshcomboBox.setCurrentText(
-            _translate("MainWindow", "Bilinear Transfinite "))
-        self.meshcomboBox.setItemText(0, _translate(
-            "MainWindow", "Bilinear Transfinite"))
-        self.meshcomboBox.setItemText(1, _translate(
-            "MainWindow", "Trilinear Transfinite"))
-        self.meshcomboBox.setItemText(2, _translate(
-            "MainWindow", "Triangular Boundary Contraction"))
-        self.meshcomboBox.setItemText(
-            3, _translate("MainWindow", "Quadrilateral Seam"))
-        self.meshcomboBox.setItemText(
-            4, _translate("MainWindow", "Quadrilateral Template"))
+        self.meshcomboBox.setCurrentText(_translate("MainWindow", "Bilinear Transfinite "))
+        self.meshcomboBox.setItemText(0, _translate("MainWindow", "Bilinear Transfinite"))
+        self.meshcomboBox.setItemText(1, _translate("MainWindow", "Trilinear Transfinite"))
+        self.meshcomboBox.setItemText(2, _translate("MainWindow", "Triangular Boundary Contraction"))
+        self.meshcomboBox.setItemText(3, _translate("MainWindow", "Quadrilateral Seam"))
+        self.meshcomboBox.setItemText(4, _translate("MainWindow", "Quadrilateral Template"))
+        self.meshcomboBox.setItemText(5, _translate("MainWindow", "Isogeometric"))
         self.meshTypesLabel.setText(_translate("MainWindow", " Mesh Types :"))
-        self.elemTypesLAbel.setText(
-            _translate("MainWindow", "Element Types :"))
-        self.diagTypesLabel.setText(
-            _translate("MainWindow", "Diagonal Types :"))
-        self.flagLabel.setText(
-            _translate("MainWindow", "Based on:"))
-        self.shapecomboBox.setItemText(
-            0, _translate("MainWindow", "Triangular"))
-        self.shapecomboBox.setItemText(
-            1, _translate("MainWindow", "Quadrilateral"))
-        self.elemcomboBox.setItemText(
-            0, _translate("MainWindow", "Linear"))
-        self.elemcomboBox.setItemText(
-            1, _translate("MainWindow", "Quadratic"))
+        self.elemTypesLAbel.setText(_translate("MainWindow", "Element Types :"))
+        self.diagTypesLabel.setText(_translate("MainWindow", "Diagonal Types :"))
+        self.flagLabel.setText(_translate("MainWindow", "Based on:"))
+        self.shapecomboBox.setItemText(0, _translate("MainWindow", "Triangular"))
+        self.shapecomboBox.setItemText(1, _translate("MainWindow", "Quadrilateral"))
+        self.elemcomboBox.setItemText(0, _translate("MainWindow", "Linear"))
+        self.elemcomboBox.setItemText(1, _translate("MainWindow", "Quadratic"))
         self.diagcomboBox.setItemText(0, _translate("MainWindow", "Right"))
         self.diagcomboBox.setItemText(1, _translate("MainWindow", "Left"))
-        self.diagcomboBox.setItemText(
-            2, _translate("MainWindow", "Union Jack"))
+        self.diagcomboBox.setItemText(2, _translate("MainWindow", "Union Jack"))
         self.diagcomboBox.setItemText(3, _translate("MainWindow", "Optimal"))
         self.flagcomboBox.setItemText(0, _translate("MainWindow", "Optimal"))
         self.flagcomboBox.setItemText(1, _translate("MainWindow", "Quadtree"))
-        self.flagcomboBox.setItemText(
-            2, _translate("MainWindow", "Regular Grid"))
-        self.genMeshpushButton.setText(
-            _translate("MainWindow", "Generate Mesh"))
-        self.delMeshpushButton.setText(
-            _translate("MainWindow", "Delete Mesh"))
+        self.flagcomboBox.setItemText(2, _translate("MainWindow", "Regular Grid"))
+        self.genMeshpushButton.setText(_translate("MainWindow", "Generate Mesh"))
+        self.delMeshpushButton.setText(_translate("MainWindow", "Delete Mesh"))
 
 
 class MeshDisplay(QMainWindow, Ui_mesh):
