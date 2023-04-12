@@ -2,10 +2,8 @@ from compgeom.pnt2d import Pnt2D
 from compgeom.compgeom import CompGeom
 from geometry.curves.curve import Curve
 from geometry.curves.line import Line
-from geomdl import fitting
-from geomdl import convert
-from geomdl import operations
 from geomdl import NURBS
+from geomdl import operations
 import numpy as np
 import math
 
@@ -196,7 +194,7 @@ class EllipseArc(Curve):
                                             self.nurbs.sample_size = 10
 
                                             # Generating equivalent polyline
-                                            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.001 * self.axis1)
+                                            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.axis1)
                                             self.eqPoly.append(self.arc2)
 
     # ---------------------------------------------------------------------
@@ -409,37 +407,30 @@ class EllipseArc(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.001 * self.axis1)
+                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.axis1)
                 self.eqPoly.append(self.arc2)
 
     # ---------------------------------------------------------------------
     def evalPoint(self, _t):
-        if _t > 1.0:
-            _t = 1.0
-        elif _t <= 0.0:
-            _t = 0.0
+        if _t <= 0.0:
+            return self.arc1
+        elif _t >= 1.0:
+            return self.arc2
 
         pt = self.nurbs.evaluate_single(_t)
-        x = pt[0]
-        y = pt[1]
-
-        return Pnt2D(x, y)
+        return Pnt2D(pt[0], pt[1])
 
     # ---------------------------------------------------------------------
     def evalPointTangent(self, _t):
-        if _t > 1.0:
-            _t = 1.0
-        elif _t <= 0.0:
+        if _t < 0.0:
             _t = 0.0
-
+        elif _t > 1.0:
+            _t = 1.0
+            
         ders = self.nurbs.derivatives(_t, order=1)
         pt = ders[0]
-        x = pt[0]
-        y = pt[1]
         tang = ders[1]
-        dx = tang[0]
-        dy = tang[1]
-        return Pnt2D(x, y), Pnt2D(dx, dy)
+        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
 
     # ---------------------------------------------------------------------
     def evalPointCurvature(self, _t):
@@ -484,10 +475,19 @@ class EllipseArc(Curve):
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+    
+        for knot in knots:
+            if _t >= (knot - 1000*Curve.PARAM_TOL) and _t <= (knot + 1000*Curve.PARAM_TOL):
+                _t = knot
+
         if _t <= Curve.PARAM_TOL:
             left = None
             right = self
             return left, right
+        
         if (1.0 - _t) <= Curve.PARAM_TOL:
             left = self
             right = None
@@ -498,209 +498,57 @@ class EllipseArc(Curve):
         right = EllipseArc()
 
         # Create the corresponding NURBS curves resulting from splitting
-        if _t > 0.5 and _t <= (0.5 + Curve.PARAM_TOL):
-            _t = 0.5
-        elif _t < 0.5 and _t >= (0.5 - Curve.PARAM_TOL):
-            _t = 0.5
-
-        try:
-            left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
-        except:
-            try:
-                left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t - Curve.PARAM_TOL)
-            except:
-                left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t + Curve.PARAM_TOL)
-
+        left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
         return left, right
 
  # ---------------------------------------------------------------------
     def split(self, _t):
-        left, right = self.splitRaw(_t)
-        if (left == None) or (right == None):
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+
+        for knot in knots:
+            if _t >= (knot - 1000*Curve.PARAM_TOL) and _t <= (knot + 1000*Curve.PARAM_TOL):
+                _t = knot
+
+        if _t <= Curve.PARAM_TOL:
+            left = None
+            right = self
+            return left, right
+        
+        if (1.0 - _t) <= Curve.PARAM_TOL:
+            left = self
+            right = None
             return left, right
 
         pt = self.evalPoint(_t)
 
-        left.center = self.center
-        left.ellip1 = self.ellip1
-        left.ellip2 = self.ellip2
-        left.arc1 = self.arc1
-        left.arc2 = pt
+        # Left curve properties
+        left_center = self.center
+        left_ellip1 = self.ellip1
+        left_ellip2 = self.ellip2
+        left_arc1 = self.arc1
+        left_arc2 = pt
 
-        if left.center is not None:
-            left.nPts += 1
+        # Right curve properties
+        right_center = self.center
+        right_ellip1 = self.ellip1
+        right_ellip2 = self.ellip2
+        right_arc1 = pt
+        right_arc2 = self.arc2
 
-            if left.ellip1 is not None:
-                # Compute first axis
-                drX = left.ellip1.getX() - left.center.getX()
-                drY = left.ellip1.getY() - left.center.getY()
-                left.axis1 = math.sqrt(drX * drX + drY * drY)
-                if left.axis1 > 0.0:
-
-                    # Compute angle for first axis
-                    left.ang = math.atan2(drY, drX)  # -PI < angle <= +PI
-                    if left.ang < 0.0:
-                        left.ang += 2.0 * math.pi  # 0 <= angle < +2PI
-                    left.nPts += 1
-
-                    if left.ellip2 is not None:
-                        # Compute and snap second axis
-                        axis1_vec = left.ellip1 - left.center
-                        ellip2_vec = left.ellip2 - left.center
-                        projeInAxis1 = Pnt2D.dotprod(ellip2_vec, axis1_vec) / Pnt2D.size(axis1_vec)
-                        left.axis2 = math.sqrt(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1)
-                        left.ellip2 = Pnt2D.rotate(Pnt2D(left.center.getX(), left.center.getY() + left.axis2), left.center, left.ang)
-                        if left.axis2 > 0.0:
-                            left.nPts += 1
-
-                            # Compute first arc point
-                            if left.arc1 is not None:
-                                drX1 = left.arc1.getX() - left.center.getX()
-                                drY1 = left.arc1.getY() - left.center.getY()
-                                dist1 = math.sqrt(drX1 * drX1 + drY1 * drY1)
-                                if dist1 > 0.0:
-
-                                    # Compute angle for first arc point
-                                    left.ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
-                                    if left.ang1 < 0.0:
-                                        left.ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-                                    # Snap first arc point to ellipse
-                                    teta1 = left.ang1 - left.ang
-                                    if teta1 < 0:
-                                        teta1 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-                                    eta1 = left.theoreticalAngle(teta1)
-                                    x1 = left.center.getX() + left.axis1 * math.cos(eta1) * math.cos(left.ang) - left.axis2 * math.sin(eta1) * math.sin(left.ang)
-                                    y1 = left.center.getY() + left.axis1 * math.cos(eta1) * math.sin(left.ang) + left.axis2 * math.sin(eta1) * math.cos(left.ang)
-                                    left.TeoAng1 = eta1 + left.ang
-                                    left.arc1 = Pnt2D(x1, y1)
-                                    left.nPts += 1
-
-                                    # Compute second arc point
-                                    if left.arc2 is not None:
-                                        drX2 = left.arc2.getX() - left.center.getX()
-                                        drY2 = left.arc2.getY() - left.center.getY()
-                                        dist2 = math.sqrt(drX2 * drX2 + drY2 * drY2)
-                                        if dist2 > 0.0:
-
-                                            # Compute angle for second arc point
-                                            left.ang2 = math.atan2(drY2, drX2)  # -PI < angle <= +PI
-                                            if left.ang2 < 0.0:
-                                                left.ang2 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-                                            # Snap second arc point to ellipse
-                                            teta2 = left.ang2 - left.ang
-                                            if teta2 < 0:
-                                                teta2 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-                                            eta2 = left.theoreticalAngle(teta2)
-                                            x2 = left.center.getX() + left.axis1 * math.cos(eta2) * math.cos(left.ang) - left.axis2 * math.sin(eta2) * math.sin(left.ang)
-                                            y2 = left.center.getY() + left.axis1 * math.cos(eta2) * math.sin(left.ang) + left.axis2 * math.sin(eta2) * math.cos(left.ang)
-                                            left.TeoAng2 = eta2 + left.ang
-                                            left.arc2 = Pnt2D(x2, y2)
-                                            left.nPts += 1
-
-                                            # Generating equivalent polyline
-                                            left.eqPoly = []
-                                            left.eqPoly = Curve.genEquivPolyline(left, left.eqPoly, 0.001 * left.axis1)
-                                            left.eqPoly.append(left.arc2)
-
-        right.center = self.center
-        right.ellip1 = self.ellip1
-        right.ellip2 = self.ellip2
-        right.arc1 = pt
-        right.arc2 = self.arc2
-
-        if right.center is not None:
-            right.nPts += 1
-
-            if right.ellip1 is not None:
-                # Compute first axis
-                drX = right.ellip1.getX() - right.center.getX()
-                drY = right.ellip1.getY() - right.center.getY()
-                right.axis1 = math.sqrt(drX * drX + drY * drY)
-                if right.axis1 > 0.0:
-
-                    # Compute angle for first axis
-                    right.ang = math.atan2(drY, drX)  # -PI < angle <= +PI
-                    if right.ang < 0.0:
-                        right.ang += 2.0 * math.pi  # 0 <= angle < +2PI
-                    right.nPts += 1
-
-                    if right.ellip2 is not None:
-                        # Compute and snap second axis
-                        axis1_vec = right.ellip1 - right.center
-                        ellip2_vec = right.ellip2 - right.center
-                        projeInAxis1 = Pnt2D.dotprod(ellip2_vec, axis1_vec) / Pnt2D.size(axis1_vec)
-                        right.axis2 = math.sqrt(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1)
-                        right.ellip2 = Pnt2D.rotate(Pnt2D(right.center.getX(), right.center.getY() + right.axis2), right.center, right.ang)
-                        if right.axis2 > 0.0:
-                            right.nPts += 1
-
-                            # Compute first arc point
-                            if right.arc1 is not None:
-                                drX1 = right.arc1.getX() - right.center.getX()
-                                drY1 = right.arc1.getY() - right.center.getY()
-                                dist1 = math.sqrt(drX1 * drX1 + drY1 * drY1)
-                                if dist1 > 0.0:
-
-                                    # Compute angle for first arc point
-                                    right.ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
-                                    if right.ang1 < 0.0:
-                                        right.ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-                                    # Snap first arc point to ellipse
-                                    teta1 = right.ang1 - right.ang
-                                    if teta1 < 0:
-                                        teta1 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-                                    eta1 = right.theoreticalAngle(teta1)
-                                    x1 = right.center.getX() + right.axis1 * math.cos(eta1) * math.cos(right.ang) - right.axis2 * math.sin(eta1) * math.sin(right.ang)
-                                    y1 = right.center.getY() + right.axis1 * math.cos(eta1) * math.sin(right.ang) + right.axis2 * math.sin(eta1) * math.cos(right.ang)
-                                    right.TeoAng1 = eta1 + right.ang
-                                    right.arc1 = Pnt2D(x1, y1)
-                                    right.nPts += 1
-
-                                    # Compute second arc point
-                                    if right.arc2 is not None:
-                                        drX2 = right.arc2.getX() - right.center.getX()
-                                        drY2 = right.arc2.getY() - right.center.getY()
-                                        dist2 = math.sqrt(drX2 * drX2 + drY2 * drY2)
-                                        if dist2 > 0.0:
-
-                                            # Compute angle for second arc point
-                                            right.ang2 = math.atan2(drY2, drX2)  # -PI < angle <= +PI
-                                            if right.ang2 < 0.0:
-                                                right.ang2 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-                                            # Snap second arc point to ellipse
-                                            teta2 = right.ang2 - right.ang
-                                            if teta2 < 0:
-                                                teta2 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-                                            eta2 = right.theoreticalAngle(teta2)
-                                            x2 = right.center.getX() + right.axis1 * math.cos(eta2) * math.cos(right.ang) - right.axis2 * math.sin(eta2) * math.sin(right.ang)
-                                            y2 = right.center.getY() + right.axis1 * math.cos(eta2) * math.sin(right.ang) + right.axis2 * math.sin(eta2) * math.cos(right.ang)
-                                            right.TeoAng2 = eta2 + right.ang
-                                            right.arc2 = Pnt2D(x2, y2)
-                                            right.nPts += 1
-
-                                            # Generating equivalent polyline
-                                            right.eqPoly = []
-                                            right.eqPoly = Curve.genEquivPolyline(right, right.eqPoly, 0.001 * right.axis1)
-                                            right.eqPoly.append(right.arc2)
-
+        # Create curve objects resulting from splitting
+        left = EllipseArc(left_center, left_ellip1, left_ellip2, left_arc1, left_arc2)
+        right = EllipseArc(right_center, right_ellip1, right_ellip2, right_arc1, right_arc2)
         return left, right
 
     # ---------------------------------------------------------------------
-    def getEquivPolyline(self, _tInit, _tEnd, _tol):
+    def getEquivPolyline(self):
         # If current curve does not have yet an equivalent polyline,
         # generate it.
         if self.eqPoly == []:
-            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, _tol)
+            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.axis1)
             self.eqPoly.append(self.arc2)
-
         return self.eqPoly
 
     # ---------------------------------------------------------------------
@@ -768,7 +616,7 @@ class EllipseArc(Curve):
             self.nurbs.sample_size = 10
 
             # Generating equivalent polyline
-            tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.001 * self.axis1)
+            tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.01 * self.axis1)
             tempEqPoly.append(self.ellip1)
 
         if self.nPts == 3:
@@ -916,9 +764,8 @@ class EllipseArc(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.001 * self.axis1)
+                tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.01 * self.axis1)
                 tempEqPoly.append(self.arc2)
-
         return tempEqPoly
 
     # ---------------------------------------------------------------------
@@ -965,7 +812,7 @@ class EllipseArc(Curve):
         if not status:
             return status, clstPt, dmin, 0.0, Pnt2D(0,0)
 
-        tolLen = self.length(0.0, 1.0)
+        tolLen = self.length()
         t = arcLen / tolLen
         if t <= 0.0:
             t = 0.0
@@ -1017,12 +864,10 @@ class EllipseArc(Curve):
         for point in self.eqPoly:
             x.append(point.getX())
             y.append(point.getY())
-
         xmin = min(x)
         xmax = max(x)
         ymin = min(y)
         ymax = max(y)
-
         return xmin, xmax, ymin, ymax
 
     # ---------------------------------------------------------------------
@@ -1042,9 +887,9 @@ class EllipseArc(Curve):
         return self.nurbs.ctrlpts[-1][1]
 
     # ---------------------------------------------------------------------
-    def length(self, _tInit, _tEnd):
-        length = operations.length_curve(self.nurbs)
-        return length
+    def length(self):
+        L = operations.length_curve(self.nurbs)
+        return L
 
     # ---------------------------------------------------------------------
     def theoreticalAngle(self, ang):
@@ -1052,9 +897,9 @@ class EllipseArc(Curve):
         return eta
 
     # ---------------------------------------------------------------------
+    # This method receives an angle in degrees and returns the distance
+    # between the ellipse point and its center
     def LenCenterToPt(self, ang):
-        # This method receives an angle in degrees and returns the distance
-        # between the ellipse point and its center
         ang *= math.pi / 180.0
         teta1 = ang - self.ang
         if teta1 < 0:
@@ -1152,3 +997,76 @@ class EllipseArc(Curve):
                 y2 = self.center.getY() + self.axis1 * math.cos(eta2) * math.sin(self.ang) + self.axis2 * math.sin(eta2) * math.cos(self.ang)
                 return x2, y2
 
+    # ---------------------------------------------------------------------
+    @staticmethod
+    def joinTwoCurves(_curv1, _curv2, _pt, _tol):
+        error_text = ""
+
+        # check if the ellipse arcs have the same center point, according  
+        # to a given tolerance
+        tol = Pnt2D(_tol, _tol)
+        if Pnt2D.equal(_curv1.center, _curv2.center, tol):
+            curv_center = (_curv1.center + _curv2.center) * 1 / 2.0
+
+        else:
+            error_text += "Ellipse arcs must have the same center point. "
+
+        # check if the ellipse arcs axis are equal, according to a given
+        # tolerance
+        if abs(_curv1.axis1 - _curv2.axis1) <= _tol:
+            curv_axis1 = (_curv1.axis1 + _curv2.axis1) / 2.0
+
+            if abs(_curv1.axis2 - _curv2.axis2) <= _tol:
+                curv_axis2 = (_curv1.axis2 + _curv2.axis2) / 2.0
+
+            else:
+                error_text += "Ellipse arcs must have the same axes length. "
+
+        else:
+            error_text += "Ellipse arcs must have the same axes length. "
+
+        # check if the ellipse arcs have the same inclination of main 
+        # ellipse
+        dx = _tol
+        dy = (_curv1.axis1 + _curv1.axis2 + _curv2.axis1 + _curv2.axis2) / 4.0
+        ang_tol = math.atan2(dx, dy)  # -PI < angle <= +PI
+        if ang_tol < 0.0:
+            ang_tol += 2.0 * math.pi  # 0 <= angle < +2PI
+        
+        if (abs(_curv1.ang - _curv2.ang) <= ang_tol or
+            abs(_curv2.ang - _curv1.ang) <= ang_tol):
+            curv_ang = (_curv1.ang + _curv2.ang) / 2.0
+
+        else:
+            error_text += "Ellipse arcs must have the same inclination. "
+
+        if error_text != "":
+            return None, error_text
+        
+        # check curves initial point
+        if Pnt2D.equal(Pnt2D(_curv1.nurbs.ctrlpts[0][0], _curv1.nurbs.ctrlpts[0][1]), _pt, tol):
+            init_pt1 = True
+        else:
+            init_pt1 = False
+
+        if Pnt2D.equal(Pnt2D(_curv2.nurbs.ctrlpts[0][0], _curv2.nurbs.ctrlpts[0][1]), _pt, tol):
+            init_pt2 = True
+        else:
+            init_pt2 = False
+
+        # ellipse arc properties
+        if init_pt1 and not init_pt2:
+            curv_ang1 = _curv2.ang1
+            curv_ang2 = _curv1.ang2
+
+        elif not init_pt1 and init_pt2:
+            curv_ang1 = _curv1.ang1
+            curv_ang2 = _curv2.ang2
+
+        curv_ellip1 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis1, curv_center.getY()), curv_center, curv_ang)
+        curv_ellip2 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis2, curv_center.getY()), curv_center, curv_ang + math.pi / 2.0)
+        curv_arc1 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis1, curv_center.getY()), curv_center, curv_ang1)
+        curv_arc2 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis2, curv_center.getY()), curv_center, curv_ang2)
+
+        curv = EllipseArc(curv_center, curv_ellip1, curv_ellip2, curv_arc1, curv_arc2)
+        return curv, None
