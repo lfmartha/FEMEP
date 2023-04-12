@@ -75,7 +75,7 @@ class Mesh1D():
                 return coords
 
             # calculates as if it were straight to find interpolation parameters
-            length = _segment.length(0, 1)
+            length = _segment.length()
             r1 = Pnt2D(0.0, 0.0)
             r2 = Pnt2D(length, 0.0)
             coords = Mesh1D.subdivideLine(r1, r2, _nsbdv, _quad, _ratio)
