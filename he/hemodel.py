@@ -4,6 +4,7 @@ from geometry.point import Point
 from geometry.curves.polyline import Polyline
 from geometry.segment import Segment
 from geometry.curves.curve import Curve
+import copy
 
 
 class HeModel:
@@ -259,8 +260,8 @@ class HeModel:
 
     def chkIntersectPolylines(self, _polylineA, _polylineB, _tol):
 
-        polyptsA = _polylineA.getCtrlPoints()
-        polyptsB = _polylineB.getCtrlPoints()
+        polyptsA = copy.deepcopy(_polylineA.getCtrlPoints())
+        polyptsB = copy.deepcopy(_polylineB.getCtrlPoints())
 
         # In case the given tolerance is positive, attract the endpoints of
         # each polyline to the other polyline (within the given tolerance).
