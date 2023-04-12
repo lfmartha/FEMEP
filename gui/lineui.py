@@ -9,15 +9,15 @@ class Ui_line(object):
         lineui.setMaximumSize(QtCore.QSize(200, 16777215))
 
         # Main Title
-        self.CubicSplineMainTitle = QtWidgets.QLabel(lineui)
-        self.CubicSplineMainTitle.setGeometry(QtCore.QRect(35, 10, 130, 20))
+        self.LineMainTitle = QtWidgets.QLabel(lineui)
+        self.LineMainTitle.setGeometry(QtCore.QRect(35, 10, 130, 20))
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.CubicSplineMainTitle.setFont(font)
-        self.CubicSplineMainTitle.setAlignment(QtCore.Qt.AlignCenter)
-        self.CubicSplineMainTitle.setObjectName("CubicSplineMainTitle")
+        self.LineMainTitle.setFont(font)
+        self.LineMainTitle.setAlignment(QtCore.Qt.AlignCenter)
+        self.LineMainTitle.setObjectName("LineMainTitle")
 
         # Initial Point
         self.InitialPointTitle = QtWidgets.QLabel(lineui)
@@ -106,7 +106,7 @@ class Ui_line(object):
 
     def retranslateUi(self, lineui):
         _translate = QtCore.QCoreApplication.translate
-        self.CubicSplineMainTitle.setText(_translate("MainWindow", "Line"))
+        self.LineMainTitle.setText(_translate("MainWindow", "Line"))
 
         self.InitialPointTitle.setText(_translate("MainWindow", "Set Initial Point:"))
         self.InitialPointXTitle.setText(_translate("MainWindow", "X:"))
