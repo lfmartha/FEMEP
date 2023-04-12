@@ -19,6 +19,7 @@ class Patch:
         self.isDeleted = False
         self.face = None
         self.attributes = []
+        self.nurbs = []
 
     def __del__(self):
         if self.mesh:
