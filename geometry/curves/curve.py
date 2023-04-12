@@ -104,9 +104,9 @@ class Curve():
         pass
 
     # ---------------------------------------------------------------------
-    # Returns equivalent polygonal of given curve from _tInit to _tEnd
-    # parametric values. The polyline is returned as a list of points.
-    def getEquivPolyline(self, _tInit, _tEnd, _tol):
+    # Returns equivalent polygonal of given curve. The polyline is returned 
+    # as a list of points.
+    def getEquivPolyline(self):
         pass
 
     # ---------------------------------------------------------------------
@@ -368,105 +368,3 @@ class Curve():
         # The returned intersection point coordinates is set as the last point
         # on the curve A. Also returns the last parametric values on both curves
         return True, currPtA, tParA, tParB
-
-    # ---------------------------------------------------------------------
-    # @staticmethod
-    # def joinTwoCurves(_curv1, _curv2, pt):
-    #     if _curv1.nurbs.degree == _curv2.nurbs.degree:
-    #         deg = _curv1.nurbs.degree
-    #     else:
-    #         error_text = "Both curves must have the same degree"
-    #         return None, error_text
-
-    #     curv1_ctrlpts = _curv1.nurbs.ctrlpts
-    #     curv2_ctrlpts = _curv2.nurbs.ctrlpts
-    #     curv1_knotvector = _curv1.nurbs.knotvector
-    #     curv2_knotvector = _curv2.nurbs.knotvector
-    #     tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
-
-    #     if Pnt2D.equal(Pnt2D(curv1_ctrlpts[0][0], curv1_ctrlpts[0][1]), pt, tol):
-    #         init_pt1 = True
-    #     else:
-    #         init_pt1 = False
-
-    #     if Pnt2D.equal(Pnt2D(curv2_ctrlpts[0][0], curv2_ctrlpts[0][1]), pt, tol):
-    #         init_pt2 = True
-    #     else:
-    #         init_pt2 = False
-
-    #     if init_pt1 and init_pt2:
-    #         # Control Points
-    #         curv1_ctrlpts.reverse()
-
-    #         # Knot vector
-    #         curv1_knotvector.reverse()
-    #         for i in range(len(curv1_knotvector)):
-    #             curv1_knotvector[i] = 1.0 - curv1_knotvector[i]
-
-    #         curv1_knotvector = np.asarray(curv1_knotvector)
-    #         curv1_ctrlpts = np.asarray(curv1_ctrlpts)
-
-    #         curv2_knotvector = np.asarray(curv2_knotvector)
-    #         curv2_ctrlpts = np.asarray(curv2_ctrlpts)
-
-    #         curv1 = nrb.NurbsCurve(control_points=curv1_ctrlpts, degree=deg, knots=curv1_knotvector)
-    #         curv2 = nrb.NurbsCurve(control_points=curv2_ctrlpts, degree=deg, knots=curv2_knotvector)
-    #         curv = curv1.attach_nurbs(curv2)
-
-    #     elif not init_pt1 and not init_pt2:
-    #         # Control Points
-    #         curv2_ctrlpts.reverse()
-
-    #         # Knot vector
-    #         curv2_knotvector.reverse()
-    #         for i in range(len(curv2_knotvector)):
-    #             curv2_knotvector[i] = 1.0 - curv2_knotvector[i]
-
-    #         curv1_knotvector = np.asarray(curv1_knotvector)
-    #         curv1_ctrlpts = np.asarray(curv1_ctrlpts)
-
-    #         curv2_knotvector = np.asarray(curv2_knotvector)
-    #         curv2_ctrlpts = np.asarray(curv2_ctrlpts)
-
-    #         curv1 = nrb.NurbsCurve(control_points=curv1_ctrlpts, degree=deg, knots=curv1_knotvector)
-    #         curv2 = nrb.NurbsCurve(control_points=curv2_ctrlpts, degree=deg, knots=curv2_knotvector)
-    #         curv = curv1.attach_nurbs(curv2)
-
-    #     elif init_pt1 and not init_pt2:
-
-    #         curv1_knotvector = np.asarray(curv1_knotvector)
-    #         curv1_ctrlpts = np.asarray(curv1_ctrlpts)
-
-    #         curv2_knotvector = np.asarray(curv2_knotvector)
-    #         curv2_ctrlpts = np.asarray(curv2_ctrlpts)
-
-    #         curv1 = nrb.NurbsCurve(control_points=curv1_ctrlpts, degree=deg, knots=curv1_knotvector)
-    #         curv2 = nrb.NurbsCurve(control_points=curv2_ctrlpts, degree=deg, knots=curv2_knotvector)
-    #         curv = curv2.attach_nurbs(curv1)
-
-    #     elif not init_pt1 and init_pt2:
-
-    #         curv1_knotvector = np.asarray(curv1_knotvector)
-    #         curv1_ctrlpts = np.asarray(curv1_ctrlpts)
-
-    #         curv2_knotvector = np.asarray(curv2_knotvector)
-    #         curv2_ctrlpts = np.asarray(curv2_ctrlpts)
-
-    #         curv1 = nrb.NurbsCurve(control_points=curv1_ctrlpts, degree=deg, knots=curv1_knotvector)
-    #         curv2 = nrb.NurbsCurve(control_points=curv2_ctrlpts, degree=deg, knots=curv2_knotvector)
-    #         curv = curv1.attach_nurbs(curv2)
-
-    #     curv_geomdl = CubicSpline()
-    #     curv_geomdl.nurbs = NURBS.Curve()
-    #     curv_geomdl.nurbs.degree = curv.degree
-    #     curv_geomdl.nurbs.ctrlpts = curv.control_points
-    #     curv_geomdl.nurbs.knotvector = curv.knots
-    #     curv_geomdl.nurbs.sample_size = 10
-
-    #     L1 = _curv1.length(0.0, 1.0)
-    #     L2 = _curv2.length(0.0, 1.0)
-    #     L = (L1 + L2) / 2.0
-    #     curv_geomdl.eqPoly = Curve.genEquivPolyline(curv_geomdl, curv_geomdl.eqPoly, 0.001 * L)
-    #     curv_geomdl.eqPoly.append(Pnt2D(curv_geomdl.nurbs.ctrlpts[-1][0], curv_geomdl.nurbs.ctrlpts[-1][1]))
-
-    #     return curv_geomdl, None
