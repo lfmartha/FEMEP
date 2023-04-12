@@ -97,25 +97,9 @@ class HeController:
 
     def insertSegment(self, _curve, _tol):
         self.undoredo.begin()
-        segmentPts = _curve.getEquivPolyline(0.0, 1.0, _tol)
+        segmentPts = _curve.getEquivPolyline()
         segment = Segment(segmentPts, _curve)
         self.addSegment(segment, _tol)
-
-        # if _curve.type == "POLYLINE":
-        #     status, pts, params = segment.selfIntersectPoly()
-        #     if segment.polyline[0] == segment.polyline[-1]:
-        #         status = False
-        #     if status:
-        #         # if there are self-intersections, split the segment in segments and
-        #         # then insert each segment at a time
-        #         segment_segments = segment.split(params, pts)
-        #         for segment in segment_segments:
-        #             self.addSegment(segment, _tol)
-        #     else:
-        #         self.addSegment(segment, _tol)
-                    
-        # else:
-        #     self.addSegment(segment, _tol)
 
         self.undoredo.end()
         self.update()
@@ -541,7 +525,7 @@ class HeController:
             if face.patch.mesh is not None:
                 self.delMesh(face)
 
-    def delSelectedEntities(self):
+    def delSelectedEntities(self, _tol):
 
         self.undoredo.begin()
         error_text = None
@@ -565,7 +549,7 @@ class HeController:
             edges = vertex.incidentEdges()
             check = False
             if len(edges) == 2:
-                check, error_text = self.joinEdges(edges[0], edges[1], vertex)
+                check, error_text = self.joinEdges(edges[0], edges[1], vertex, _tol)
 
             if not check:
                 if error_text is not None:
@@ -939,7 +923,7 @@ class HeController:
             # this loop go as far as there is more than 2 segments remaining
 
             # ORIGINALLY IT WAS LIKE THIS:
-            # initial_segment = existent_edge.segment.clone()
+            #initial_segment = existent_edge.segment.clone()
             # NOW TESTING USING NO CLONE
             initial_segment = existent_edge.segment
             while len(segments) > 2:
@@ -1012,7 +996,7 @@ class HeController:
 
         return mvse
 
-    def joinEdges(self, _edge1, _edge2, _vertex):
+    def joinEdges(self, _edge1, _edge2, _vertex, _tol):
 
         # update mesh face
         face_1 = _edge1.he1.loop.face
@@ -1026,59 +1010,16 @@ class HeController:
         loop2 = _edge1.he2.loop
 
         if self.checkClosedSegment(loop1) or self.checkClosedSegment(loop2):
-            return False
+            error_text = "Can not join two closed segments"
+            return False, error_text
 
-        seg1_pts = _edge1.segment.getPoints().copy()
-        seg2_pts = _edge2.segment.getPoints().copy()
-        joinned_pts = []
-        tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
+        ###### JOIN CURVES ######
+        seg1 = _edge1.segment
+        seg2 = _edge2.segment
+        segment, error_text = Segment.joinTwoCurves(seg1, seg2, _vertex.point, _tol)
 
-        if Pnt2D.equal(seg1_pts[0], _vertex.point, tol):
-            init_pt1 = True
-        else:
-            init_pt1 = False
-
-        if Pnt2D.equal(seg2_pts[0], _vertex.point, tol):
-            init_pt2 = True
-        else:
-            init_pt2 = False
-
-        if init_pt1 and init_pt2:
-            seg1_pts.reverse()
-            seg1_pts.pop()
-            joinned_pts.extend(seg1_pts)
-            joinned_pts.extend(seg2_pts)
-        elif not init_pt1 and not init_pt2:
-            seg1_pts.pop()
-            joinned_pts.extend(seg1_pts)
-            seg2_pts.reverse()
-            joinned_pts.extend(seg2_pts)
-        elif init_pt1 and not init_pt2:
-            joinned_pts.extend(seg2_pts)
-            joinned_pts.pop()
-            joinned_pts.extend(seg1_pts)
-        elif not init_pt1 and init_pt2:
-            joinned_pts.extend(seg1_pts)
-            joinned_pts.pop()
-            joinned_pts.extend(seg2_pts)
-
-        ###### NEED TO TREAT JOIN CURVES ######
-        curv1 = _edge1.segment.curve
-        curv2 = _edge2.segment.curve
-        if curv1.type == "CUBICSPLINE" and curv2.type == "CUBICSPLINE":
-            curv, error_text = CubicSpline.joinTwoCurves(curv1, curv2, _vertex.point)
-
-            if curv == None:
-                return False, error_text
-
-            else:
-                tol = 0.01
-                segmentPoly = curv.getEquivPolyline(0.0, 1.0, tol)
-                segment = Segment(segmentPoly, curv)
-        
-        else:
-            segmentPoly = Polyline(joinned_pts)
-            segment = Segment(joinned_pts, segmentPoly)
+        if segment == None:
+            return False, error_text
 
         # removes entities
         removeVertex = RemoveVertex(_vertex, self.hemodel)
@@ -1200,7 +1141,7 @@ class HeController:
                     end_point = end_vertex.point
 
             make_segment = True
-            if seg.length(0, 1) <= _tol:
+            if seg.length() <= _tol:
                 make_segment = False
 
             # # check if the segment to be inserted already exists in the model
@@ -1790,7 +1731,7 @@ class HeController:
         self.undoredo.end()
         self.isChanged = True
 
-    def BackToOriginalNurbs(self):
+    def BackToOriginalNurbsKnot(self):
         self.undoredo.begin()
         segments = self.hemodel.getSegments()
 
@@ -1801,19 +1742,125 @@ class HeController:
         self.undoredo.end()
         self.isChanged = True
 
-    def degreeChange(self, _degree):
+    def BackToOriginalNurbsDegree(self):
         self.undoredo.begin()
 
         segments = self.hemodel.getSegments()
 
+        seg_list = []
         for seg in segments:
             if seg.isSelected():
-                status = seg.degreeChange(_degree)
+                seg_list.append(seg)
+
+        if len(seg_list) > 1:
+            error_text = "Please select just one curve"
+            return False, error_text
+        elif len(seg_list) == 0:
+            error_text = "Please select a curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.BackToOriginalNurbs()
 
         self.undoredo.end()
         self.isChanged = True
-        pass
+        return True, None
 
+    def degreeChange(self):
+        self.undoredo.begin()
+
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) > 1:
+            error_text = "Please select just one curve"
+            return False, error_text
+        elif len(seg_list) == 0:
+            error_text = "Please select a curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.degreeChange()
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+    
+    def ReverseNurbs(self):
+        self.undoredo.begin()
+
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) > 1:
+            error_text = "Please select just one curve"
+            return False, error_text
+        elif len(seg_list) == 0:
+            error_text = "Please select a curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.ReverseNurbs()
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+
+    def conformSegs(self):
+        self.undoredo.begin()
+
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) < 2:
+            error_text = "Please select two or more curves"
+            return False, error_text
+        
+        check, error_text = Segment.conformSegs(seg_list)
+
+        self.undoredo.end()
+        self.isChanged = True
+        return check, error_text
+    
+    def updateCtrlPolyView(self, status):
+        self.undoredo.begin()
+
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) > 1:
+            error_text = "Please select just one curve"
+            return False, error_text
+        elif len(seg_list) == 0:
+            error_text = "Please select a curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.updateCtrlPolyView(status)
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
 
     def generateMesh(self, _mesh_type, _shape_type,  _elem_type, _diag_type, _bc_flag):
 
@@ -1891,9 +1938,9 @@ class HeController:
                     gen_check = (len(model.shell.faces) -
                                  len(face.patch.holes) - 1)
 
-                    if gen_check != nel:
-                        self.undoredo.end()
-                        raise Error
+                    # if gen_check != nel:
+                    #     self.undoredo.end()
+                    #     raise Error
 
                     if face.patch.mesh is not None:
                         self.delMesh(face)
@@ -1976,16 +2023,25 @@ class HeController:
     def makeMesh(self, _lines, _repeatedPts):
 
         # initialize the data structure
-        self.makeMeshVertexFace(_lines[0].curve.pt0)
+        self.makeMeshVertexFace(_lines[0].getInitPt())
+        # self.makeMeshVertexFace(_lines[0].curve.pt0)
 
         tol = Point(CompGeom.ABSTOL, CompGeom.ABSTOL)
 
         for line in _lines:
             make_segment = True
-            init_vertex = line.curve.pt0.vertex
-            end_vertex = line.curve.pt1.vertex
-            init_point = line.curve.pt0
-            end_point = line.curve.pt1
+
+            init_point = line.getInitPt()
+            end_point = line.getEndPt()
+
+            # init_vertex = line.curve.pt0.vertex
+            # end_vertex = line.curve.pt1.vertex
+
+            init_vertex = init_point.vertex
+            end_vertex = end_point.vertex
+
+            # init_point = line.curve.pt0
+            # end_point = line.curve.pt1
 
             for pt in _repeatedPts:
                 if Point.equal(pt, init_point, tol) or Point.equal(pt, end_point, tol):
