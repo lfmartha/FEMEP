@@ -48,7 +48,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.verticalLayout_2.addWidget(self.leftToolbarFrame)
         self.logoFrame = QtWidgets.QFrame(self.leftFrame)
-        self.logoFrame.setMaximumSize(QtCore.QSize(16777215, 100))
+        self.logoFrame.setMaximumSize(QtCore.QSize(16777215, 90))
         self.logoFrame.setStyleSheet("image: url(icons/femep-icon.png);")
         self.logoFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.logoFrame.setFrameShadow(QtWidgets.QFrame.Raised)
@@ -80,17 +80,12 @@ class Ui_MainWindow(object):
         self.lineYCoords.setStyleSheet("color: rgb(0, 0, 0);")
         self.lineYCoords.setAlignment(QtCore.Qt.AlignCenter)
         self.lineYCoords.setObjectName("lineYCoords")
-        self.lineLenght = QtWidgets.QLineEdit(self.downRightToolbarFrame)
-        self.lineLenght.setEnabled(False)
-        self.lineLenght.setGeometry(QtCore.QRect(190, 10, 120, 20))
-        self.lineLenght.setStyleSheet("color: rgb(255, 0, 0);")
-        self.lineLenght.setAlignment(QtCore.Qt.AlignCenter)
-        self.lineLenght.setObjectName("lineLenght")
         self.horizontalLayout_3.addWidget(self.downRightToolbarFrame)
         self.downLeftToolbarFrame = QtWidgets.QFrame(self.downToolbarFrame)
         self.downLeftToolbarFrame.setMinimumSize(QtCore.QSize(200, 38))
         self.downLeftToolbarFrame.setMaximumSize(QtCore.QSize(200, 16777215))
         self.downLeftToolbarFrame.setObjectName("downLeftToolbarFrame")
+
         self.snapcheckBox = QtWidgets.QCheckBox(self.downLeftToolbarFrame)
         self.snapcheckBox.setEnabled(True)
         self.snapcheckBox.setGeometry(QtCore.QRect(130, 10, 70, 20))
@@ -108,6 +103,26 @@ class Ui_MainWindow(object):
         self.snapcheckBox.setStyleSheet("image: url(icons/Snap-to-grid.png);")
         self.snapcheckBox.setText("")
         self.snapcheckBox.setObjectName("snapcheckBox")
+
+        # # Add control polygon checkbox
+        # self.ctrlPolygonCheckBox = QtWidgets.QCheckBox(self.downLeftToolbarFrame)
+        # self.ctrlPolygonCheckBox.setEnabled(True)
+        # self.ctrlPolygonCheckBox.setGeometry(QtCore.QRect(60, 10, 70, 20))
+        # sizePolicy = QtWidgets.QSizePolicy(
+        #     QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        # sizePolicy.setHorizontalStretch(0)
+        # sizePolicy.setVerticalStretch(0)
+        # sizePolicy.setHeightForWidth(
+        #     self.ctrlPolygonCheckBox.sizePolicy().hasHeightForWidth())
+        # self.ctrlPolygonCheckBox.setSizePolicy(sizePolicy)
+        # self.ctrlPolygonCheckBox.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+        # self.ctrlPolygonCheckBox.setAcceptDrops(False)
+        # self.ctrlPolygonCheckBox.setLayoutDirection(QtCore.Qt.LeftToRight)
+        # self.ctrlPolygonCheckBox.setAutoFillBackground(False)
+        # self.ctrlPolygonCheckBox.setStyleSheet("image: url(icons/ctrlpoly.png);")
+        # self.ctrlPolygonCheckBox.setText("")
+        # self.ctrlPolygonCheckBox.setObjectName("ctrlPolygonCheckBox")
+
         self.horizontalLayout_3.addWidget(self.downLeftToolbarFrame)
         self.verticalLayout.addWidget(self.downToolbarFrame)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -443,28 +458,28 @@ class Ui_MainWindow(object):
 
         self.actionCubicSpline.setText(_translate("MainWindow", "CubicSpline"))
         self.actionCubicSpline.setToolTip(_translate(
-            "MainWindow", "CubicSpline (Shift + P)"))
-        self.actionCubicSpline.setShortcut(_translate("MainWindow", "Shift+P"))
+            "MainWindow", "CubicSpline (Shift + S)"))
+        self.actionCubicSpline.setShortcut(_translate("MainWindow", "Shift + S"))
 
         self.actionCircle.setText(_translate("MainWindow", "Circle"))
         self.actionCircle.setToolTip(_translate(
-            "MainWindow", "Circle (Shift + P)"))
-        self.actionCircle.setShortcut(_translate("MainWindow", "Shift+P"))
+            "MainWindow", "Circle (C)"))
+        self.actionCircle.setShortcut(_translate("MainWindow", "C"))
 
         self.actionCircleArc.setText(_translate("MainWindow", "CircleArc"))
         self.actionCircleArc.setToolTip(_translate(
-            "MainWindow", "CircleArc (Shift + P)"))
-        self.actionCircleArc.setShortcut(_translate("MainWindow", "Shift+P"))
+            "MainWindow", "CircleArc (Shift + C)"))
+        self.actionCircleArc.setShortcut(_translate("MainWindow", "Shift+C"))
 
         self.actionEllipse.setText(_translate("MainWindow", "Ellipse"))
         self.actionEllipse.setToolTip(_translate(
-            "MainWindow", "Ellipse (Shift + P)"))
-        self.actionEllipse.setShortcut(_translate("MainWindow", "Shift+P"))
+            "MainWindow", "Ellipse (E)"))
+        self.actionEllipse.setShortcut(_translate("MainWindow", "E"))
 
         self.actionEllipseArc.setText(_translate("MainWindow", "EllipseArc"))
         self.actionEllipseArc.setToolTip(_translate(
-            "MainWindow", "EllipseArc (Shift + P)"))
-        self.actionEllipseArc.setShortcut(_translate("MainWindow", "Shift+P"))
+            "MainWindow", "EllipseArc (Shift + E)"))
+        self.actionEllipseArc.setShortcut(_translate("MainWindow", "Shift+E"))
 
         self.actionDelete.setText(_translate("MainWindow", "Delete (Del)"))
         self.actionDelete.setShortcut(_translate("MainWindow", "Del"))
