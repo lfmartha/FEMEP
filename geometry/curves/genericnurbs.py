@@ -123,12 +123,12 @@ class GenericNurbs(Curve):
         return True
 
     # ---------------------------------------------------------------------
-    def getEquivPolyline(self, _tInit, _tEnd, _tol):
+    def getEquivPolyline(self, _tol):
         # If current curve does not have yet an equivalent polyline,
         # generate it.
         if self.eqPoly == []:
             L = self.lengthInerpPts()
-            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.001 * L)
+            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * L)
             ptEnd = Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
             self.eqPoly.append(ptEnd)
 
@@ -203,6 +203,14 @@ class GenericNurbs(Curve):
     # ---------------------------------------------------------------------
     def getYend(self):
         return self.nurbs.ctrlpts[-1][1]
+    
+    # ---------------------------------------------------------------------
+    def getInitPt(self):
+        return self.pt0
+    
+    # ---------------------------------------------------------------------
+    def getEndPt(self):
+        return self.pt1
 
     # ---------------------------------------------------------------------
     def lengthInerpPts(self):
