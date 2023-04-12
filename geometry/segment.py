@@ -1,9 +1,14 @@
 from compgeom.pnt2d import Pnt2D
 from geometry.curves.curve import Curve
 from compgeom.compgeom import CompGeom
-from geometry.point import Point
+from geometry.curves.polyline import Polyline
+from geometry.curves.cubicspline import CubicSpline
+from geometry.curves.circlearc import CircleArc
+from geometry.curves.ellipsearc import EllipseArc
+import numpy as np
+from geomdl import NURBS
 from geomdl import operations
-import math
+from geomdl import helpers
 import copy
 
 
@@ -17,6 +22,7 @@ class Segment():
         self.nsudv = None
         self.sdvPoints = None
         self.originalNurbs = None
+        self.CtrlPolyView = False
 
     # ---------------------------------------------------------------------
     def getCurve(self):
@@ -36,16 +42,12 @@ class Segment():
 
     # ---------------------------------------------------------------------
     def getInitTangent(self):
-        # tan = self.polyline[1] - self.polyline[0]
-        # tan = Pnt2D.normalize(tan)
         pt, tan = self.curve.evalPointTangent(0.0)
         tan = Pnt2D.normalize(tan)
         return tan
 
     # ---------------------------------------------------------------------
     def getEndTangent(self):
-        # tan = self.polyline[-1] - self.polyline[-2]
-        # tan = Pnt2D.normalize(tan)
         pt, tan = self.curve.evalPointTangent(1.0)
         tan = Pnt2D.normalize(tan)
         return tan
@@ -57,36 +59,6 @@ class Segment():
 
     # ---------------------------------------------------------------------
     def intersectPoint(self, _pt, _tol):
-        # partialLength = 0
-        # totalLength = Segment.polylineLength(self.polyline, 0.0, 1.0)
-        # interStatus = False
-        # param = None
-
-        # if Point.euclidiandistance(_pt, self.polyline[0]) <= _tol:
-        #     param = 0
-
-        # for i in range(1, len(self.polyline)):
-        #     p1 = Point(self.polyline[i-1].getX(), self.polyline[i-1].getY())
-        #     p2 = Point(self.polyline[i].getX(), self.polyline[i].getY())
-
-        #     dist, pi, t = CompGeom.getClosestPointSegment(p1, p2, _pt)
-        #     length = math.sqrt(((self.polyline[i].getX() - self.polyline[i-1].getX()) *
-        #                         (self.polyline[i].getX() - self.polyline[i-1].getX())) +
-        #                        ((self.polyline[i].getY() - self.polyline[i-1].getY()) *
-        #                         (self.polyline[i].getY() - self.polyline[i-1].getY())))
-
-        #     # skip init intersections at each segment (no repeated intersections)
-        #     if dist <= _tol and t*length > _tol:
-        #     #if dist <= _tol and t > 0.0:
-        #         param = ((partialLength + t*length) / totalLength)
-        #         status, pi, dmin, param, tang = self.curve.closestPointParam(pi.getX(), pi.getY(), param)
-        #         if status == True:
-        #             interStatus = True
-        #         break
-
-        #     partialLength += length
-
-        # return interStatus, param, pi
         status, clstPt, dmin, t, tang = self.curve.closestPoint(_pt.getX(), _pt.getY())
         if dmin <= _tol:
             return True, t, clstPt
@@ -94,15 +66,7 @@ class Segment():
             return False, t, clstPt
 
     # ---------------------------------------------------------------------
-    def selfIntersectPoly(self):
-        flag, pts, params = CompGeom.splitSelfIntersected(self.getPoints())
-
-        return flag, pts, params
-
-    # ---------------------------------------------------------------------
     def split(self, _params, _pts):
-        seglen = Segment.polylineLength(self.polyline, 0.0, 1.0)
-        tol = 0.001 * seglen
         curv2 = self.curve
         segments = []
 
@@ -111,7 +75,7 @@ class Segment():
             curv1, curv2 = curv2.split(t)
 
             if curv1 is not None:
-                seg1Pts = curv1.getEquivPolyline(0.0, 1.0, tol)
+                seg1Pts = curv1.getEquivPolyline()
                 seg1 = Segment(seg1Pts, curv1)
                 segments.append(seg1)
 
@@ -120,15 +84,15 @@ class Segment():
                 _params[j] = (_params[j] - _params[i])/(1-_params[i])
 
         if curv2 is not None:
-            seg2Pts = curv2.getEquivPolyline(0.0, 1.0, tol)
+            seg2Pts = curv2.getEquivPolyline()
             seg2 = Segment(seg2Pts, curv2)
             segments.append(seg2)
         return segments
 
     # ---------------------------------------------------------------------
-    def length(self, _t0, _t1):
-        lenSeg = Segment.polylineLength(self.polyline, _t0, _t1)
-        return lenSeg
+    def length(self):
+        L = self.curve.length()
+        return L
 
     # ---------------------------------------------------------------------
     def isEqual(self, _segment, _tol):
@@ -244,6 +208,16 @@ class Segment():
     def getYend(self):
         pt = self.polyline[-1]
         return pt.getY()
+    
+    # ---------------------------------------------------------------------
+    def getInitPt(self):
+        pt = self.curve.getInitPt()
+        return pt
+    
+    # ---------------------------------------------------------------------
+    def getEndPt(self):
+        pt = self.curve.getEndPt()
+        return pt
 
     # ---------------------------------------------------------------------
     def getType(self):
@@ -303,18 +277,6 @@ class Segment():
                             ni += 1
 
         return ni
-
-    # ---------------------------------------------------------------------
-    def getInitPoint(self):
-        xInit = self.polyline[0].getX()
-        yInit = self.polyline[0].getY()
-        return Point(xInit, yInit)
-
-    # ---------------------------------------------------------------------
-    def getEndPoint(self):
-        xEnd = self.polyline[-1].getX()
-        yEnd = self.polyline[-1].getY()
-        return Point(xEnd, yEnd)
 
     # ---------------------------------------------------------------------
     def setInitPoint(self, _pt):
@@ -425,116 +387,164 @@ class Segment():
         return self.curve.nurbs
 
     # ---------------------------------------------------------------------
-    def degreeChange(self, _degree):
-        status = self.curve.degreeChange(_degree)
-        return status
+    def degreeChange(self):
+        if self.originalNurbs is None:
+            self.originalNurbs = copy.deepcopy(self.curve.nurbs)
+
+        crv = copy.deepcopy(self.curve.nurbs)
+
+        # Knot insertion
+        knots = list(set(crv.knotvector)) # Remove duplicates
+        knots.sort()
+        knots.pop()
+        knots.pop(0)
+
+        numb_insertions = []
+        for knot in knots:
+            knot_multiplicity = helpers.find_multiplicity(knot, crv.knotvector)
+            numb_insertions.append(crv.degree - knot_multiplicity)
+            if numb_insertions[-1] > 0:
+                operations.insert_knot(crv, [knot], [numb_insertions[-1]])
+
+        # Bezier decomposition
+        beziers = operations.decompose_curve(crv)
+
+        # Bezier degree elevation
+        new_ctrlpts = []
+        for i in range(len(beziers)):
+            bezier_new_ctrlpts = helpers.degree_elevation(crv.degree, beziers[i].ctrlpts)
+            if len(beziers) == 2:
+                if i == 0:
+                    bezier_new_ctrlpts.pop()
+            elif len(beziers) > 2:
+                if i == 0:
+                    bezier_new_ctrlpts.pop()
+                elif i != 0 and i != (len(beziers) - 1):
+                    bezier_new_ctrlpts.pop()
+            new_ctrlpts.extend(bezier_new_ctrlpts)
+
+        # New knot vector
+        new_knot_vector = crv.knotvector
+        new_knot_vector.extend(list(set(crv.knotvector)))
+        new_knot_vector.sort()
+
+        # New degree
+        new_degree = crv.degree + 1
+
+        # Create the curve instance #2
+        crv2 = NURBS.Curve()
+
+        # Set degree, control points and knot vector
+        crv2.degree = new_degree
+        crv2.ctrlpts = new_ctrlpts
+        crv2.knotvector = new_knot_vector
+
+        for i in range(len(knots)):
+            operations.remove_knot(crv2, [knots[i]], [numb_insertions[i]])
+
+        self.curve.nurbs = crv2
+
+    def ReverseNurbs(self):
+        if self.originalNurbs is None:
+            self.originalNurbs = copy.deepcopy(self.curve.nurbs)
+
+        degree = copy.deepcopy(self.curve.nurbs.degree)
+        ctrlpts = copy.deepcopy(self.curve.nurbs.ctrlpts)
+        weights = copy.deepcopy(self.curve.nurbs.weights)
+        knotvector = copy.deepcopy(self.curve.nurbs.knotvector)
+
+        # inverte NURBS direction
+        for i in range(len(knotvector)):
+            knotvector[i] = 1.0 - knotvector[i]
+        knotvector.reverse()
+        ctrlpts.reverse()
+        weights.reverse()
+
+        # Create the curve instance #2
+        crv2 = NURBS.Curve()
+
+        # Set degree, control points and knot vector
+        crv2.degree = degree
+        crv2.ctrlpts = ctrlpts
+        crv2.weights = weights
+        crv2.knotvector = knotvector
+
+        self.curve.nurbs = crv2
 
     # ---------------------------------------------------------------------
-        
-    # def evalPoint(self, _t):
-    #     # Get the owning curve and polyline of given segmente.
-    #     curve = self.curve
-
-    #     # Evaluate point on segment based on its polyline
-    #     pt, locSeg, tloc = Segment.evalPolylinePointSeg(self.polyline, _t)
- 
-    #     # Get closest point on onwing curve
-    #     if curve is not None:  # In case there is a supporting curve
-    #         status, pt, dist, par, tangVec = curve.closestPointParam(pt.getX(), pt.getY(), _t)
-
-    #     return pt
-
+    def getCtrlPts(self):
+        return self.curve.nurbs.ctrlpts
+    
     # ---------------------------------------------------------------------
-    # ---------------------------------------------------------------------
-    # ---------------------------------------------------------------------
-    # --------------------------- CLASS METHODS ---------------------------
-    # ---------------------------------------------------------------------
-    # ---------------------------------------------------------------------
-    # ---------------------------------------------------------------------
-
+    def updateCtrlPolyView(self, status):
+        self.CtrlPolyView = status
+    
     # ---------------------------------------------------------------------
     @staticmethod
-    def polylineLength(_polypts, _tInit, _tEnd):
-        nPts = len(_polypts)
-        L = 0.0
-        for i in range(0, nPts - 1):
-            L += math.sqrt((_polypts[i + 1].getX() - _polypts[i].getX()) *
-                           (_polypts[i + 1].getX() - _polypts[i].getX()) +
-                           (_polypts[i + 1].getY() - _polypts[i].getY()) *
-                           (_polypts[i + 1].getY() - _polypts[i].getY()))
-
-        return L * (_tEnd - _tInit)
-
-    # ---------------------------------------------------------------------
-    # Evaluate a point on polyline for a given parametric value.
-    # Also return the segment of the polyline of the evaluated point and
-    # the local parametric value in segment
-    @staticmethod
-    def evalPolylinePointSeg(_polypts, _t):
-        nPts = len(_polypts)
-        if _t <= 0.0:
-            return Pnt2D(_polypts[0].getX(), _polypts[0].getY()), 0, 0.0
-
-        if _t >= 1.0:
-            return Pnt2D(_polypts[-1].getX(), _polypts[-1].getY()), nPts - 1, 1.0
-
-        length = Segment.polylineLength(_polypts, 0.0, 1.0)
-        s = _t * length
-        loc_t = 1.0
-        prev_id = 0
-        next_id = 0
-        lenToSeg = 0.0
-
-        for i in range(1, nPts):
-            prev_id = i - 1
-            next_id = i
-            dist = math.sqrt((_polypts[i].getX() - _polypts[i - 1].getX()) *
-                             (_polypts[i].getX() - _polypts[i - 1].getX()) +
-                             (_polypts[i].getY() - _polypts[i - 1].getY()) *
-                             (_polypts[i].getY() - _polypts[i - 1].getY()))
-
-            if (lenToSeg + dist) >= s:
-                loc_t = (s - lenToSeg) / dist
-                break
-
-            lenToSeg += dist
-
-        x = _polypts[prev_id].getX() + loc_t * \
-            (_polypts[next_id].getX() - _polypts[prev_id].getX())
-        y = _polypts[prev_id].getY() + loc_t * \
-            (_polypts[next_id].getY() - _polypts[prev_id].getY())
-
-        return Pnt2D(x, y), prev_id, loc_t
-
-    # ---------------------------------------------------------------------
-    @staticmethod
-    def generatePartialPolyline(_polypts, _tInit, _tEnd):
-        nPts = len(_polypts)
-        equivPoly = []
-        if (_tEnd - _tInit) <= Curve.PARAM_TOL:
-            return equivPoly
-
-        ptInit, segInit, tlocInit = Segment.evalPolylinePointSeg(_polypts, _tInit)
-        ptEnd, segEnd, tlocEnd = Segment.evalPolylinePointSeg(_polypts, _tEnd)
-
-        if abs(tlocInit) <= Curve.PARAM_TOL:
-            ptInit = _polypts[segInit]
-        elif abs(tlocInit - 1.0) <= Curve.PARAM_TOL:
-            segInit += 1
-            ptInit = _polypts[segInit]
-
-        if abs(tlocEnd) <= Curve.PARAM_TOL:
-            ptEnd = _polypts[segEnd]
-            segEnd -= 1
-        elif abs(tlocEnd - 1.0) <= Curve.PARAM_TOL:
-            if segEnd < (nPts - 1):
-                ptEnd = _polypts[segEnd + 1]
+    def joinTwoCurves(_seg1, _seg2, _pt, _tol):
+        # check curve types
+        if _seg1.curve.type != _seg2.curve.type:
+            # in case the curves are polyline and line, joining is possible
+            if ((_seg1.curve.type == 'POLYLINE' and _seg2.curve.type == 'LINE') or
+                (_seg1.curve.type == 'LINE' and _seg2.curve.type == 'POLYLINE')):
+                pass
             else:
-                ptEnd = _polypts[segEnd]
-                segEnd -= 1
+                error_text = "These types of curves can not be joined."
+                return None, error_text
+        
+        if _seg1.curve.type == 'POLYLINE' or _seg1.curve.type == 'LINE':
+            curv, error_text = Polyline.joinTwoCurves(_seg1.curve, _seg2.curve, _pt, _tol)
+        elif _seg1.curve.type == 'CUBICSPLINE':
+            curv, error_text = CubicSpline.joinTwoCurves(_seg1.curve, _seg2.curve, _pt, _tol)
+        elif _seg1.curve.type == 'CIRCLEARC':
+            curv, error_text = CircleArc.joinTwoCurves(_seg1.curve, _seg2.curve, _pt, _tol)
+        elif _seg1.curve.type == 'ELLIPSEARC':
+            curv, error_text = EllipseArc.joinTwoCurves(_seg1.curve, _seg2.curve, _pt, _tol)
 
-        equivPoly.append(ptInit)
-        for i in range(segInit + 1, segEnd + 1):
-            equivPoly.append(_polypts[i])
-        equivPoly.append(ptEnd)
-        return equivPoly
+        if curv is not None:
+            segPoly = curv.getEquivPolyline()
+            seg = Segment(segPoly, curv)
+        else:
+            seg = None
+        return seg, error_text
+
+    @staticmethod
+    def conformSegs(_seg_list):
+        for seg in _seg_list:
+            if seg.originalNurbs is None:
+                seg.originalNurbs = copy.deepcopy(seg.curve.nurbs)
+
+        # check curves degree
+        degrees_list = []
+        for seg in _seg_list:
+            degrees_list.append(seg.curve.nurbs.degree)
+
+        if len(set(degrees_list)) != 1:
+            error_text = "Curves must have the same degree"
+            return False, error_text
+        
+        # find remaining knots
+        insert_knots = []
+        for i in range(len(_seg_list)):
+            knots_already_have = copy.deepcopy(_seg_list[i].curve.nurbs.knotvector)
+            seg_insert_knots = []
+            for j in range(len(_seg_list)):
+                next_knotvector = _seg_list[j].curve.nurbs.knotvector
+                
+                remaining_knots = []
+                for k in next_knotvector:
+                    if k not in knots_already_have:
+                        remaining_knots.append(k)
+
+                knots_already_have.extend(remaining_knots)
+                seg_insert_knots.extend(remaining_knots)
+            insert_knots.append(seg_insert_knots)
+
+        # insert remaining knots in each curve
+        for i in range(len(_seg_list)):
+            seg = _seg_list[i]
+            knots = insert_knots[i]
+            for knot in knots:
+                operations.insert_knot(seg.curve.nurbs, [knot], [1])
+
+        return True, None
