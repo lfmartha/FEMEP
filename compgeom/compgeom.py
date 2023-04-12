@@ -74,6 +74,12 @@ class CompGeom:
     @staticmethod
     def getClosestPointSegment(_p1, _p2, _p):
         # **** COMPLETE HERE: COMPGEOM_01 ****
+        if _p1 == _p2:
+            dist = Pnt2D.euclidiandistance(_p2, _p)
+            pC = _p2
+            t = 1.0
+            return dist, pC, t
+        
         v12 = _p2 - _p1
         v1p = _p - _p1
 
