@@ -2,8 +2,8 @@ from compgeom.pnt2d import Pnt2D
 from compgeom.compgeom import CompGeom
 from geometry.curves.curve import Curve
 from geomdl import NURBS
-from geomdl import knotvector
 from geomdl import operations
+from geomdl import knotvector
 
 
 class Line(Curve):
@@ -33,12 +33,6 @@ class Line(Curve):
                     self.nurbs.sample_size = 10
 
     # ---------------------------------------------------------------------
-    def setPoints(self, _x0, _y0, _x1, _y1):
-        self.pt0 = Pnt2D(_x0, _y0)
-        self.pt1 = Pnt2D(_x1, _y1)
-        self.nPts = 2
-
-    # ---------------------------------------------------------------------
     def addCtrlPoint(self, _x, _y, _LenAndAng):
         pt = Pnt2D(_x, _y)
 
@@ -63,23 +57,15 @@ class Line(Curve):
 
     # ---------------------------------------------------------------------
     def evalPoint(self, _t):
-        if _t > 1.0:
-            _t = 1.0
-        elif _t <= 0.0:
-            _t = 0.0
-
-        vx = self.pt1.getX() - self.pt0.getX()
-        vy = self.pt1.getY() - self.pt0.getY()
         if _t < 0.0:
-            xOn = self.pt0.getX()
-            yOn = self.pt0.getY()
+            _t = 0.0
         elif _t > 1.0:
-            xOn = self.pt1.getX()
-            yOn = self.pt1.getY()
-        else:
-            xOn = self.pt0.getX() + _t * vx
-            yOn = self.pt0.getY() + _t * vy
-        return Pnt2D(xOn, yOn)
+            _t = 1.0
+
+        v = self.pt1 - self.pt0
+        pt = self.pt0 +  v * _t
+
+        return pt
 
     # ---------------------------------------------------------------------
     def evalPointTangent(self, _t):
@@ -90,6 +76,7 @@ class Line(Curve):
             
         pt = self.evalPoint(_t)
         tangVec = self.pt1 - self.pt0
+
         return pt, tangVec
 
     # ---------------------------------------------------------------------
@@ -103,35 +90,14 @@ class Line(Curve):
         if self.nPts < 2:
             return False
         return True
-
+    
+    # ---------------------------------------------------------------------
+    def isUnlimited(self):
+        return False
+    
     # ---------------------------------------------------------------------
     def getCtrlPoints(self):
-        tempPts = []
-        if self.nPts == 0:
-            return tempPts
-        if self.nPts == 1:
-            tempPts.append(self.pt0)
-            return tempPts
-        tempPts.append(self.pt0)
-        tempPts.append(self.pt1)
-        return tempPts
-
-    # ---------------------------------------------------------------------
-    def setCtrlPoint(self, _id, _x, _y, _tol):
-        if self.nPts != 2:
-            return False
-        pt = Pnt2D(_x, _y)
-        if _id == 0:
-            if Pnt2D.euclidiandistance(pt, self.pt1) <= _tol:
-                return False
-            self.pt0.setCoords(_x, _y)
-            return True
-        if _id == 1:
-            if Pnt2D.euclidiandistance(pt, self.pt0) <= _tol:
-                return False
-            self.pt1.setCoords(_x, _y)
-            return True
-        return False
+        return [self.pt0, self.pt1]
 
     # ---------------------------------------------------------------------
     def isStraight(self, _tol):
@@ -143,10 +109,19 @@ class Line(Curve):
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+
+        for knot in knots:
+            if _t >= (knot - 1000*Curve.PARAM_TOL) and _t <= (knot + 1000*Curve.PARAM_TOL):
+                _t = knot
+
         if _t <= Curve.PARAM_TOL:
             left = None
             right = self
             return left, right
+        
         if (1.0 - _t) <= Curve.PARAM_TOL:
             left = self
             right = None
@@ -157,78 +132,68 @@ class Line(Curve):
         right = Line()
 
         # Create the corresponding NURBS curves resulting from splitting
-        if _t > 0.5 and _t <= (0.5 + Curve.PARAM_TOL):
-            _t = 0.5
-        elif _t < 0.5 and _t >= (0.5 - Curve.PARAM_TOL):
-            _t = 0.5
-            
-        try:
-            left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
-        except:
-            try:
-                left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t - Curve.PARAM_TOL)
-            except:
-                left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t + Curve.PARAM_TOL)
+        left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
 
         return left, right
 
     # ---------------------------------------------------------------------
     def split(self, _t):
-        left, right = self.splitRaw(_t)
-        if (left == None) or (right == None):
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+
+        for knot in knots:
+            if _t >= (knot - 1000*Curve.PARAM_TOL) and _t <= (knot + 1000*Curve.PARAM_TOL):
+                _t = knot
+
+        if _t <= Curve.PARAM_TOL:
+            left = None
+            right = self
+            return left, right
+        
+        if (1.0 - _t) <= Curve.PARAM_TOL:
+            left = self
+            right = None
             return left, right
 
         pt = self.evalPoint(_t)
 
-        left.pt0 = self.pt0
-        left.pt1 = pt
+        # Left curve properties
+        left_pt0 = self.pt0
+        left_pt1 = pt
 
-        right.pt0 = pt
-        right.pt1 = self.pt1
+        # Right curve properties
+        right_pt0 = pt
+        right_pt1 = self.pt1
+
+        # Create curve objects resulting from splitting
+        left = Line(left_pt0, left_pt1)
+        right = Line(right_pt0, right_pt1)
 
         return left, right
 
     # ---------------------------------------------------------------------
-    def getEquivPolyline(self, _tInit, _tEnd, _tol):
-        equivPoly = []
-        if (_tEnd - _tInit) <= Curve.PARAM_TOL:
-            return equivPoly
+    def getEquivPolyline(self):
+        equivPoly = [self.pt0, self.pt1]
 
-        if _tInit <= Curve.PARAM_TOL:
-            ptInit = self.pt0
-        elif (1.0 - _tInit) <= Curve.PARAM_TOL:
-            return equivPoly
-        else:
-            ptInit = self.evalPoint(_tInit)
-
-        if _tEnd <= Curve.PARAM_TOL:
-            return equivPoly
-        elif (1.0 - _tEnd) <= Curve.PARAM_TOL:
-            ptEnd = self.pt1
-        else:
-            ptEnd = self.evalPoint(_tEnd)
-
-        equivPoly.append(ptInit)
-        equivPoly.append(ptEnd)
         return equivPoly
 
     # ---------------------------------------------------------------------
     def getEquivPolylineCollecting(self, _pt):
         tempPts = []
-        tempPts.append(self.pt0)
-        if self.nPts == 2:
+        if self.nPts == 1:
+            self.pt1 = Pnt2D(_pt.x, _pt.y)
+            tempPts.append(self.pt0)
             tempPts.append(self.pt1)
-        elif self.nPts == 1:
-            tempPts.append(_pt)
+
         return tempPts
 
     # ---------------------------------------------------------------------
     def closestPoint(self, _x, _y):
-        p0 = self.pt0
-        p1 = self.pt1
         pt = Pnt2D(_x, _y)
-        dist, clstPt, t = CompGeom.getClosestPointSegment(p0, p1, pt)
+        dist, clstPt, t = CompGeom.getClosestPointSegment(self.pt0, self.pt1, pt)
         tangVec = self.pt1 - self.pt0
+
         return True, clstPt, dist, t, tangVec
 
     # ---------------------------------------------------------------------
@@ -239,6 +204,7 @@ class Line(Curve):
             return True, clstPt, 0.0, _tStart, tangVec
 
         status, clstPt, dist, t, tangVec = self.closestPoint(_x, _y)
+
         return status, clstPt, dist, t, tangVec
 
     # ---------------------------------------------------------------------
@@ -247,6 +213,7 @@ class Line(Curve):
         xmin = min(self.pt0.getX(), self.pt1.getX())
         ymax = max(self.pt0.getY(), self.pt1.getY())
         ymin = min(self.pt0.getY(), self.pt1.getY())
+
         return xmin, xmax, ymin, ymax
 
     # ---------------------------------------------------------------------
@@ -264,9 +231,16 @@ class Line(Curve):
     # ---------------------------------------------------------------------
     def getYend(self):
         return self.pt1.getY()
+    
+    # ---------------------------------------------------------------------
+    def getInitPt(self):
+        return self.pt0
+    
+    # ---------------------------------------------------------------------
+    def getEndPt(self):
+        return self.pt1
 
     # ---------------------------------------------------------------------
-    def length(self, _tInit, _tEnd):
-        L = Pnt2D.euclidiandistance(self.pt0,self.pt1)
-        len = L * (_tEnd - _tInit)
-        return len
+    def length(self):
+        L = Pnt2D.euclidiandistance(self.pt0, self.pt1)
+        return L
