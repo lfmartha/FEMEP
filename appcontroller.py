@@ -161,15 +161,18 @@ class AppController(QMainWindow, Ui_MainWindow):
         # Subdivisions QpushButtons
         self.nsudv_display.nsudvpushButton.clicked.connect(self.setNumberSdv)
         self.nsudv_display.knotrefinementpushButton.clicked.connect(self.refineNumberSdv)
-        self.nsudv_display.rescuepushButton.clicked.connect(self.BackToOriginalNurbs)
+        self.nsudv_display.rescuepushButton.clicked.connect(self.BackToOriginalNurbsKnot)
+        self.nsudv_display.knotconformpushButton.clicked.connect(self.conformSegs)
 
         # Prop QpushButtons
         self.prop_face_display.closepushbutton.clicked.connect(self.close_propFace)
-        self.prop_edge_display.closepushbutton.clicked.connect(self.close_propEdge)
         self.prop_edge_display.degreeChange.clicked.connect(self.degreeChange)
+        self.prop_edge_display.rescuepushbutton.clicked.connect(self.BackToOriginalNurbsDegree)
+        self.prop_edge_display.reversepushbutton.clicked.connect(self.ReverseNurbs)
+        self.prop_edge_display.swappushbutton.clicked.connect(self.close_propEdge)
         self.prop_vertex_display.closepushbutton.clicked.connect(self.close_propVertex)
 
-        self.point_display.addpointpushButton.clicked.connect(self.add_point)
+        self.point_display.addPointpushButton.clicked.connect(self.add_point)
         self.select_display.propertiespushButton.clicked.connect(
             self.properties)
         self.attribute_display.addpushButton.clicked.connect(self.addAttribute)
@@ -193,6 +196,9 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.select_display.pointcheckBox.clicked.connect(self.change_select)
         self.select_display.segmentcheckBox.clicked.connect(self.change_select)
         self.select_display.patchcheckBox.clicked.connect(self.change_select)
+
+        # Prop edge checkbox
+        self.prop_edge_display.ctrlPolygonCheckBox.clicked.connect(self.updateCtrlPolyView)
 
         # comboBoxes
         self.attribute_display.attcomboBox.activated.connect(
@@ -701,10 +707,14 @@ class AppController(QMainWindow, Ui_MainWindow):
     def add_point(self):
         if len(self.canvas_list) == 0:
             return
+        
+        # get current canvas
+        canvas = self.current_canvas
 
+        # get point from lineEdits
         try:
-            x = float(self.point_display.xlineEdit.text())
-            y = float(self.point_display.ylineEdit.text())
+            x = float(self.point_display.PointXlineEdit.text())
+            y = float(self.point_display.PointYlineEdit.text())
         except:
             self.clearDispText(self.point_display)
             msg = QMessageBox(self)
@@ -713,8 +723,11 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        self.current_canvas.hecontroller.insertPoint(
-            Point(x, y), 0.01)
+        # set point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
+        self.current_canvas.hecontroller.insertPoint(Point(x, y), pick_tol)
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
@@ -741,8 +754,10 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # start collection and set the initial point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
@@ -772,13 +787,15 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # set the end point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, False, pick_tol)
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.hecontroller.insertSegment(segment, pick_tol)
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -806,8 +823,10 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # start collection and set the initial point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
@@ -837,8 +856,10 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # set the end point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, False, pick_tol)
 
         canvas.updatedDsp = False
@@ -866,13 +887,15 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # set the end point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, False, pick_tol)
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.hecontroller.insertSegment(segment, pick_tol)
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -900,8 +923,10 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # start collection and set the initial point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
@@ -931,8 +956,10 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # set the end point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, False, pick_tol)
 
         canvas.updatedDsp = False
@@ -960,13 +987,15 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # set the end point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, False, pick_tol)
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.hecontroller.insertSegment(segment, pick_tol)
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -994,8 +1023,10 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # start collection and set the center point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
@@ -1032,13 +1063,15 @@ class AppController(QMainWindow, Ui_MainWindow):
         elif Radius_option == "Radius and Angle":
             LenAndAng = True
 
-        pick_tol = 0
         # set the radius
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.hecontroller.insertSegment(segment, pick_tol)
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -1066,8 +1099,10 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # start collection and set the center point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
@@ -1098,14 +1133,16 @@ class AppController(QMainWindow, Ui_MainWindow):
             return
 
        # check comboBox
-        FirstAxis_option = self.circlearc_display.FirstArcPointcomboBox.currentText()
-        if FirstAxis_option == "Coordinates":
+        FirstArcPoint_option = self.circlearc_display.FirstArcPointcomboBox.currentText()
+        if FirstArcPoint_option == "Coordinates":
             LenAndAng = False
-        elif FirstAxis_option == "Radius and Angle":
+        elif FirstArcPoint_option == "Radius and Angle":
             LenAndAng = True
 
-        pick_tol = 0
         # set the first arc point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
 
         canvas.updatedDsp = False
@@ -1113,6 +1150,14 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # set LineEdits
         self.set_curves_lineEdits()
+
+       # check comboBox and set LineEdits text
+        SecondArcPoint_option = self.circlearc_display.SecondArcPointcomboBox.currentText()
+        if SecondArcPoint_option == "Coordinates":
+            pass
+        elif SecondArcPoint_option == "Radius and Angle":
+            self.set_curves_lineEdits_text(0.0, 0.0)
+            self.circlearc_display.SecondArcPointYlineEdit.clear()
 
     def add_circlearc(self):
         if len(self.canvas_list) == 0:
@@ -1140,13 +1185,15 @@ class AppController(QMainWindow, Ui_MainWindow):
         elif Radius_option == "Radius and Angle":
             LenAndAng = True
 
-        pick_tol = 0
         # set the radius
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.hecontroller.insertSegment(segment, pick_tol)
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -1174,8 +1221,10 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # start collection and set the center point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
@@ -1212,8 +1261,10 @@ class AppController(QMainWindow, Ui_MainWindow):
         elif FirstAxis_option == "Length and Angle":
             LenAndAng = True
 
-        pick_tol = 0
         # set the first axis
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
 
         canvas.updatedDsp = False
@@ -1221,6 +1272,14 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # set LineEdits
         self.set_curves_lineEdits()
+
+       # check comboBox and set LineEdits text
+        SecondAxis_option = self.ellipse_display.SecondAxiscomboBox.currentText()
+        if SecondAxis_option == "Coordinates":
+            pass
+        elif SecondAxis_option == "Length and Angle":
+            self.set_curves_lineEdits_text(0.0, 0.0)
+            self.ellipse_display.SecondAxisXlineEdit.clear()
 
     def add_ellipse(self):
         if len(self.canvas_list) == 0:
@@ -1248,13 +1307,15 @@ class AppController(QMainWindow, Ui_MainWindow):
         elif SecondAxis_option == "Length and Angle":
             LenAndAng = True
 
-        pick_tol = 0
         # set the second axis
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.hecontroller.insertSegment(segment, pick_tol)
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -1282,8 +1343,10 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.exec()
             return
 
-        pick_tol = 0
         # start collection and set the center point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
@@ -1320,8 +1383,10 @@ class AppController(QMainWindow, Ui_MainWindow):
         elif FirstAxis_option == "Length and Angle":
             LenAndAng = True
 
-        pick_tol = 0
         # set the first axis
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
 
         canvas.updatedDsp = False
@@ -1329,6 +1394,14 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # set LineEdits
         self.set_curves_lineEdits()
+
+        # check comboBox and set lineEdits
+        SecondAxis_option = self.ellipsearc_display.SecondAxiscomboBox.currentText()
+        if SecondAxis_option == "Coordinates":
+            pass
+        elif SecondAxis_option == "Length and Angle":
+            self.set_curves_lineEdits_text(0.0, 0.0)
+            self.ellipsearc_display.SecondAxisXlineEdit.clear()
 
     def set_ellipsearcSecondAxis(self):
         if len(self.canvas_list) == 0:
@@ -1356,8 +1429,10 @@ class AppController(QMainWindow, Ui_MainWindow):
         elif SecondAxis_option == "Length and Angle":
             LenAndAng = True
 
-        pick_tol = 0
         # set the second axis
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
 
         canvas.updatedDsp = False
@@ -1375,7 +1450,6 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # get values from Ellipse Arc first point lineEdits
         try:
-            x = float(self.ellipsearc_display.FirstArcPointXlineEdit.text())
             y = float(self.ellipsearc_display.FirstArcPointYlineEdit.text())
         except:
             self.clearDispText(self.ellipsearc_display)
@@ -1384,7 +1458,7 @@ class AppController(QMainWindow, Ui_MainWindow):
             msg.setText('These data fields only accept numbers')
             msg.exec()
             return
-
+        
        # check comboBox
         FirstArcPoint_option = self.ellipsearc_display.FirstArcPointcomboBox.currentText()
         if FirstArcPoint_option == "Coordinates":
@@ -1392,17 +1466,31 @@ class AppController(QMainWindow, Ui_MainWindow):
         elif FirstArcPoint_option == "Length and Angle":
             LenAndAng = True
 
-        pick_tol = 0
+        try:
+            x = float(self.ellipsearc_display.FirstArcPointXlineEdit.text())
+        except:
+            if LenAndAng:
+                # set LineEdit
+                x = canvas.collector.geo.LenCenterToPt(y)
+                self.ellipsearc_display.FirstArcPointXlineEdit.setText(str(round(x, 3)))
+            else:
+                self.clearDispText(self.ellipsearc_display)
+                msg = QMessageBox(self)
+                msg.setWindowTitle('Warning')
+                msg.setText('These data fields only accept numbers')
+                msg.exec()
+                return
+            
         # set the first arc point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
 
         canvas.updatedDsp = False
         canvas.update()
 
-        # set LineEdits
-        if LenAndAng:
-            length = canvas.collector.geo.LenCenterToPt(y)
-            self.ellipsearc_display.FirstArcPointXlineEdit.setText(str(round(length, 3)))
+        # # set LineEdits
         self.set_curves_lineEdits()
 
     def add_ellipsearc(self):
@@ -1414,7 +1502,6 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # get values from Ellipse Arc second point lineEdits
         try:
-            x = float(self.ellipsearc_display.SecondArcPointXlineEdit.text())
             y = float(self.ellipsearc_display.SecondArcPointYlineEdit.text())
         except:
             self.clearDispText(self.ellipsearc_display)
@@ -1431,13 +1518,29 @@ class AppController(QMainWindow, Ui_MainWindow):
         elif SecondArcPoint_option == "Length and Angle":
             LenAndAng = True
 
-        pick_tol = 0
+        try:
+            x = float(self.ellipsearc_display.SecondArcPointXlineEdit.text())
+        except:
+            if LenAndAng:
+                # set LineEdit
+                x = canvas.collector.geo.LenCenterToPt(y)
+            else:
+                self.clearDispText(self.ellipsearc_display)
+                msg = QMessageBox(self)
+                msg.setWindowTitle('Warning')
+                msg.setText('These data fields only accept numbers')
+                msg.exec()
+                return
+
         # set the second arc point
+        max_size = max(abs(canvas.right-canvas.left),
+                        abs(canvas.top-canvas.bottom))
+        pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, 0.01)
+        canvas.hecontroller.insertSegment(segment, pick_tol)
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -1705,9 +1808,81 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def BackToOriginalNurbs(self):
+    def BackToOriginalNurbsKnot(self):
 
-        self.current_hecontroller.BackToOriginalNurbs()
+        self.current_hecontroller.BackToOriginalNurbsKnot()
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
+    def BackToOriginalNurbsDegree(self):
+
+        check, error_text = self.current_hecontroller.BackToOriginalNurbsDegree()
+        if check:
+            self.close_propEdge()
+        elif not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+            
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
+    def degreeChange(self):
+
+        check, error_text = self.current_hecontroller.degreeChange()
+        if check:
+            self.close_propEdge()
+        elif not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
+    def ReverseNurbs(self):
+
+        check, error_text = self.current_hecontroller.ReverseNurbs()
+        if check:
+            self.close_propEdge()
+        elif not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
+    def conformSegs(self):
+
+        check, error_text = self.current_hecontroller.conformSegs()
+        if not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
+    def updateCtrlPolyView(self):
+
+        if self.prop_edge_display.ctrlPolygonCheckBox.isChecked():
+            status = True
+        else:
+            status = False
+        check, error_text = self.current_hecontroller.updateCtrlPolyView(status)
+        if check:
+            self.close_propEdge()
+        elif not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
@@ -2010,12 +2185,6 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.select_display.show()
         self.current_canvas.prop_disp = False
 
-    def degreeChange(self):
-        degree = int(self.prop_edge_display.degreelineEdit.text())
-        self.current_hecontroller.degreeChange(degree)
-        self.current_canvas.updatedDsp = False
-        self.current_canvas.update()
-
     def close_propEdge(self):
         check, _ = self.properties()
 
@@ -2196,7 +2365,11 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.canvas_list[currentIndex].prop_disp = False
 
     def clearDispText(self, _display):
-        if _display == self.line_display:
+        if _display == self.point_display:
+            _display.PointXlineEdit.clear()
+            _display.PointYlineEdit.clear()
+
+        elif _display == self.line_display:
             _display.InitialPointXlineEdit.clear()
             _display.InitialPointYlineEdit.clear()
             _display.EndPointXlineEdit.clear()
@@ -2247,10 +2420,6 @@ class AppController(QMainWindow, Ui_MainWindow):
             _display.FirstArcPointYlineEdit.clear()
             _display.SecondArcPointXlineEdit.clear()
             _display.SecondArcPointYlineEdit.clear()
-
-        elif _display == self.point_display:
-            _display.xlineEdit.clear()
-            _display.ylineEdit.clear()
 
     # Set Enable in lineEdits, pushButtons and comboBoxes
     def set_curves_lineEdits(self):
@@ -2722,9 +2891,13 @@ class AppController(QMainWindow, Ui_MainWindow):
         if Radius_option == "Coordinates":
             self.circle_display.RadiusXTitle.setText(_translate("MainWindow", "X:"))
             self.circle_display.RadiusYTitle.setText(_translate("MainWindow", "Y:"))
+            self.circle_display.RadiusXlineEdit.clear()
+            self.circle_display.RadiusYlineEdit.clear()
         elif Radius_option == "Radius and Angle":
             self.circle_display.RadiusXTitle.setText(_translate("MainWindow", "Radius:"))
             self.circle_display.RadiusYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.circle_display.RadiusXlineEdit.clear()
+            self.circle_display.RadiusYlineEdit.clear()
 
     # Check Circle Arc comboBoxes options
     def setCircleArcFirstArcPointOptions(self):
@@ -2734,9 +2907,13 @@ class AppController(QMainWindow, Ui_MainWindow):
         if FirstArcPoint_option == "Coordinates":
             self.circlearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "X:"))
             self.circlearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Y:"))
+            self.circlearc_display.FirstArcPointXlineEdit.clear()
+            self.circlearc_display.FirstArcPointYlineEdit.clear()
         elif FirstArcPoint_option == "Radius and Angle":
             self.circlearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "Radius:"))
             self.circlearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.circlearc_display.FirstArcPointXlineEdit.clear()
+            self.circlearc_display.FirstArcPointYlineEdit.clear()
 
     def setCircleArcSecondArcPointOptions(self):
         _translate = QtCore.QCoreApplication.translate
@@ -2746,10 +2923,14 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.circlearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "X:"))
             self.circlearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Y:"))
             self.circlearc_display.SecondArcPointXlineEdit.setEnabled(True)
+            self.circlearc_display.SecondArcPointXlineEdit.clear()
+            self.circlearc_display.SecondArcPointYlineEdit.clear()
         elif SecondArcPoint_option == "Radius and Angle":
             self.circlearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "Radius:"))
             self.circlearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
             self.circlearc_display.SecondArcPointXlineEdit.setEnabled(False)
+            self.set_curves_lineEdits_text(0.0, 0.0)
+            self.circlearc_display.SecondArcPointYlineEdit.clear()
 
     # Check Ellipse comboBoxes options
     def setEllipseFirstAxisOptions(self):
@@ -2759,9 +2940,13 @@ class AppController(QMainWindow, Ui_MainWindow):
         if FirstAxis_option == "Coordinates":
             self.ellipse_display.FirstAxisXTitle.setText(_translate("MainWindow", "X:"))
             self.ellipse_display.FirstAxisYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipse_display.FirstAxisXlineEdit.clear()
+            self.ellipse_display.FirstAxisYlineEdit.clear()
         elif FirstAxis_option == "Length and Angle":
             self.ellipse_display.FirstAxisXTitle.setText(_translate("MainWindow", "Length:"))
             self.ellipse_display.FirstAxisYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipse_display.FirstAxisXlineEdit.clear()
+            self.ellipse_display.FirstAxisYlineEdit.clear()
 
     def setEllipseSecondAxisOptions(self):
         _translate = QtCore.QCoreApplication.translate
@@ -2771,10 +2956,14 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.ellipse_display.SecondAxisXTitle.setText(_translate("MainWindow", "X:"))
             self.ellipse_display.SecondAxisYTitle.setText(_translate("MainWindow", "Y:"))
             self.ellipse_display.SecondAxisYlineEdit.setEnabled(True)
+            self.ellipse_display.SecondAxisXlineEdit.clear()
+            self.ellipse_display.SecondAxisYlineEdit.clear()
         elif SecondAxis_option == "Length and Angle":
             self.ellipse_display.SecondAxisXTitle.setText(_translate("MainWindow", "Length:"))
             self.ellipse_display.SecondAxisYTitle.setText(_translate("MainWindow", "Angle:"))
             self.ellipse_display.SecondAxisYlineEdit.setEnabled(False)
+            self.set_curves_lineEdits_text(0.0, 0.0)
+            self.ellipse_display.SecondAxisXlineEdit.clear()
 
     # Check Ellipse Arc comboBoxes options
     def setEllipseArcFirstAxisOptions(self):
@@ -2784,9 +2973,13 @@ class AppController(QMainWindow, Ui_MainWindow):
         if FirstAxis_option == "Coordinates":
             self.ellipsearc_display.FirstAxisXTitle.setText(_translate("MainWindow", "X:"))
             self.ellipsearc_display.FirstAxisYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipsearc_display.FirstAxisXlineEdit.clear()
+            self.ellipsearc_display.FirstAxisYlineEdit.clear()
         elif FirstAxis_option == "Length and Angle":
             self.ellipsearc_display.FirstAxisXTitle.setText(_translate("MainWindow", "Length:"))
             self.ellipsearc_display.FirstAxisYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipsearc_display.FirstAxisXlineEdit.clear()
+            self.ellipsearc_display.FirstAxisYlineEdit.clear()
 
     def setEllipseArcSecondAxisOptions(self):
         _translate = QtCore.QCoreApplication.translate
@@ -2796,10 +2989,14 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.ellipsearc_display.SecondAxisXTitle.setText(_translate("MainWindow", "X:"))
             self.ellipsearc_display.SecondAxisYTitle.setText(_translate("MainWindow", "Y:"))
             self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(True)
+            self.ellipsearc_display.SecondAxisXlineEdit.clear()
+            self.ellipsearc_display.SecondAxisYlineEdit.clear()
         elif SecondAxis_option == "Length and Angle":
             self.ellipsearc_display.SecondAxisXTitle.setText(_translate("MainWindow", "Length:"))
             self.ellipsearc_display.SecondAxisYTitle.setText(_translate("MainWindow", "Angle:"))
             self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(False)
+            self.set_curves_lineEdits_text(0.0, 0.0)
+            self.ellipsearc_display.SecondAxisXlineEdit.clear()
 
     def setEllipseArcFirstArcPointOptions(self):
         _translate = QtCore.QCoreApplication.translate
@@ -2809,10 +3006,14 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.ellipsearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "X:"))
             self.ellipsearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Y:"))
             self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(True)
+            self.ellipsearc_display.FirstArcPointXlineEdit.clear()
+            self.ellipsearc_display.FirstArcPointYlineEdit.clear()
         elif FirstArcPoint_option == "Length and Angle":
             self.ellipsearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "Length:"))
             self.ellipsearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
             self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(False)
+            self.ellipsearc_display.FirstArcPointXlineEdit.clear()
+            self.ellipsearc_display.FirstArcPointYlineEdit.clear()
 
     def setEllipseArcSecondArcPointOptions(self):
         _translate = QtCore.QCoreApplication.translate
@@ -2822,10 +3023,14 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.ellipsearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "X:"))
             self.ellipsearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Y:"))
             self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(True)
+            self.ellipsearc_display.SecondArcPointXlineEdit.clear()
+            self.ellipsearc_display.SecondArcPointYlineEdit.clear()
         elif SecondArcPoint_option == "Length and Angle":
             self.ellipsearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "Length:"))
             self.ellipsearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
             self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(False)
+            self.ellipsearc_display.SecondArcPointXlineEdit.clear()
+            self.ellipsearc_display.SecondArcPointYlineEdit.clear()
 
     # Check Number os Subdivisions comboBox options
     def setNumSubdivisionsOptions(self):
@@ -2842,6 +3047,8 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.nsudv_display.knotrefinementTitle.hide()
             self.nsudv_display.knotrefinementpushButton.hide()
             self.nsudv_display.rescuepushButton.hide()
+            self.nsudv_display.knotconformTitle.hide()
+            self.nsudv_display.knotconformpushButton.hide()
         elif Subdivision_option == "Get from Knot Vector":
             self.nsudv_display.valueTitle.hide()
             self.nsudv_display.valuelineEdit.hide()
@@ -2852,3 +3059,5 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.nsudv_display.knotrefinementTitle.show()
             self.nsudv_display.knotrefinementpushButton.show()
             self.nsudv_display.rescuepushButton.show()
+            self.nsudv_display.knotconformTitle.show()
+            self.nsudv_display.knotconformpushButton.show()
