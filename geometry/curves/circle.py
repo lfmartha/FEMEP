@@ -1,9 +1,9 @@
 from compgeom.pnt2d import Pnt2D
 from geometry.curves.curve import Curve
 from geometry.curves.line import Line
-from geomdl import operations
-from geomdl import NURBS
 from geometry.curves.circlearc import CircleArc
+from geomdl import NURBS
+from geomdl import operations
 import math
 
 
@@ -69,7 +69,7 @@ class Circle(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.001 * self.radius)
+                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.radius)
                 self.eqPoly.append(self.circ1)
 
     # ---------------------------------------------------------------------
@@ -141,38 +141,30 @@ class Circle(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.001 * self.radius)
+                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.radius)
                 self.eqPoly.append(self.circ1)
 
     # ---------------------------------------------------------------------
-    # Evaluate a point for a given parametric value.
     def evalPoint(self, _t):
-        if _t > 1.0:
-            _t = 1.0
-        elif _t <= 0.0:
-            _t = 0.0
+        if _t <= 0.0:
+            return self.circ1
+        elif _t >= 1.0:
+            return self.circ1
 
         pt = self.nurbs.evaluate_single(_t)
-        x = pt[0]
-        y = pt[1]
-
-        return Pnt2D(x, y)
+        return Pnt2D(pt[0], pt[1])
 
     # ---------------------------------------------------------------------
     def evalPointTangent(self, _t):
-        if _t > 1.0:
-            _t = 1.0
-        elif _t <= 0.0:
+        if _t < 0.0:
             _t = 0.0
+        elif _t > 1.0:
+            _t = 1.0
             
         ders = self.nurbs.derivatives(_t, order=1)
         pt = ders[0]
-        x = pt[0]
-        y = pt[1]
         tang = ders[1]
-        dx = tang[0]
-        dy = tang[1]
-        return Pnt2D(x, y), Pnt2D(dx, dy)
+        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
 
     # ---------------------------------------------------------------------
     def evalPointCurvature(self, _t):
@@ -195,77 +187,6 @@ class Circle(Curve):
         return [self.center, self.circ1]
 
     # ---------------------------------------------------------------------
-    def setCtrlPoint(self, _id, _x, _y, _tol):
-        if self.nPts != 2:
-            return False
-        pt = Pnt2D(_x, _y)
-
-        if _id == 0:
-            deltaX = _x - self.center.getX()
-            deltaY = _y - self.center.getY()
-            circ1X = self.circ1.getX()
-            circ1Y = self.circ1.getY()
-            self.center = pt
-            self.circ1 = Pnt2D(circ1X + deltaX, circ1Y + deltaY)
-            return True
-
-        if _id == 1:
-            if Pnt2D.euclidiandistance(pt, self.center) <= _tol:
-                return False
-            self.circ1 = pt
-
-            # Compute radius
-            drX1 = self.circ1.getX() - self.center.getX()
-            drY1 = self.circ1.getY() - self.center.getY()
-            self.radius = math.sqrt(drX1 * drX1 + drY1 * drY1)
-            if self.radius > 0.0:
-
-                # Compute angle for circle point
-                self.ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
-                if self.ang1 < 0.0:
-                    self.ang1 = 2.0 * math.pi + self.ang1  # 0 <= angle < +2PI
-
-                # Nurbs control points
-                ctrlPts = []
-                ctrlPts.append(Pnt2D(self.center.getX() + self.radius, self.center.getY()))
-                ctrlPts.append(Pnt2D(self.center.getX() + self.radius, self.center.getY() + self.radius))
-                ctrlPts.append(Pnt2D(self.center.getX(), self.center.getY() + self.radius))
-                ctrlPts.append(Pnt2D(self.center.getX() - self.radius, self.center.getY() + self.radius))
-                ctrlPts.append(Pnt2D(self.center.getX() - self.radius, self.center.getY()))
-                ctrlPts.append(Pnt2D(self.center.getX() - self.radius, self.center.getY() - self.radius))
-                ctrlPts.append(Pnt2D(self.center.getX(), self.center.getY() - self.radius))
-                ctrlPts.append(Pnt2D(self.center.getX() + self.radius, self.center.getY() - self.radius))
-                ctrlPts.append(ctrlPts[0])
-
-                # Applying the rotation matrix
-                ctrlPtsValues =[]
-                for Pt in ctrlPts:
-                    PtRotated = Pnt2D.rotate(Pt, self.center, self.ang1)
-                    ctrlPtsValues.append([PtRotated.getX(), PtRotated.getY()])
-
-                # Nurbs weights
-                weights = [1, 1/math.sqrt(2.0), 1, 1/math.sqrt(2.0), 1, 1/math.sqrt(2.0),
-                                1, 1/math.sqrt(2.0), 1]
-
-                # Nurbs knot vector
-                knotVector = [0.0, 0.0, 0.0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1.0, 1.0, 1.0]
-
-                # Creating Nurbs circle
-                self.nurbs = NURBS.Curve()
-                self.nurbs.degree = 2
-                self.nurbs.ctrlpts = ctrlPtsValues
-                self.nurbs.weights = weights
-                self.nurbs.knotvector = knotVector
-                self.nurbs.sample_size = 10
-
-                # Generating equivalent polyline
-                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.001 * self.radius)
-                self.eqPoly.append(self.circ1)
-                return True
-   
-        return False
-
-    # ---------------------------------------------------------------------
     def isStraight(self, _tol):
         return False
 
@@ -275,10 +196,19 @@ class Circle(Curve):
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+
+        for knot in knots:
+            if _t >= (knot - 1000*Curve.PARAM_TOL) and _t <= (knot + 1000*Curve.PARAM_TOL):
+                _t = knot
+
         if _t <= Curve.PARAM_TOL:
             left = None
             right = self
             return left, right
+        
         if (1.0 - _t) <= Curve.PARAM_TOL:
             left = self
             right = None
@@ -289,125 +219,53 @@ class Circle(Curve):
         right = CircleArc()
 
         # Create the corresponding NURBS curves resulting from splitting
-        if _t > 0.5 and _t <= (0.5 + Curve.PARAM_TOL):
-            _t = 0.5
-        elif _t < 0.5 and _t >= (0.5 - Curve.PARAM_TOL):
-            _t = 0.5
-            
-        try:
-            left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
-        except:
-            try:
-                left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t - Curve.PARAM_TOL)
-            except:
-                left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t + Curve.PARAM_TOL)
-
+        left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
         return left, right
 
     # ---------------------------------------------------------------------
     def split(self, _t):
-        left, right = self.splitRaw(_t)
-        if (left == None) or (right == None):
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+
+        for knot in knots:
+            if _t >= (knot - 1000*Curve.PARAM_TOL) and _t <= (knot + 1000*Curve.PARAM_TOL):
+                _t = knot
+
+        if _t <= Curve.PARAM_TOL:
+            left = None
+            right = self
+            return left, right
+        
+        if (1.0 - _t) <= Curve.PARAM_TOL:
+            left = self
+            right = None
             return left, right
 
         pt = self.evalPoint(_t)
 
-        left.center = self.center
-        left.circ1 = self.circ1
-        left.circ2 = pt
+        # Left curve properties
+        left_center = self.center
+        left_circ1 = self.circ1
+        left_circ2 = pt
 
-        if left.center is not None:
-            left.nPts += 1
+        # Right curve properties
+        right_center = self.center
+        right_circ1 = pt
+        right_circ2 = self.circ1
 
-        if left.circ1 is not None:
-            # Compute radius
-            drX1 = left.circ1.getX() - left.center.getX()
-            drY1 = left.circ1.getY() - left.center.getY()
-            left.radius = math.sqrt(drX1 * drX1 + drY1 * drY1)
-            if left.radius > 0.0:
-
-                # Compute angle for pirst arc point
-                left.ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
-                if left.ang1 < 0.0:
-                    left.ang1 = 2.0 * math.pi + left.ang1  # 0 <= angle < +2PI
-                left.nPts += 1
-
-                if left.circ2 is not None:
-                    drX2 = left.circ2.getX() - left.center.getX()
-                    drY2 = left.circ2.getY() - left.center.getY()
-                    dist2 = math.sqrt(drX2 * drX2 + drY2 * drY2)
-                    if dist2 > 0.0:
-
-                        # Snap second arc point to circle
-                        tRadius = left.radius / dist2
-                        x2 = left.center.getX() + tRadius * drX2
-                        y2 = left.center.getY() + tRadius * drY2
-                        left.circ2.setCoords(x2, y2)
-
-                        # Compute angle for second arc point
-                        left.ang2 = math.atan2(drY2, drX2)  # -PI < angle <= +PI
-                        if left.ang2 <= 0.0:
-                            left.ang2 += 2.0 * math.pi  # 0 <= angle < +2PI
-                        left.nPts += 1
-
-                        # Generating equivalent polyline
-                        left.eqPoly = []
-                        left.eqPoly = Curve.genEquivPolyline(left, left.eqPoly, 0.001 * left.radius)
-                        left.eqPoly.append(left.circ2)
-
-        right.center = self.center
-        right.circ1 = pt
-        right.circ2 = self.circ1
-
-        if right.center is not None:
-            right.nPts += 1
-
-        if right.circ1 is not None:
-            # Compute radius
-            drX1 = right.circ1.getX() - right.center.getX()
-            drY1 = right.circ1.getY() - right.center.getY()
-            right.radius = math.sqrt(drX1 * drX1 + drY1 * drY1)
-            if right.radius > 0.0:
-
-                # Compute angle for pirst arc point
-                right.ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
-                if right.ang1 < 0.0:
-                    right.ang1 = 2.0 * math.pi + right.ang1  # 0 <= angle < +2PI
-                right.nPts += 1
-
-                if right.circ2 is not None:
-                    drX2 = right.circ2.getX() - right.center.getX()
-                    drY2 = right.circ2.getY() - right.center.getY()
-                    dist2 = math.sqrt(drX2 * drX2 + drY2 * drY2)
-                    if dist2 > 0.0:
-
-                        # Snap second arc point to circle
-                        tRadius = right.radius / dist2
-                        x2 = right.center.getX() + tRadius * drX2
-                        y2 = right.center.getY() + tRadius * drY2
-                        right.circ2.setCoords(x2, y2)
-
-                        # Compute angle for second arc point
-                        right.ang2 = math.atan2(drY2, drX2)  # -PI < angle <= +PI
-                        if right.ang2 <= 0.0:
-                            right.ang2 += 2.0 * math.pi  # 0 <= angle < +2PI
-                        right.nPts += 1
-
-                        # Generating equivalent polyline
-                        right.eqPoly = []
-                        right.eqPoly = Curve.genEquivPolyline(right, right.eqPoly, 0.001 * right.radius)
-                        right.eqPoly.append(right.circ2)
-
+        # Create curve objects resulting from splitting
+        left = CircleArc(left_center, left_circ1, left_circ2)
+        right = CircleArc(right_center, right_circ1, right_circ2)
         return left, right
 
     # ---------------------------------------------------------------------
-    def getEquivPolyline(self, _tInit, _tEnd, _tol):
+    def getEquivPolyline(self):
         # If current curve does not have yet an equivalent polyline,
         # generate it.
         if self.eqPoly == []:
-            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, _tol)
+            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.radius)
             self.eqPoly.append(self.circ1)
-
         return self.eqPoly
 
     # ---------------------------------------------------------------------
@@ -461,9 +319,8 @@ class Circle(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.001 * self.radius)
+                tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.01 * self.radius)
                 tempEqPoly.append(self.circ1)
-
         return tempEqPoly
 
     # ---------------------------------------------------------------------
@@ -510,7 +367,7 @@ class Circle(Curve):
         if not status:
             return status, clstPt, dmin, 0.0, Pnt2D(0,0)
 
-        tolLen = self.length(0.0, 1.0)
+        tolLen = self.length()
         t = arcLen / tolLen
         if (t > -Curve.PARAM_TOL) and (t < Curve.PARAM_TOL):
             t = 0.0
@@ -562,12 +419,10 @@ class Circle(Curve):
         for point in self.eqPoly:
             x.append(point.getX())
             y.append(point.getY())
-
         xmin = min(x)
         xmax = max(x)
         ymin = min(y)
         ymax = max(y)
-
         return xmin, xmax, ymin, ymax
 
     # ---------------------------------------------------------------------
@@ -587,30 +442,9 @@ class Circle(Curve):
         return self.nurbs.ctrlpts[-1][1]
 
     # ---------------------------------------------------------------------
-    def length(self, _tInit, _tEnd):
-        ptInit = self.evalPoint(_tInit)
-        drXInit = ptInit.getX() - self.center.getX()
-        drYInit = ptInit.getY() - self.center.getY()
-        angInit = math.atan2(drYInit, drXInit) # between -pi and pi
-        if angInit < 0.0:
-            angInit += 2.0 * math.pi # between 0 and 2pi
-
-        ptEnd = self.evalPoint(_tEnd)
-        drXEnd = ptEnd.getX() - self.center.getX()
-        drYEnd = ptEnd.getY() - self.center.getY()
-        angEnd = math.atan2(drYEnd, drXEnd)  # between -pi and pi
-        if angEnd < 0.0:
-            angEnd += 2.0 * math.pi # between 0 and 2pi
-
-        # Arc angle range
-        angRange = angEnd - angInit
-        if angRange <= 0:
-            angRange += 2.0 * math.pi
-
-        # Length
-        length = angRange * self.radius
-
-        return length
+    def length(self):
+        L = 2.0 * math.pi * self.radius
+        return L
 
     # ---------------------------------------------------------------------
     def updateLineEditValues(self, _x, _y, _LenAndAng):
