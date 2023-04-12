@@ -42,7 +42,7 @@ class Canvas(QtOpenGL.QGLWidget):
         self.pt0W = QtCore.QPointF(0.0, 0.0)  # first point to calculate dist
         self.pt0 = QtCore.QPointF(0.0, 0.0)  # first mouse position
         self.pt1 = QtCore.QPointF(0.0, 0.0)  # current mouse position
-        self.pickTolFac = 0.01  # factor for pick tolerance w.r.t max window size
+        self.pickTolFac = 0.001  # factor for pick tolerance w.r.t max window size
         self.mouseMoveTol = 2  # tolerance for mouse move
 
         # Pressed key properties
@@ -57,6 +57,7 @@ class Canvas(QtOpenGL.QGLWidget):
         # Defined colors
         self.colorCollecting = [1.00, 0.00, 0.00]  # red
         self.colorsegment = [0.00, 0.00, 0.00]  # black
+        self.colorControlPolygon = [0.00, 0.00, 1.00] # blue
         self.colorVertex = [0.00, 0.00, 0.50]  # dark blue
         self.colorSelection = [1.00, 0.00, 0.00]  # red
         self.colorGrid = [0.00, 0.00, 0.00]  # black
@@ -126,7 +127,10 @@ class Canvas(QtOpenGL.QGLWidget):
 
     def delSelectedEntities(self):
         if not ((self.view is None) and (self.view.isEmpty())):
-            error_text = self.hecontroller.delSelectedEntities()
+            max_size = max(abs(self.right-self.left),
+                            abs(self.top-self.bottom))
+            pick_tol = max_size * self.pickTolFac
+            error_text = self.hecontroller.delSelectedEntities(pick_tol)
             if error_text is not None:
                 msg = QMessageBox(self.Apptools)
                 msg.setWindowTitle('Error')
@@ -134,6 +138,17 @@ class Canvas(QtOpenGL.QGLWidget):
                 msg.exec()
             self.updatedDsp = False
             self.update()
+
+    # def conformSegs(self):
+    #     if not ((self.view is None) and (self.view.isEmpty())):
+    #         check, error_text = self.hecontroller.conformSegs()
+    #         if not check:
+    #             msg = QMessageBox(self.Apptools)
+    #             msg.setWindowTitle('Error')
+    #             msg.setText(error_text)
+    #             msg.exec()
+    #         self.updatedDsp = False
+    #         self.update()
 
     def Undo(self):
         if not ((self.view is None) and (self.view.isEmpty())):
@@ -422,6 +437,35 @@ class Canvas(QtOpenGL.QGLWidget):
                 glVertex2d(Pts[j].getX(), Pts[j].getY())
             glEnd()
 
+            # Display control polygon
+            if segments[i].CtrlPolyView:
+                ctrlPts = segments[i].getCtrlPts()
+                
+                if ((segments[i].curve.type == "LINE" or
+                    segments[i].curve.type == "POLYLINE") and
+                    segments[i].isSelected()):
+                    pass
+
+                else:
+                    glColor3d(self.colorControlPolygon[0],
+                            self.colorControlPolygon[1], self.colorControlPolygon[2])
+                    
+                    glBegin(GL_LINE_STRIP)
+
+                    for j in range(0, len(ctrlPts)):
+                        glVertex2d(ctrlPts[j][0], ctrlPts[j][1])
+                    glEnd()
+
+                # # Display Nurbs Control Points
+                # glColor3d(self.colorControlPolygon[0],
+                #         self.colorControlPolygon[1], self.colorControlPolygon[2])
+
+                # glBegin(GL_POINTS)
+
+                # for j in range(0, len(ctrlPts)):
+                #     glVertex2d(ctrlPts[j][0], ctrlPts[j][1])
+                # glEnd()
+
             # get segment attributes
             attributes = segments[i].attributes
             for att in attributes:
@@ -456,6 +500,22 @@ class Canvas(QtOpenGL.QGLWidget):
             glBegin(GL_POINTS)
             glVertex2d(points[i].getX(), points[i].getY())
             glEnd()
+
+
+        # Display Nurbs Control Points
+        segments = self.view.getSegments()
+        for i in range(0, len(segments)):
+            if segments[i].CtrlPolyView:
+                ctrlPts = segments[i].getCtrlPts()
+                
+                glColor3d(self.colorControlPolygon[0],
+                        self.colorControlPolygon[1], self.colorControlPolygon[2])
+
+                glBegin(GL_POINTS)
+
+                for j in range(0, len(ctrlPts)):
+                    glVertex2d(ctrlPts[j][0], ctrlPts[j][1])
+                glEnd()
 
         # draws remaining symbols
         for symbol in symbols:
@@ -832,7 +892,7 @@ class Canvas(QtOpenGL.QGLWidget):
                 # snap-to-grid flag (which will be inverted by control key).
                 # Try to attract point to a point.
                 # Try to attract point to a segment.
-                xW, yW = self.snapMousePt(xW, yW, pick_tol)
+                xW, yW = self.snapMousePt(xW, yW, pick_tol * 10)
 
                 # Add point to collected geometry
                 if self.collector.getGeoType() == 'POINT':
@@ -860,7 +920,7 @@ class Canvas(QtOpenGL.QGLWidget):
                 # snap-to-grid flag (which will be inverted by control key).
                 # Try to attract point to a point.
                 # Try to attract point to a segment.
-                xW, yW = self.snapMousePt(xW, yW, pick_tol)
+                xW, yW = self.snapMousePt(xW, yW, pick_tol * 10)
 
                 # try to attract point to current segment
                 check, _x, _y = self.collector.SnaptoCurrentSegment(
@@ -912,7 +972,7 @@ class Canvas(QtOpenGL.QGLWidget):
             # snap-to-grid flag (which will be inverted by control key).
             # Try to attract point to a point.
             # Try to attract point to a segment.
-            xW, yW = self.snapMousePt(xW, yW, pick_tol)
+            xW, yW = self.snapMousePt(xW, yW, pick_tol * 10)
 
             # Only consider current point if left mouse button was used,
             # if not button pressed, and if current point is not at the
@@ -931,13 +991,6 @@ class Canvas(QtOpenGL.QGLWidget):
 
                         # Add point as a temporary point for segment collection
                         self.collector.addTempPoint(xW, yW)
-                        dist = round(math.sqrt((self.pt0W.x()-xW)*(self.pt0W.x()-xW) +
-                                               (self.pt0W.y()-yW)*(self.pt0W.y()-yW)), 3)
-
-                        # Set text in LenghtLineEdit
-                        self.Apptools.lineLenght.setText(
-                            f'Lenght: {str(dist)}')
-
                         self.update()
 
             self.Apptools.lineXCoords.setText(f'X:  {str(round(xW, 3))}')
@@ -972,7 +1025,7 @@ class Canvas(QtOpenGL.QGLWidget):
                             (abs(self.pt0.y() - self.pt1.y()) <= self.mouseMoveTol)):
                         max_size = max(abs(self.right-self.left),
                                        abs(self.top-self.bottom))
-                        pick_tol = max_size * self.pickTolFac
+                        pick_tol = max_size * self.pickTolFac * 10
                         self.hecontroller.selectPick(
                             pt1W.x(), pt1W.y(), pick_tol, self.shiftKeyPressed)
                     else:
@@ -986,9 +1039,6 @@ class Canvas(QtOpenGL.QGLWidget):
                 self.update()
 
         if self.curMouseAction == 'COLLECTION':
-
-            # clear Lenght line edit
-            self.Apptools.lineLenght.clear()
 
             # Check for end of segment collection, which occurs in two situations:
             # (a) If left mouse button was used, and current collected segment has
