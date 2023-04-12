@@ -74,8 +74,20 @@ class Ui_nsudv(object):
 
         self.rescuepushButton = QtWidgets.QPushButton(nsudvui)
         self.rescuepushButton.setAutoDefault(True)
-        self.rescuepushButton.setGeometry(QtCore.QRect(50, 200, 100, 25))
-        self.rescuepushButton.setObjectName("knotrefinementpushButton")
+        self.rescuepushButton.setGeometry(QtCore.QRect(150, 170, 25, 25))
+        self.rescuepushButton.setObjectName("rescuepushButton")
+        self.rescuepushButton.setIcon(QtGui.QIcon("icons/undo-icon.png"))
+
+        # Knot Comform
+        self.knotconformTitle = QtWidgets.QLabel(nsudvui)
+        self.knotconformTitle.setGeometry(QtCore.QRect(50, 210, 100, 20))
+        self.knotconformTitle.setAlignment(QtCore.Qt.AlignCenter)
+        self.knotconformTitle.setObjectName("knotconformTitle")
+
+        self.knotconformpushButton = QtWidgets.QPushButton(nsudvui)
+        self.knotconformpushButton.setAutoDefault(True)
+        self.knotconformpushButton.setGeometry(QtCore.QRect(50, 235, 100, 25))
+        self.knotconformpushButton.setObjectName("knotconformpushButton")
 
         self.retranslateUi(nsudvui)
         QtCore.QMetaObject.connectSlotsByName(nsudvui)
@@ -93,8 +105,12 @@ class Ui_nsudv(object):
         self.knotrefinementTitle.hide()
         self.knotrefinementpushButton.setText(_translate("MainWindow", "Refine Curve"))
         self.knotrefinementpushButton.hide()
-        self.rescuepushButton.setText(_translate("MainWindow", "Rescue Curve"))
+        self.rescuepushButton.setToolTip(_translate("MainWindow", "Rescue Curve"))
         self.rescuepushButton.hide()
+        self.knotconformTitle.setText(_translate("MainWindow", "Knot Conform"))
+        self.knotconformTitle.hide()
+        self.knotconformpushButton.setText(_translate("MainWindow", "Conform Curves"))
+        self.knotconformpushButton.hide()
 
 class NsudvDisplay(QMainWindow, Ui_nsudv):
     def __init__(self, parent=None):
