@@ -3,8 +3,9 @@ from compgeom.compgeom import CompGeom
 from geometry.curves.curve import Curve
 from geometry.curves.line import Line
 from geomdl import NURBS
-from geomdl import knotvector
 from geomdl import operations
+from geomdl import knotvector
+import copy
 import math
 
 
@@ -45,6 +46,12 @@ class Polyline(Curve):
             self.nPts += 1
 
         else:
+            closeToOther = False
+            for i in range(0, self.nPts):
+                if Pnt2D.euclidiandistance(self.pts[i], pt) <= 0.01:
+                    closeToOther = True
+            if closeToOther:
+                return
             self.pts.append(pt)
             self.nPts += 1
 
@@ -65,21 +72,64 @@ class Polyline(Curve):
             self.nurbs.sample_size = 10
 
     # ---------------------------------------------------------------------
-    # Evaluate a point for a given parametric value.
-    # Also return the segment of the evaluated point and
-    # the local parametric value in segment
+    def evalPoint(self, _t):
+        if _t <= 0.0:
+            return self.pts[0]
+        elif _t >= 1.0:
+            return self.pts[-1]
+
+        pt = self.nurbs.evaluate_single(_t)
+        return Pnt2D(pt[0], pt[1])
+    
+    # ---------------------------------------------------------------------
     def evalPointSeg(self, _t):
         if _t <= 0.0:
-            return Pnt2D(self.pts[0].getX(), self.pts[0].getY()), 0, 0.0
+            return self.pts[0]
+        elif _t >= 1.0:
+            return self.pts[-1]
+        
+        prev_id, loc_t = self.findPointLocationSeg(_t)
 
-        if _t >= 1.0:
-            return Pnt2D(self.pts[-1].getX(), self.pts[-1].getY()), self.nPts - 1, 1.0
+        x = self.pts[prev_id].getX() + loc_t * \
+            (self.pts[prev_id + 1].getX() - self.pts[prev_id].getX())
+        y = self.pts[prev_id].getY() + loc_t * \
+            (self.pts[prev_id + 1].getY() - self.pts[prev_id].getY())
+        return Pnt2D(x,y)
+    
+    # ---------------------------------------------------------------------
+    def findPointLocation(self, _t):
+        if _t <= 0.0:
+            return 0, 0.0
+        elif _t >= 1.0:
+            return (self.nPts - 1), 1.0
 
-        length = self.length(0.0, 1.0)
-        s = _t * length
-        loc_t = 1.0
         prev_id = 0
-        next_id = 0
+        loc_t = 0.0
+
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+
+        for i in range(1, len(knots)):
+            prev_id = i - 1
+            next_id = i
+            if _t >= knots[prev_id] and _t < knots[next_id]:
+                loc_t = _t - knots[prev_id]
+                break
+        return prev_id, loc_t
+    
+    # ---------------------------------------------------------------------
+    def findPointLocationSeg(self, _t):
+        if _t <= 0.0:
+            return 0, 0.0
+        elif _t >= 1.0:
+            return (self.nPts - 1), 1.0
+
+        length = self.length()
+        s = _t * length
+
+        prev_id = 0
+        loc_t = 1.0
         lenToSeg = 0.0
 
         for i in range(1, len(self.pts)):
@@ -100,61 +150,20 @@ class Polyline(Curve):
             (self.pts[next_id].getX() - self.pts[prev_id].getX())
         y = self.pts[prev_id].getY() + loc_t * \
             (self.pts[next_id].getY() - self.pts[prev_id].getY())
-
-        return Pnt2D(x, y), prev_id, loc_t
-
-    # ---------------------------------------------------------------------
-    # Evaluate a point for a given parametric value.
-    def evalPoint(self, _t):
-        if _t > 1.0:
-            _t = 1.0
-        elif _t <= 0.0:
-            _t = 0.0
-
-        pt = self.nurbs.evaluate_single(_t)
-        x = pt[0]
-        y = pt[1]
-
-        return Pnt2D(x, y)
-
+        return prev_id, loc_t
+    
     # ---------------------------------------------------------------------
     def evalPointTangent(self, _t):
-        if _t > 1.0:
-            _t = 1.0
-        elif _t <= 0.0:
+        if _t < 0.0:
             _t = 0.0
+        elif _t > 1.0:
+            _t = 1.0
 
         ders = self.nurbs.derivatives(_t, order=1)
         pt = ders[0]
-        x = pt[0]
-        y = pt[1]
         tang = ders[1]
-        dx = tang[0]
-        dy = tang[1]
-
-        return Pnt2D(x, y), Pnt2D(dx, dy)
-
-        # pt, seg, loc_t = self.evalPointSeg(_t)
-
-        # if _t <= 0.0:
-        #     tan = self.pts[1]-self.pts[0]
-        #     tan = Pnt2D.normalize(tan)
-        #     return pt, tan
-
-        # if _t >= 1.0:
-        #     tan = self.pts[-1]-self.pts[-2]
-        #     tan = Pnt2D.normalize(tan)
-        #     return pt, tan
-
-        # tangVec = self.pts[seg + 1] - self.pts[seg]
-
-        # pt = self.nurbs.evaluate_single(_t)
-        # x = pt[0]
-        # y = pt[1]
-        # pt = Pnt2D(x,y)
-
-        # return pt, tangVec
-
+        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
+    
     # ---------------------------------------------------------------------
     def evalPointCurvature(self, _t):
         pt = self.evalPoint(_t)
@@ -176,26 +185,6 @@ class Polyline(Curve):
         return self.pts
 
     # ---------------------------------------------------------------------
-    def setCtrlPoint(self, _id, _x, _y, _tol):
-        if self.nPts < 2:
-            return False
-        if _id < 0:
-            return False
-        if _id >= self.nPts:
-            return False
-        pt = Pnt2D(_x, _y)
-        # Check to see whether coordinates of current control point will
-        # be equal to the coordinates of other control point. Do not allow
-        # creating a closed curve.
-        for i in range(0, self.nPts):
-            if i == _id:
-                continue
-            if Pnt2D.euclidiandistance(pt, self.pts[i]) <= _tol:
-                return False
-        self.pts[_id].setCoords(_x, _y)
-        return True
-
-    # ---------------------------------------------------------------------
     def isStraight(self, _tol):
         for i in range(1, len(self.pts) - 1):
             if not CompGeom.pickLine(self.pts[0], self.pts[-1], self.pts[i], _tol):
@@ -214,7 +203,11 @@ class Polyline(Curve):
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
-        for knot in self.nurbs.knotvector:
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+    
+        for knot in knots:
             if _t >= (knot - 1000*Curve.PARAM_TOL) and _t <= (knot + 1000*Curve.PARAM_TOL):
                 _t = knot
 
@@ -222,6 +215,7 @@ class Polyline(Curve):
             left = None
             right = self
             return left, right
+        
         if (1.0 - _t) <= Curve.PARAM_TOL:
             left = self
             right = None
@@ -230,66 +224,62 @@ class Polyline(Curve):
         # Create two curve objects resulting from splitting
         left = Polyline()
         right = Polyline()
-
-        # Create the corresponding NURBS curves resulting from splitting
-        # if _t > 0.5 and _t <= (0.5 + Curve.PARAM_TOL):
-        #     _t = 0.5
-        # elif _t < 0.5 and _t >= (0.5 - Curve.PARAM_TOL):
-        #     _t = 0.5
             
-        # try:
+        # Create the corresponding NURBS curves resulting from splitting
         left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
-        # except:
-        #     try:
-        #         left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t - Curve.PARAM_TOL)
-        #     except:
-        #         left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t + Curve.PARAM_TOL)
-
         return left, right
         
     # ---------------------------------------------------------------------
     def split(self, _t):
-        left, right = self.splitRaw(_t)
-        if (left == None) or (right == None):
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+        
+        for knot in knots:
+            if _t >= (knot - 1000*Curve.PARAM_TOL) and _t <= (knot + 1000*Curve.PARAM_TOL):
+                _t = knot
+
+        if _t <= Curve.PARAM_TOL:
+            left = None
+            right = self
             return left, right
+        
+        if (1.0 - _t) <= Curve.PARAM_TOL:
+            left = self
+            right = None
+            return left, right
+        
+        pt = self.evalPoint(_t)
+        prev_id, loc_t = self.findPointLocation(_t)
 
+        # Left curve properties
         left_pts = []
+        for i in range(0, prev_id):
+            left_pts.append(self.pts[i])
+
+        # check whether the split point is one of the points of the polyline itself
+        if loc_t > Curve.PARAM_TOL:
+            left_pts.append(self.pts[prev_id])
+
+        left_pts.append(pt)
+
+        # Right curve properties
         right_pts = []
-        # pt, prev_id, tloc = self.evalPointSeg(_t)
+        right_pts.append(pt)
+        # check whether the split point is one of the points of the polyline itself
+        if 1.0 - loc_t > Curve.PARAM_TOL:
+            right_pts.append(self.pts[prev_id + 1])
 
-        # for i in range(0, prev_id):
-        #     left_pts.append(self.pts[i])
+        for j in range(prev_id + 2, self.nPts):
+            right_pts.append(self.pts[j])
 
-        # # check whether the split point is one of the points of the polyline itself
-        # if tloc > Curve.PARAM_TOL:
-        #     left_pts.append(self.pts[prev_id])
-
-        # left_pts.append(pt)
-        # right_pts.append(pt)
-
-        # if 1.0 - tloc > Curve.PARAM_TOL:
-        #     right_pts.append(self.pts[prev_id + 1])
-
-        # for j in range(prev_id + 2, self.nPts):
-        #     right_pts.append(self.pts[j])
-
-
-        for pt in left.nurbs.ctrlpts:
-            left_pts.append(Pnt2D(pt[0], pt[1]))
-
-        for pt in right.nurbs.ctrlpts:
-            right_pts.append(Pnt2D(pt[0], pt[1]))
-
-
-        left.pts = left_pts
-        left.nPts = len(left_pts)
-        right.pts = right_pts
-        right.nPts = len(right_pts)
-
+        # Create curve objects resulting from splitting
+        left = Polyline(left_pts)
+        right = Polyline(right_pts)
         return left, right
 
     # ---------------------------------------------------------------------
-    def getEquivPolyline(self, _tInit, _tEnd, _tol):
+    def getEquivPolyline(self):
         return self.pts
 
     # ---------------------------------------------------------------------
@@ -302,58 +292,6 @@ class Polyline(Curve):
         return tempPts
 
     # ---------------------------------------------------------------------
-    # Returns the closest point on polyline for a given point.
-    # Also returns the segment of the closest point and the arc
-    # length from the curve init to the closest point.
-    # def closestPointSeg(self, _x, _y):
-    #     pt = Pnt2D(_x, _y)
-    #     d, clstPtSeg, t = CompGeom.getClosestPointSegment(self.pts[0], self.pts[1], pt)
-    #     xOn = clstPtSeg.getX()
-    #     yOn = clstPtSeg.getY()
-    #     dmin = d
-    #     seg = 0
-
-    #     for i in range(1, self.nPts - 1):
-    #         d, clstPtSeg, t = CompGeom.getClosestPointSegment(self.pts[i], self.pts[i + 1], pt)
-    #         if d < dmin:
-    #             xOn = clstPtSeg.getX()
-    #             yOn = clstPtSeg.getY()
-    #             dmin = d
-    #             seg = i
-
-    #     arcLen = 0.0
-    #     for i in range(0, seg):
-    #         arcLen += math.sqrt((self.pts[i + 1].getX() - self.pts[i].getX()) *
-    #                             (self.pts[i + 1].getX() - self.pts[i].getX()) +
-    #                             (self.pts[i + 1].getY() - self.pts[i].getY()) *
-    #                             (self.pts[i + 1].getY() - self.pts[i].getY()))
-    #     arcLen += math.sqrt((xOn - self.pts[seg].getX()) *
-    #                         (xOn - self.pts[seg].getX()) +
-    #                         (yOn - self.pts[seg].getY()) *
-    #                         (yOn - self.pts[seg].getY()))
-
-    #     clstPt = Pnt2D(xOn, yOn)
-    #     return clstPt, dmin, seg, arcLen
-
-    # # ---------------------------------------------------------------------
-    # def closestPoint(self, _x, _y):
-
-    #     clstPt, dmin, seg, arcLen = self.closestPointSeg(_x, _y)
-    #     totLen = self.length(0.0, 1.0)
-    #     t = arcLen / totLen
-    #     tangVec = self.pts[seg + 1] - self.pts[seg]
-    #     return True, clstPt, dmin, t, tangVec
-
-    # # ---------------------------------------------------------------------
-    # def closestPointParam(self, _x, _y, _tStart):
-    #     clstPt, tangVec = self.evalPointTangent(_tStart)
-    #     if ((abs(clstPt.getX() - _x) < Curve.COORD_TOL) and
-    #         (abs(clstPt.getY() - _y) < Curve.COORD_TOL)):
-    #         return True, clstPt, 0.0, _tStart, tangVec
-
-    #     status, clstPt, dist, t, tangVec = self.closestPoint(_x, _y)
-    #     return status, clstPt, dist, t, tangVec
-
     def closestPointSeg(self, _x, _y):
         if self.pts is []:
             return False, Pnt2D(0,0), 0, 0, Pnt2D(0,0)
@@ -397,7 +335,7 @@ class Polyline(Curve):
         if not status:
             return status, clstPt, dmin, 0.0, Pnt2D(0,0)
 
-        tolLen = self.length(0.0, 1.0)
+        tolLen = self.length()
         t = arcLen / tolLen
         t = self.updateParametricValue(t)
         if t <= 0.0:
@@ -451,12 +389,10 @@ class Polyline(Curve):
         for point in self.pts:
             x.append(point.getX())
             y.append(point.getY())
-
         xmin = min(x)
         xmax = max(x)
         ymin = min(y)
         ymax = max(y)
-
         return xmin, xmax, ymin, ymax
 
     # ---------------------------------------------------------------------
@@ -474,103 +410,93 @@ class Polyline(Curve):
     # ---------------------------------------------------------------------
     def getYend(self):
         return self.pts[-1].getY()
+    
+    # ---------------------------------------------------------------------
+    def getInitPt(self):
+        return self.pts[0]
+    
+    # ---------------------------------------------------------------------
+    def getEndPt(self):
+        return self.pts[-1]
 
     # ---------------------------------------------------------------------
-    def updateParametricValue(self, _t):
-        if _t == 0.0 or _t == 1.0:
-            return _t
-
-        knots = self.nurbs.knotvector
-        knots = list(set(knots)) # Remove duplicates
-        knots.sort()
-
-        pt, prev_id, loc_t = self.evalPointSeg(_t)
-        t = knots[prev_id] + loc_t * (knots[prev_id + 1] - knots[prev_id])
-        return t
-
-    # ---------------------------------------------------------------------
-    def length(self, _tInit, _tEnd):
+    def length(self):
         L = 0.0
         for i in range(0, self.nPts - 1):
             L += math.sqrt((self.pts[i + 1].getX() - self.pts[i].getX()) *
                            (self.pts[i + 1].getX() - self.pts[i].getX()) +
                            (self.pts[i + 1].getY() - self.pts[i].getY()) *
                            (self.pts[i + 1].getY() - self.pts[i].getY()))
+        return L
+    
+    # ---------------------------------------------------------------------
+    def updateParametricValue(self, _t):
+        if _t >= 1.0:
+            return 1.0
+        elif _t <= 0.0:
+            return 0.0
 
-        return L * (_tEnd - _tInit)
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+
+        prev_id, loc_t = self.findPointLocationSeg(_t)
+        t = knots[prev_id] + loc_t * (knots[prev_id + 1] - knots[prev_id])
+        return t
         
     # ---------------------------------------------------------------------
     def updateLineEditValues(self, _NumctrlPts, _y, _LenAndAng):
         x = self.pts[_NumctrlPts - 1].getX()
         y = self.pts[_NumctrlPts - 1].getY()
         return x, y
-
+    
     # ---------------------------------------------------------------------
-    def degreeChange(self, _degree):
-        # Check if degree change is possible
-        if self.nPts <= (_degree + 1):
-            return False
+    @staticmethod
+    def joinTwoCurves(_curv1, _curv2, _pt, _tol):
+        if _curv1.type == "LINE":
+            _curv1 = Polyline([_curv1.pt0, _curv1.pt1])
+        elif _curv2.type == "LINE":
+            _curv2 = Polyline([_curv2.pt0, _curv2.pt1])
 
-        # NURBS knotvector
-        knotvector = []
-        knotvector.extend([0.0] * (_degree + 1))
-        knot = 0.0
-        for i in range(len(self.pts) - 2):
-            knot += 1.0 / (len(self.pts) - 1)
-            knotvector.extend([knot] * _degree)
-        knotvector.extend([1.0] * (_degree + 1))
+        tol = Pnt2D(_tol, _tol)
 
-        # NURBS Control Points
-        ctrlPts = []
-        if _degree == 1:
-            for pt in self.pts:
-                ctrlPts.append([pt.getX(), pt.getY()])
+        # check curves initial point
+        if Pnt2D.equal(_curv1.pts[0], _pt, tol):
+            init_pt1 = True
+        else:
+            init_pt1 = False
 
-        elif _degree == 2:
-            # For an even number of control points
-            if self.nPts % 2 == 0:
-                MiddleKnot2 = int(self.nPts / 2)
-                MiddleKnot1 = MiddleKnot2 - 1
-                MiddlePt = (self.pts[MiddleKnot2] - self.pts[MiddleKnot2]) / 2.0
-                for pt in self.pts:
-                    if pt == self.pts[MiddleKnot1]:
-                        ctrlPts.append([pt.getX(), pt.getY()])
-                        ctrlPts.append([MiddlePt.getX(), MiddlePt.getY()])
-                    elif pt == self.pts[MiddleKnot2]:
-                        ctrlPts.append([pt.getX(), pt.getY()])
-                    else:
-                        ctrlPts.extend([[pt.getX(), pt.getY()]] * 2)
-            # For an odd number of control points
-            else:
-                MiddleKnot = int(self.nPts / 2.0)
-                for pt in self.pts:
-                    if pt == self.pts[MiddleKnot]:
-                        ctrlPts.append([pt.getX(), pt.getY()])
-                    else:
-                        ctrlPts.extend([[pt.getX(), pt.getY()]] * 2)
+        if Pnt2D.equal(_curv2.pts[0], _pt, tol):
+            init_pt2 = True
+        else:
+            init_pt2 = False
 
-        elif _degree == 3:
-            # For an even number of control points
-            if self.nPts % 2 == 0:
-                MiddleKnot2 = int(self.nPts / 2)
-                MiddleKnot1 = MiddleKnot2 - 1
-                for pt in self.pts:
-                    if pt == self.pts[MiddleKnot2] or pt == self.pts[MiddleKnot1]:
-                        ctrlPts.extend([[pt.getX(), pt.getY()]] * 2)
-                    else:
-                        ctrlPts.extend([[pt.getX(), pt.getY()]] * 3)
-            # For an odd number of control points
-            else:
-                for pt in self.pts:
-                    if pt == self.pts[1] or pt == self.pts[-2]:
-                        ctrlPts.extend([[pt.getX(), pt.getY()]] * 2)
-                    else:
-                        ctrlPts.extend([[pt.getX(), pt.getY()]] * 3)
+        # polyline points
+        curv1_pts = _curv1.getEquivPolyline()
+        curv2_pts = _curv2.getEquivPolyline()
 
-        # Creating Nurbs polyline
-        self.nurbs = NURBS.Curve()
-        self.nurbs.degree = _degree
-        self.nurbs.ctrlpts = ctrlPts
-        self.nurbs.knotvector = knotvector
-        self.nurbs.sample_size = 10
-        return True
+        joinned_pts = []
+        if init_pt1 and init_pt2:
+            curv1_pts.reverse()
+            curv1_pts.pop()
+            joinned_pts.extend(curv1_pts)
+            joinned_pts.extend(curv2_pts)
+
+        elif not init_pt1 and not init_pt2:
+            curv1_pts.pop()
+            joinned_pts.extend(curv1_pts)
+            curv2_pts.reverse()
+            joinned_pts.extend(curv2_pts)
+
+        elif init_pt1 and not init_pt2:
+            joinned_pts.extend(curv2_pts)
+            joinned_pts.pop()
+            joinned_pts.extend(curv1_pts)
+
+        elif not init_pt1 and init_pt2:
+            joinned_pts.extend(curv1_pts)
+            joinned_pts.pop()
+            joinned_pts.extend(curv2_pts)
+
+        curv = Polyline(joinned_pts)
+        return curv, None
