@@ -69,7 +69,7 @@ class Circle(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.radius)
+                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.radius)
                 self.eqPoly.append(self.circ1)
 
     # ---------------------------------------------------------------------
@@ -89,7 +89,7 @@ class Circle(Curve):
 
         elif self.nPts == 1:
             closeToOther = False
-            if Pnt2D.euclidiandistance(self.center, pt) <= 0.01:
+            if self.center == pt:
                 closeToOther = True
             if closeToOther:
                 return
@@ -141,7 +141,7 @@ class Circle(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.radius)
+                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.radius)
                 self.eqPoly.append(self.circ1)
 
     # ---------------------------------------------------------------------
@@ -264,7 +264,7 @@ class Circle(Curve):
         # If current curve does not have yet an equivalent polyline,
         # generate it.
         if self.eqPoly == []:
-            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.radius)
+            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.radius)
             self.eqPoly.append(self.circ1)
         return self.eqPoly
 
@@ -319,7 +319,7 @@ class Circle(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.01 * self.radius)
+                tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.005 * self.radius)
                 tempEqPoly.append(self.circ1)
         return tempEqPoly
 
@@ -445,6 +445,12 @@ class Circle(Curve):
     def length(self):
         L = 2.0 * math.pi * self.radius
         return L
+    
+    # ---------------------------------------------------------------------
+    def getDataToInitCurve(self):
+        data = {'center': [self.center.getX(), self.center.getY()],
+                'circ1': [self.circ1.getX(), self.circ1.getY()]}
+        return data
 
     # ---------------------------------------------------------------------
     def updateLineEditValues(self, _x, _y, _LenAndAng):
