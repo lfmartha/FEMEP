@@ -19,6 +19,7 @@ from geometry.segment import Segment
 from geometry.attributes.attribmanager import AttribManager
 from mesh.mesh import Mesh, MeshGeneration
 from geometry.curves.curve import Curve
+from geomdl import NURBS
 from PyQt5.QtWidgets import QMessageBox
 
 
@@ -1456,9 +1457,25 @@ class HeController:
         for face_dict in faces:
             mesh_dict = face_dict['attributes']['mesh']
             if mesh_dict is not None:
-                coords = mesh_dict['coords']
-                conn = mesh_dict['conn']
-                lines = MeshGeneration.meshLines(coords, conn)
+
+                if mesh_dict['properties']['Element type'] == 'Isogeometric':
+                    coonsSurf = NURBS.Surface()
+                    coonsSurf.degree_u = face_dict['dataSurf']['degree_u']
+                    coonsSurf.degree_v = face_dict['dataSurf']['degree_v']
+                    coonsSurf.ctrlpts_size_u = face_dict['dataSurf']['ctrlpts_size_u']
+                    coonsSurf.ctrlpts_size_v = face_dict['dataSurf']['ctrlpts_size_v']
+                    coonsSurf.ctrlpts = face_dict['dataSurf']['ctrlpts']
+                    coonsSurf.weights = face_dict['dataSurf']['weights']
+                    coonsSurf.knotvector_u = face_dict['dataSurf']['knotvector_u']
+                    coonsSurf.knotvector_v = face_dict['dataSurf']['knotvector_v']
+                    coonsSurf.sample_size = 10
+                    face_dict['face'].patch.nurbs = coonsSurf
+                    check, lines, co, con, nno, nel = MeshGeneration.isogeometricMesh(coonsSurf)
+                else:
+                    coords = mesh_dict['coords']
+                    conn = mesh_dict['conn']
+                    lines = MeshGeneration.meshLines(coords, conn)
+
                 model = HeModel()
                 hecontroller = HeController(model)
                 mesh = Mesh(model, hecontroller)
@@ -1467,8 +1484,11 @@ class HeController:
                 setAtt = SetAttribute(face_dict['face'].patch, mesh_dict)
                 setAtt.execute()
 
-                repeatedPts = hecontroller.repeatedMeshPoints(
-                    face_dict['face'], mesh_dict['properties']['Element type'])
+                if mesh_dict['properties']['Element type'] == 'Isogeometric':
+                    repeatedPts = []
+                else:
+                    repeatedPts = hecontroller.repeatedMeshPoints(
+                        face_dict['face'], mesh_dict['properties']['Element type'])
 
                 hecontroller.makeMesh(lines, repeatedPts)
 
@@ -1879,6 +1899,9 @@ class HeController:
                 elem_type = 8
                 elem = "Q8"
 
+        if _mesh_type == "Isogeometric" or _mesh_type == "Isogeometric Template":
+            elem = "Isogeometric"
+
         if _mesh_type == "Triangular Boundary Contraction":
             mesh_name = "Triangular Boundary C."
         else:
@@ -1930,13 +1953,16 @@ class HeController:
                     }
                     mesh.mesh_dict = mesh_dict
 
-                    repeatedPts = hecontroller.repeatedMeshPoints(
-                        face, _elem_type)
+                    if elem == "Isogeometric":
+                        repeatedPts = []
+                    else:
+                        repeatedPts = hecontroller.repeatedMeshPoints(
+                            face, _elem_type)
 
                     hecontroller.makeMesh(lines, repeatedPts)
 
-                    gen_check = (len(model.shell.faces) -
-                                 len(face.patch.holes) - 1)
+                    # gen_check = (len(model.shell.faces) -
+                    #              len(face.patch.holes) - 1)
 
                     # if gen_check != nel:
                     #     self.undoredo.end()
