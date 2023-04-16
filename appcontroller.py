@@ -1681,14 +1681,14 @@ class AppController(QMainWindow, Ui_MainWindow):
         if filename == '':
             return
 
-        try:
-            self.current_canvas.openFile(filename)
-        except:
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Error')
-            msg.setText('It was not possible read the file')
-            msg.exec()
-            return
+        # try:
+        self.current_canvas.openFile(filename)
+        # except:
+        #     msg = QMessageBox(self)
+        #     msg.setWindowTitle('Error')
+        #     msg.setText('It was not possible read the file')
+        #     msg.exec()
+        #     return
 
         split_name = filename.split('/')
         split_name = split_name[-1].split('.')
@@ -2224,53 +2224,86 @@ class AppController(QMainWindow, Ui_MainWindow):
     def setMeshOptions(self):
 
         # setup display
-        self.mesh_display.genMeshpushButton.show()
         mesh_type = self.mesh_display.meshcomboBox.currentText()
+        self.mesh_display.elemTypesLAbel.hide()
         self.mesh_display.shapecomboBox.hide()
-        self.mesh_display.flagcomboBox.hide()
-        self.mesh_display.flagLabel.hide()
-        self.mesh_display.diagcomboBox.hide()
+        self.mesh_display.elemcomboBox.hide()
         self.mesh_display.diagTypesLabel.hide()
-
+        self.mesh_display.diagcomboBox.hide()
+        self.mesh_display.flagLabel.hide()
+        self.mesh_display.flagcomboBox.hide()
+        
         if mesh_type == "Bilinear Transfinite":
+            self.mesh_display.elemTypesLAbel.show()
             self.mesh_display.shapecomboBox.show()
+            self.mesh_display.elemcomboBox.show()
             self.setDiagOptions()
 
+            self.mesh_display.shapecomboBox.setGeometry(
+                QtCore.QRect(25, 125, 150, 25))
             self.mesh_display.elemcomboBox.setGeometry(
-                QtCore.QRect(25, 160, 150, 20))
-            self.mesh_display.genMeshpushButton.setGeometry(
-                QtCore.QRect(55, 260, 90, 23))
-            self.mesh_display.delMeshpushButton.setGeometry(
-                QtCore.QRect(55, 290, 90, 23))
+                QtCore.QRect(25, 155, 150, 25))
 
+        elif (mesh_type == "Trilinear Transfinite" or
+              mesh_type == "Quadrilateral Seam" or
+              mesh_type == "Quadrilateral Template"):
+            self.mesh_display.elemTypesLAbel.show()
+            self.mesh_display.elemcomboBox.show()
+
+            self.mesh_display.elemcomboBox.setGeometry(
+                QtCore.QRect(25, 125, 150, 25))
+            self.mesh_display.genMeshpushButton.setGeometry(
+                QtCore.QRect(50, 170, 100, 25))
+            self.mesh_display.delMeshpushButton.setGeometry(
+                QtCore.QRect(50, 200, 100, 25))
+            
         elif mesh_type == "Triangular Boundary Contraction":
-            self.mesh_display.flagcomboBox.show()
+            self.mesh_display.elemTypesLAbel.show()
+            self.mesh_display.elemcomboBox.show()
             self.mesh_display.flagLabel.show()
+            self.mesh_display.flagcomboBox.show()
 
             self.mesh_display.elemcomboBox.setGeometry(
-                QtCore.QRect(25, 130, 150, 20))
+                QtCore.QRect(25, 125, 150, 25))
+            self.mesh_display.flagLabel.setGeometry(
+                QtCore.QRect(25, 170, 150, 25))
+            self.mesh_display.flagcomboBox.setGeometry(
+                QtCore.QRect(25, 190, 150, 25))
             self.mesh_display.genMeshpushButton.setGeometry(
-                QtCore.QRect(55, 220, 90, 23))
+                QtCore.QRect(50, 235, 100, 25))
             self.mesh_display.delMeshpushButton.setGeometry(
-                QtCore.QRect(55, 250, 90, 23))
-        else:
-            self.mesh_display.elemcomboBox.setGeometry(
-                QtCore.QRect(25, 130, 150, 20))
+                QtCore.QRect(50, 265, 100, 25))
+        elif (mesh_type == "Isogeometric" or 
+              mesh_type == "Isogeometric Template"):
+
             self.mesh_display.genMeshpushButton.setGeometry(
-                QtCore.QRect(55, 160, 90, 23))
+                QtCore.QRect(50, 105, 100, 25))
             self.mesh_display.delMeshpushButton.setGeometry(
-                QtCore.QRect(55, 190, 90, 23))
+                QtCore.QRect(50, 135, 100, 25))
 
     def setDiagOptions(self):
-
         shape_type = self.mesh_display.shapecomboBox.currentText()
 
         if shape_type == "Triangular":
             self.mesh_display.diagcomboBox.show()
             self.mesh_display.diagTypesLabel.show()
+
+            self.mesh_display.diagTypesLabel.setGeometry(
+                QtCore.QRect(0, 200, 200, 20))
+            self.mesh_display.diagcomboBox.setGeometry(
+                QtCore.QRect(25, 220, 150, 25))
+            self.mesh_display.genMeshpushButton.setGeometry(
+                QtCore.QRect(50, 265, 100, 25))
+            self.mesh_display.delMeshpushButton.setGeometry(
+                QtCore.QRect(50, 295, 100, 25))
         else:
             self.mesh_display.diagcomboBox.hide()
             self.mesh_display.diagTypesLabel.hide()
+
+            self.mesh_display.genMeshpushButton.setGeometry(
+                QtCore.QRect(50, 200, 100, 25))
+            self.mesh_display.delMeshpushButton.setGeometry(
+                QtCore.QRect(50, 230, 100, 25))
 
     def generateMesh(self):
         mesh_type = self.mesh_display.meshcomboBox.currentText()
@@ -2286,6 +2319,9 @@ class AppController(QMainWindow, Ui_MainWindow):
             shape_type = "Quadrilateral"
         elif mesh_type == "Triangular Boundary Contraction":
             shape_type = "Triangular"
+        elif (mesh_type == "Isogeometric" or 
+              mesh_type == "Isogeometric Template"):
+            shape_type = "Quadrilateral"
         else:
             shape_type = self.mesh_display.shapecomboBox.currentText()
 
