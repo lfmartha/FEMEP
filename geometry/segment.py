@@ -23,6 +23,9 @@ class Segment():
         self.sdvPoints = None
         self.originalNurbs = None
         self.CtrlPolyView = False
+        self.isReversed = False
+        self.currentDegree = self.curve.nurbs.degree
+        self.currentKnotVector = self.curve.nurbs.knotvector
 
     # ---------------------------------------------------------------------
     def getCurve(self):
@@ -275,7 +278,6 @@ class Segment():
                             # Count intersection if first point is to the right of given point
                             # and second point is above.
                             ni += 1
-
         return ni
 
     # ---------------------------------------------------------------------
@@ -374,6 +376,7 @@ class Segment():
 
         for knot in knotsToBeInserted:
             operations.insert_knot(self.curve.nurbs, [knot], [1])
+        self.currentKnotVector = self.curve.nurbs.knotvector
         
     # ---------------------------------------------------------------------
     def BackToOriginalNurbs(self):
@@ -381,6 +384,9 @@ class Segment():
             return
 
         self.curve.nurbs = copy.deepcopy(self.originalNurbs)
+        self.isReversed = False
+        self.currentDegree = self.curve.nurbs.degree
+        self.currentKnotVector = self.curve.nurbs.knotvector
 
     # ---------------------------------------------------------------------
     def getNurbs(self):
@@ -408,20 +414,20 @@ class Segment():
 
         # Bezier decomposition
         beziers = operations.decompose_curve(crv)
-
+        
         # Bezier degree elevation
-        new_ctrlpts = []
+        new_ctrlptsw = []
         for i in range(len(beziers)):
-            bezier_new_ctrlpts = helpers.degree_elevation(crv.degree, beziers[i].ctrlpts)
+            bezier_new_ctrlptsw = helpers.degree_elevation(crv.degree, beziers[i].ctrlptsw)
             if len(beziers) == 2:
                 if i == 0:
-                    bezier_new_ctrlpts.pop()
+                    bezier_new_ctrlptsw.pop()
             elif len(beziers) > 2:
                 if i == 0:
-                    bezier_new_ctrlpts.pop()
+                    bezier_new_ctrlptsw.pop()
                 elif i != 0 and i != (len(beziers) - 1):
-                    bezier_new_ctrlpts.pop()
-            new_ctrlpts.extend(bezier_new_ctrlpts)
+                    bezier_new_ctrlptsw.pop()
+            new_ctrlptsw.extend(bezier_new_ctrlptsw)
 
         # New knot vector
         new_knot_vector = crv.knotvector
@@ -436,14 +442,17 @@ class Segment():
 
         # Set degree, control points and knot vector
         crv2.degree = new_degree
-        crv2.ctrlpts = new_ctrlpts
+        crv2.ctrlptsw = new_ctrlptsw
         crv2.knotvector = new_knot_vector
 
         for i in range(len(knots)):
             operations.remove_knot(crv2, [knots[i]], [numb_insertions[i]])
 
         self.curve.nurbs = crv2
+        self.currentDegree = self.curve.nurbs.degree
+        self.currentKnotVector = self.curve.nurbs.knotvector
 
+    # ---------------------------------------------------------------------
     def ReverseNurbs(self):
         if self.originalNurbs is None:
             self.originalNurbs = copy.deepcopy(self.curve.nurbs)
@@ -471,6 +480,13 @@ class Segment():
 
         self.curve.nurbs = crv2
 
+        # Change self.isReversed flag
+        if self.isReversed == False:
+            self.isReversed = True
+        else:
+            self.isReversed = False
+        self.currentKnotVector = self.curve.nurbs.knotvector
+
     # ---------------------------------------------------------------------
     def getCtrlPts(self):
         return self.curve.nurbs.ctrlpts
@@ -478,6 +494,28 @@ class Segment():
     # ---------------------------------------------------------------------
     def updateCtrlPolyView(self, status):
         self.CtrlPolyView = status
+
+    # ---------------------------------------------------------------------
+    def conformFromKnotVector(self, upcoming_knotvector):
+        # find remaining knots
+        remaining_knots = []
+        knots_already_have = copy.deepcopy(self.curve.nurbs.knotvector)
+        for k in upcoming_knotvector:
+            if k not in knots_already_have:
+                remaining_knots.append(k)
+
+        # insert remaining knots in each curve
+        for knot in remaining_knots:
+            operations.insert_knot(self.curve.nurbs, [knot], [1])
+        self.currentKnotVector = self.curve.nurbs.knotvector
+
+    # ---------------------------------------------------------------------
+    def getDataToInitCurve(self):
+        data = self.curve.getDataToInitCurve()
+        data['isReversed'] = self.isReversed
+        data['currentDegree'] = self.currentDegree
+        data['currentKnotVector'] = self.currentKnotVector
+        return data
     
     # ---------------------------------------------------------------------
     @staticmethod
@@ -546,5 +584,6 @@ class Segment():
             knots = insert_knots[i]
             for knot in knots:
                 operations.insert_knot(seg.curve.nurbs, [knot], [1])
+            seg.currentKnotVector = seg.curve.nurbs.knotvector
 
         return True, None
