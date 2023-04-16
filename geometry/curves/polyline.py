@@ -48,7 +48,7 @@ class Polyline(Curve):
         else:
             closeToOther = False
             for i in range(0, self.nPts):
-                if Pnt2D.euclidiandistance(self.pts[i], pt) <= 0.01:
+                if self.pts[i] == pt:
                     closeToOther = True
             if closeToOther:
                 return
@@ -445,6 +445,14 @@ class Polyline(Curve):
         return t
         
     # ---------------------------------------------------------------------
+    def getDataToInitCurve(self):
+        pts = []
+        for i in range (self.nPts):
+            pts.append([self.pts[i].getX(), self.pts[i].getY()])
+        data = {'pts': pts}
+        return data
+    
+    # ---------------------------------------------------------------------
     def updateLineEditValues(self, _NumctrlPts, _y, _LenAndAng):
         x = self.pts[_NumctrlPts - 1].getX()
         y = self.pts[_NumctrlPts - 1].getY()
@@ -455,7 +463,7 @@ class Polyline(Curve):
     def joinTwoCurves(_curv1, _curv2, _pt, _tol):
         if _curv1.type == "LINE":
             _curv1 = Polyline([_curv1.pt0, _curv1.pt1])
-        elif _curv2.type == "LINE":
+        if _curv2.type == "LINE":
             _curv2 = Polyline([_curv2.pt0, _curv2.pt1])
 
         tol = Pnt2D(_tol, _tol)
