@@ -81,7 +81,7 @@ class Ellipse(Curve):
                         self.nurbs.sample_size = 10
 
                         # Generating equivalent polyline
-                        self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.axis1)
+                        self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.axis1)
                         self.eqPoly.append(self.ellip1)
 
     # ---------------------------------------------------------------------
@@ -101,7 +101,7 @@ class Ellipse(Curve):
 
         elif self.nPts == 1:
             closeToOther = False
-            if Pnt2D.euclidiandistance(self.center, pt) <= 0.01:
+            if self.center == pt:
                 closeToOther = True
             if closeToOther:
                 return
@@ -121,9 +121,9 @@ class Ellipse(Curve):
 
         elif self.nPts == 2:
             closeToOther = False
-            if Pnt2D.euclidiandistance(self.center, pt) <= 0.01:
+            if self.center == pt:
                 closeToOther = True
-            if Pnt2D.euclidiandistance(self.ellip1, pt) <= 0.01:
+            if self.ellip1 == pt:
                 closeToOther = True
             if closeToOther:
                 return
@@ -172,7 +172,7 @@ class Ellipse(Curve):
             self.nurbs.sample_size = 10
 
             # Generating equivalent polyline
-            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.axis1)
+            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.axis1)
             self.eqPoly.append(self.ellip1)
 
     # ---------------------------------------------------------------------
@@ -304,7 +304,7 @@ class Ellipse(Curve):
         # If current curve does not have yet an equivalent polyline,
         # generate it.
         if self.eqPoly == []:
-            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.axis1)
+            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.axis1)
             self.eqPoly.append(self.ellip1)
         return self.eqPoly
 
@@ -372,7 +372,7 @@ class Ellipse(Curve):
             self.nurbs.sample_size = 10
 
             # Generating equivalent polyline
-            tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.01 * self.axis1)
+            tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.005 * self.axis1)
             tempEqPoly.append(self.ellip1)
         return tempEqPoly
 
@@ -498,6 +498,13 @@ class Ellipse(Curve):
     def length(self):
         L = operations.length_curve(self.nurbs)
         return L
+    
+    # ---------------------------------------------------------------------
+    def getDataToInitCurve(self):
+        data = {'center': [self.center.getX(), self.center.getY()],
+                'ellip1': [self.ellip1.getX(), self.ellip1.getY()],
+                'ellip2': [self.ellip2.getX(), self.ellip2.getY()]}
+        return data
 
     # ---------------------------------------------------------------------
     def updateLineEditValues(self, _x, _y, _LenAndAng):
