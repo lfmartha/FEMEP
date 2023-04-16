@@ -94,41 +94,7 @@ class MeshGeneration:
                 msg.setText('Opposite segments must have the same degree')
                 msg.exec()
                 return False, None, None, None, None, None
-
-            # # Check if curves are in positive direcion, if not 
-            # # inverte directions
-            # knotvector_west = nurbs_west.knotvector
-            # if nurbs_west.ctrlpts[0][1] > nurbs_west.ctrlpts[-1][1]:
-            #     for i in range(len(knotvector_west)):
-            #         if knotvector_west[i] != 1.0 and knotvector_west[i] != 0.0:
-            #             nurbs_west.knotvector[len(knotvector_west) - 1 - i] = 1.0 - knotvector_west[i]
-            #     nurbs_west.ctrlpts.reverse()
-            #     nurbs_west.weights.reverse()
-
-            # knotvector_south = nurbs_south.knotvector
-            # if nurbs_south.ctrlpts[0][0] > nurbs_south.ctrlpts[-1][0]:
-            #     for i in range(len(knotvector_south)):
-            #         if knotvector_south[i] != 1.0 and knotvector_south[i] != 0.0:
-            #             nurbs_south.knotvector[len(knotvector_south) - 1 - i] = 1.0 - knotvector_south[i]
-            #     nurbs_south.ctrlpts.reverse()
-            #     nurbs_south.weights.reverse()
-
-            # knotvector_east = nurbs_east.knotvector
-            # if nurbs_east.ctrlpts[0][1] > nurbs_east.ctrlpts[-1][1]:
-            #     for i in range(len(knotvector_east)):
-            #         if knotvector_east[i] != 1.0 and knotvector_east[i] != 0.0:
-            #             nurbs_east.knotvector[len(knotvector_east) - 1 - i] = 1.0 - knotvector_east[i]
-            #     nurbs_east.ctrlpts.reverse()
-            #     nurbs_east.weights.reverse()
-
-            # knotvector_north = nurbs_north.knotvector
-            # if nurbs_north.ctrlpts[0][0] > nurbs_north.ctrlpts[-1][0]:
-            #     for i in range(len(knotvector_north)):
-            #         if knotvector_north[i] != 1.0 and knotvector_north[i] != 0.0:
-            #             nurbs_north.knotvector[len(knotvector_north) - 1 - i] = 1.0 - knotvector_north[i]
-            #     nurbs_north.ctrlpts.reverse()
-            #     nurbs_north.weights.reverse()
-
+ 
             # Check if opposite segments have conforming knot vectors
             if nurbs_west.knotvector != nurbs_east.knotvector or nurbs_south.knotvector != nurbs_north.knotvector:
                 msg = QMessageBox(MeshGeneration.App)
@@ -140,7 +106,6 @@ class MeshGeneration:
             check, coonsSurf = MeshGeneration.getCoonsSurface(nurbs_north, nurbs_south, nurbs_west, nurbs_east)
             if check:
                 _face.patch.nurbs = coonsSurf
-                # return MeshGeneration.isoCurves(coonsSurf)
                 return MeshGeneration.isogeometricMesh(coonsSurf)
             else:
                 return False, None, None, None, None, None
@@ -1022,7 +987,8 @@ class MeshGeneration:
                 MeshCurves.append(isoCurveSeg)
 
         nel = (len(set(coonsSurf.knotvector_u)) - 1) * (len(set(coonsSurf.knotvector_v)) - 1)
-        return True, MeshCurves, [], [], 0.0, nel
+        nno = coonsSurf.ctrlpts_size_u * coonsSurf.ctrlpts_size_v
+        return True, MeshCurves, [], [], nno, nel
 
     def getIsocurveU(coonsSurf, u0):
         # Surface properties
@@ -1172,5 +1138,3 @@ class MeshGeneration:
         # assert p <= n    # The degree of the basis polynomials must be equal or lower than the number of basis polynomials
 
         return N
-
-
