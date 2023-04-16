@@ -8,7 +8,6 @@ from geomdl import convert
 from geomdl import operations
 from geomdl import NURBS
 import numpy as np
-import nurbspy as nrb
 import math
 
 
