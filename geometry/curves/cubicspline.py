@@ -6,45 +6,34 @@ from geomdl import NURBS
 from geomdl import operations
 from geomdl import fitting
 from geomdl import convert
-import numpy as np
-import nurbspy as nrb
 import math
 
 
 class CubicSpline(Curve):
-    def __init__(self, _pts=None):
+    def __init__(self, degree=None, ctrlpts=None, weights=None, knotvector=None):
         super(Curve, self).__init__()
         self.type = 'CUBICSPLINE'
-        self.pts = _pts
+        self.pts = []
         self.nPts = 0
-        self.nurbs = []
+        self.nurbs = None
         self.eqPoly = []
 
-        if self.pts is not None:
-            self.nPts = len(self.pts)
+        if (degree is not None and ctrlpts is not None and weights is not None and 
+            knotvector is not None):
 
-            if self.nPts >= 2:
-                # Nurbs degree and control points
-                if len(self.pts) == 2:
-                    degree = 1
-                elif len(self.pts) == 3:
-                    degree = 2
-                elif len(self.pts) > 3:
-                    degree = 3
+            # Creating Nurbs
+            self.nurbs = NURBS.Curve()
+            self.nurbs.degree = degree
+            self.nurbs.ctrlpts = ctrlpts
+            self.nurbs.weights = weights
+            self.nurbs.knotvector = knotvector
+            self.nurbs.sample_size = 10
 
-                ctrlPts = []
-                for pt in self.pts:
-                    ctrlPts.append([pt.getX(), pt.getY()])
-
-                # Creating Nurbs
-                spline = fitting.interpolate_curve(ctrlPts, degree)
-                self.nurbs = convert.bspline_to_nurbs(spline)
-                self.nurbs.sample_size = 10
-
-                # Generating equivalent polyline
-                L = self.lengthInerpPts()
-                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.001 * L)
-                self.eqPoly.append(self.pts[-1])
+            # Generating equivalent polyline
+            L = self.lengthInerpPts()
+            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.001 * L)
+            ptEnd = Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
+            self.eqPoly.append(ptEnd)
 
     # ---------------------------------------------------------------------
     def addCtrlPoint(self, _x, _y, _LenAndAng):
@@ -53,12 +42,11 @@ class CubicSpline(Curve):
         if self.nPts == 0:
             self.pts = [pt]
             self.nPts += 1
-            # self.eqPoly.append(pt)
 
         else:
             closeToOther = False
             for i in range(0, self.nPts):
-                if Pnt2D.euclidiandistance(self.pts[i], pt) <= 0.01:
+                if self.pts[i] == pt:
                     closeToOther = True
             if closeToOther:
                 return
@@ -185,13 +173,13 @@ class CubicSpline(Curve):
             return left, right
 
         # Generate equivalent polylines for each resulting curve
-        L = self.length()
-        left.eqPoly = []
-        left.eqPoly = Curve.genEquivPolyline(left, left.eqPoly, 0.001 * L)
+        L_left = left.lengthInerpPts()
+        left.eqPoly = Curve.genEquivPolyline(left, left.eqPoly, 0.001 * L_left)
         ptLeftEnd = Pnt2D(left.nurbs.ctrlpts[-1][0], left.nurbs.ctrlpts[-1][1])
         left.eqPoly.append(ptLeftEnd)
-        right.eqPoly = []
-        right.eqPoly = Curve.genEquivPolyline(right, right.eqPoly, 0.001 * L)
+        
+        L_right = right.lengthInerpPts()
+        right.eqPoly = Curve.genEquivPolyline(right, right.eqPoly, 0.001 * L_right)
         ptRightEnd = Pnt2D(right.nurbs.ctrlpts[-1][0], right.nurbs.ctrlpts[-1][1])
         right.eqPoly.append(ptRightEnd)
         return left, right
@@ -203,7 +191,8 @@ class CubicSpline(Curve):
         if self.eqPoly == []:
             L = self.lengthInerpPts()
             self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.001 * L)
-            self.eqPoly.append(self.pts[-1])
+            ptEnd = Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
+            self.eqPoly.append(ptEnd)
         return self.eqPoly
 
     # ---------------------------------------------------------------------
@@ -213,34 +202,33 @@ class CubicSpline(Curve):
 
         pts = []
         pts.extend(self.pts)
-        pts.append(pt)
+        if pt != self.pts[-1]:
+            pts.append(pt)
 
-        if self.nPts == 1:
-            tempEqPoly = pts
+        # Nurbs degree and control points
+        if len(pts) == 1:
+            return pts
+        elif len(pts) == 2:
+            return pts
+        elif len(pts) == 3:
+            degree = 2
+        elif len(pts) > 3:
+            degree = 3
 
-        if self.nPts >= 2 and pts[-1] != pts[-2]:
-            # Nurbs degree and control points
-            if len(pts) == 2:
-                degree = 1
-            elif len(pts) == 3:
-                degree = 2
-            elif len(pts) > 3:
-                degree = 3
+        ctrlPts = []
+        for p in pts:
+            ctrlPts.append([p.getX(), p.getY()])
 
-            ctrlPts = []
-            for p in pts:
-                ctrlPts.append([p.getX(), p.getY()])
+        # Creating Nurbs
+        cubic_spline = CubicSpline()
+        spline = fitting.interpolate_curve(ctrlPts, degree)
+        cubic_spline.nurbs = convert.bspline_to_nurbs(spline)
+        cubic_spline.nurbs.sample_size = 10
 
-            # Creating Nurbs
-            cubic_spline = CubicSpline()
-            spline = fitting.interpolate_curve(ctrlPts, degree)
-            cubic_spline.nurbs = convert.bspline_to_nurbs(spline)
-            cubic_spline.nurbs.sample_size = 10
-
-            # Generating equivalent polyline
-            L = self.lengthInerpPts()
-            tempEqPoly = Curve.genEquivPolyline(cubic_spline, tempEqPoly, 0.001 * L)
-            tempEqPoly.append(pts[-1])
+        # Generating equivalent polyline
+        L = self.lengthInerpPts()
+        tempEqPoly = Curve.genEquivPolyline(cubic_spline, tempEqPoly, 0.001 * L)
+        tempEqPoly.append(pts[-1])
         return tempEqPoly
 
     # ---------------------------------------------------------------------
@@ -364,11 +352,11 @@ class CubicSpline(Curve):
     # ---------------------------------------------------------------------
     def lengthInerpPts(self):
         L = 0.0
-        for i in range(0, len(self.pts) - 1):
-            L += math.sqrt((self.pts[i + 1].getX() - self.pts[i].getX()) *
-                           (self.pts[i + 1].getX() - self.pts[i].getX()) +
-                           (self.pts[i + 1].getY() - self.pts[i].getY()) *
-                           (self.pts[i + 1].getY() - self.pts[i].getY()))
+        for i in range(0, len(self.nurbs.ctrlpts) - 1):
+            L += math.sqrt((self.nurbs.ctrlpts[i+1][0] - self.nurbs.ctrlpts[i][0]) *
+                           (self.nurbs.ctrlpts[i+1][0] - self.nurbs.ctrlpts[i][0]) +
+                           (self.nurbs.ctrlpts[i+1][1] - self.nurbs.ctrlpts[i][1]) *
+                           (self.nurbs.ctrlpts[i+1][1] - self.nurbs.ctrlpts[i][1]))
         return L
 
     # ---------------------------------------------------------------------
@@ -380,7 +368,15 @@ class CubicSpline(Curve):
                            (self.eqPoly[i + 1].getY() - self.eqPoly[i].getY()) *
                            (self.eqPoly[i + 1].getY() - self.eqPoly[i].getY()))
         return L
-
+    
+    # ---------------------------------------------------------------------
+    def getDataToInitCurve(self):
+        data = {'degree': self.nurbs.degree,
+                'ctrlpts': self.nurbs.ctrlpts,
+                'weights': self.nurbs.weights,
+                'knotvector': self.nurbs.knotvector}
+        return data
+    
     # ---------------------------------------------------------------------
     def updateLineEditValues(self, _NumctrlPts, _y, _LenAndAng):
         x = self.pts[_NumctrlPts - 1].getX()
