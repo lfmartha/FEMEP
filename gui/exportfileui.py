@@ -73,7 +73,7 @@ class Ui_exportFile(object):
         self.Q8Label.setObjectName("Q8Label")
         self.Q8comboBox = QtWidgets.QComboBox(exportFileui)
         self.Q8comboBox.setGeometry(QtCore.QRect(40, 280, 50, 20))
-        self.Q8comboBox.setObjectName("Q4comboBox")
+        self.Q8comboBox.setObjectName("Q8comboBox")
         self.Q8comboBox.addItem("2x2")
 
         self.exportpushButton = QtWidgets.QPushButton(exportFileui)
