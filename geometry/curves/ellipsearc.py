@@ -194,7 +194,7 @@ class EllipseArc(Curve):
                                             self.nurbs.sample_size = 10
 
                                             # Generating equivalent polyline
-                                            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.axis1)
+                                            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.axis1)
                                             self.eqPoly.append(self.arc2)
 
     # ---------------------------------------------------------------------
@@ -214,7 +214,7 @@ class EllipseArc(Curve):
 
         elif self.nPts == 1:
             closeToOther = False
-            if Pnt2D.euclidiandistance(self.center, pt) <= 0.01:
+            if self.center == pt:
                 closeToOther = True
             if closeToOther:
                 return
@@ -234,9 +234,9 @@ class EllipseArc(Curve):
 
         elif self.nPts == 2:
             closeToOther = False
-            if Pnt2D.euclidiandistance(self.center, pt) <= 0.01:
+            if self.center == pt:
                 closeToOther = True
-            if Pnt2D.euclidiandistance(self.ellip1, pt) <= 0.01:
+            if self.ellip1 == pt:
                 closeToOther = True
             if closeToOther:
                 return
@@ -253,7 +253,7 @@ class EllipseArc(Curve):
 
         elif self.nPts == 3:
             closeToOther = False
-            if Pnt2D.euclidiandistance(self.center, pt) <= 0.01:
+            if self.center == pt:
                 closeToOther = True
             if closeToOther:
                 return
@@ -284,9 +284,9 @@ class EllipseArc(Curve):
 
         elif self.nPts == 4:
             closeToOther = False
-            if Pnt2D.euclidiandistance(self.center, pt) <= 0.01:
+            if self.center == pt:
                 closeToOther = True
-            if Pnt2D.euclidiandistance(self.arc1, pt) <= 0.01:
+            if self.arc1 == pt:
                 closeToOther = True
             if closeToOther:
                 return
@@ -407,7 +407,7 @@ class EllipseArc(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.axis1)
+                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.axis1)
                 self.eqPoly.append(self.arc2)
 
     # ---------------------------------------------------------------------
@@ -547,7 +547,7 @@ class EllipseArc(Curve):
         # If current curve does not have yet an equivalent polyline,
         # generate it.
         if self.eqPoly == []:
-            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.axis1)
+            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.axis1)
             self.eqPoly.append(self.arc2)
         return self.eqPoly
 
@@ -616,7 +616,7 @@ class EllipseArc(Curve):
             self.nurbs.sample_size = 10
 
             # Generating equivalent polyline
-            tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.01 * self.axis1)
+            tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.005 * self.axis1)
             tempEqPoly.append(self.ellip1)
 
         if self.nPts == 3:
@@ -764,7 +764,7 @@ class EllipseArc(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.01 * self.axis1)
+                tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.005 * self.axis1)
                 tempEqPoly.append(self.arc2)
         return tempEqPoly
 
@@ -907,6 +907,15 @@ class EllipseArc(Curve):
 
         len = self.axis1 * self.axis2 / math.sqrt(self.axis1 ** 2 * math.sin(teta1) ** 2 + self.axis2 ** 2 * math.cos(teta1) ** 2)
         return len
+    
+    # ---------------------------------------------------------------------
+    def getDataToInitCurve(self):
+        data = {'center': [self.center.getX(), self.center.getY()],
+                'ellip1': [self.ellip1.getX(), self.ellip1.getY()],
+                'ellip2': [self.ellip2.getX(), self.ellip2.getY()],
+                'arc1': [self.arc1.getX(), self.arc1.getY()],
+                'arc2': [self.arc2.getX(), self.arc2.getY()]}
+        return data
 
     # ---------------------------------------------------------------------
     def updateLineEditValues(self, _x, _y, _LenAndAng):
