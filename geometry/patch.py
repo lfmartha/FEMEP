@@ -177,3 +177,17 @@ class Patch:
                             Area -= adjface.patch.Area()
 
         return Area
+
+    def getDataToInitSurface(self):
+        if self.nurbs != []:
+            data ={'degree_u': self.nurbs.degree_u,
+                'degree_v': self.nurbs.degree_v,
+                'ctrlpts_size_u': self.nurbs.ctrlpts_size_u,
+                'ctrlpts_size_v': self.nurbs.ctrlpts_size_v,
+                'ctrlpts': self.nurbs.ctrlpts,
+                'weights': self.nurbs.weights,
+                'knotvector_u': self.nurbs.knotvector_u,
+                'knotvector_v': self.nurbs.knotvector_v}
+        else:
+            data = {}
+        return data
