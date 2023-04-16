@@ -25,11 +25,14 @@ class Line(Curve):
                     # Nurbs control points
                     crvPts =[[self.pt0.getX(), self.pt0.getY()], [self.pt1.getX(), self.pt1.getY()]]
 
+                    # Nurbs knot vector
+                    knotvector = [0.0, 0.0, 1.0, 1.0]
+
                     # Creating Nurbs line
                     self.nurbs = NURBS.Curve()
                     self.nurbs.degree = 1
                     self.nurbs.ctrlpts = crvPts
-                    self.nurbs.knotvector = knotvector.generate(self.nurbs.degree, self.nurbs.ctrlpts_size)
+                    self.nurbs.knotvector = knotvector
                     self.nurbs.sample_size = 10
 
     # ---------------------------------------------------------------------
@@ -48,11 +51,14 @@ class Line(Curve):
                 # Nurbs control points
                 crvPts =[[self.pt0.getX(), self.pt0.getY()], [self.pt1.getX(), self.pt1.getY()]]
 
+                # Nurbs knot vector
+                knotvector = [0.0, 0.0, 1.0, 1.0]
+
                 # Creating Nurbs line
                 self.nurbs = NURBS.Curve()
                 self.nurbs.degree = 1
                 self.nurbs.ctrlpts = crvPts
-                self.nurbs.knotvector = knotvector.generate(self.nurbs.degree, self.nurbs.ctrlpts_size)
+                self.nurbs.knotvector = knotvector
                 self.nurbs.sample_size = 10
 
     # ---------------------------------------------------------------------
@@ -64,7 +70,6 @@ class Line(Curve):
 
         v = self.pt1 - self.pt0
         pt = self.pt0 +  v * _t
-
         return pt
 
     # ---------------------------------------------------------------------
@@ -76,7 +81,6 @@ class Line(Curve):
             
         pt = self.evalPoint(_t)
         tangVec = self.pt1 - self.pt0
-
         return pt, tangVec
 
     # ---------------------------------------------------------------------
@@ -133,7 +137,6 @@ class Line(Curve):
 
         # Create the corresponding NURBS curves resulting from splitting
         left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
-
         return left, right
 
     # ---------------------------------------------------------------------
@@ -169,13 +172,11 @@ class Line(Curve):
         # Create curve objects resulting from splitting
         left = Line(left_pt0, left_pt1)
         right = Line(right_pt0, right_pt1)
-
         return left, right
 
     # ---------------------------------------------------------------------
     def getEquivPolyline(self):
         equivPoly = [self.pt0, self.pt1]
-
         return equivPoly
 
     # ---------------------------------------------------------------------
@@ -185,7 +186,6 @@ class Line(Curve):
             self.pt1 = Pnt2D(_pt.x, _pt.y)
             tempPts.append(self.pt0)
             tempPts.append(self.pt1)
-
         return tempPts
 
     # ---------------------------------------------------------------------
@@ -193,7 +193,6 @@ class Line(Curve):
         pt = Pnt2D(_x, _y)
         dist, clstPt, t = CompGeom.getClosestPointSegment(self.pt0, self.pt1, pt)
         tangVec = self.pt1 - self.pt0
-
         return True, clstPt, dist, t, tangVec
 
     # ---------------------------------------------------------------------
@@ -204,7 +203,6 @@ class Line(Curve):
             return True, clstPt, 0.0, _tStart, tangVec
 
         status, clstPt, dist, t, tangVec = self.closestPoint(_x, _y)
-
         return status, clstPt, dist, t, tangVec
 
     # ---------------------------------------------------------------------
@@ -213,7 +211,6 @@ class Line(Curve):
         xmin = min(self.pt0.getX(), self.pt1.getX())
         ymax = max(self.pt0.getY(), self.pt1.getY())
         ymin = min(self.pt0.getY(), self.pt1.getY())
-
         return xmin, xmax, ymin, ymax
 
     # ---------------------------------------------------------------------
@@ -244,3 +241,9 @@ class Line(Curve):
     def length(self):
         L = Pnt2D.euclidiandistance(self.pt0, self.pt1)
         return L
+    
+    # ---------------------------------------------------------------------
+    def getDataToInitCurve(self):
+        data = {'pt0': [self.pt0.getX(), self.pt0.getY()],
+                'pt1': [self.pt1.getX(), self.pt1.getY()]}
+        return data
