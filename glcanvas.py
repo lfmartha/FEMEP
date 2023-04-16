@@ -456,16 +456,6 @@ class Canvas(QtOpenGL.QGLWidget):
                         glVertex2d(ctrlPts[j][0], ctrlPts[j][1])
                     glEnd()
 
-                # # Display Nurbs Control Points
-                # glColor3d(self.colorControlPolygon[0],
-                #         self.colorControlPolygon[1], self.colorControlPolygon[2])
-
-                # glBegin(GL_POINTS)
-
-                # for j in range(0, len(ctrlPts)):
-                #     glVertex2d(ctrlPts[j][0], ctrlPts[j][1])
-                # glEnd()
-
             # get segment attributes
             attributes = segments[i].attributes
             for att in attributes:
