@@ -133,7 +133,7 @@ class CircleArc(Curve):
                         self.nurbs.sample_size = 10
 
                         # Generating equivalent polyline
-                        self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.radius)
+                        self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.radius)
                         self.eqPoly.append(self.circ2)
 
     # ---------------------------------------------------------------------
@@ -153,7 +153,7 @@ class CircleArc(Curve):
 
         elif self.nPts == 1:
             closeToOther = False
-            if Pnt2D.euclidiandistance(self.center, pt) <= 0.01:
+            if self.center == pt:
                 closeToOther = True
             if closeToOther:
                 return
@@ -173,9 +173,9 @@ class CircleArc(Curve):
 
         elif self.nPts == 2:
             closeToOther = False
-            if Pnt2D.euclidiandistance(self.center, pt) <= 0.01:
+            if self.center == pt:
                 closeToOther = True
-            if Pnt2D.euclidiandistance(self.circ1, pt) <= 0.01:
+            if self.circ1 == pt:
                 closeToOther = True
             if closeToOther:
                 return
@@ -275,7 +275,7 @@ class CircleArc(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.radius)
+                self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.radius)
                 self.eqPoly.append(self.circ2)
 
     # ---------------------------------------------------------------------
@@ -407,7 +407,7 @@ class CircleArc(Curve):
         # If current curve does not have yet an equivalent polyline,
         # generate it.
         if self.eqPoly == []:
-            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.01 * self.radius)
+            self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.005 * self.radius)
             self.eqPoly.append(self.circ2)
         return self.eqPoly
 
@@ -527,7 +527,7 @@ class CircleArc(Curve):
                 self.nurbs.sample_size = 10
 
                 # Generating equivalent polyline
-                tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.01 * self.radius)
+                tempEqPoly = Curve.genEquivPolyline(self, tempEqPoly, 0.005 * self.radius)
                 tempEqPoly.append(self.circ2)
         return tempEqPoly
 
@@ -656,6 +656,13 @@ class CircleArc(Curve):
             teta += 2.0 * math.pi  # 0 <= angle < +2PI
         L = teta * self.radius
         return L
+    
+    # ---------------------------------------------------------------------
+    def getDataToInitCurve(self):
+        data = {'center': [self.center.getX(), self.center.getY()],
+                'circ1': [self.circ1.getX(), self.circ1.getY()],
+                'circ2': [self.circ2.getX(), self.circ2.getY()]}
+        return data
 
     # ---------------------------------------------------------------------
     def updateLineEditValues(self, _x, _y, _LenAndAng):
