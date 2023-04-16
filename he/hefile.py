@@ -1,8 +1,14 @@
 import json
+from compgeom.pnt2d import Pnt2D
 from OpenGL.error import Error
 from geometry.point import Point
 from geometry.curves.line import Line
 from geometry.curves.polyline import Polyline
+from geometry.curves.cubicspline import CubicSpline
+from geometry.curves.circle import Circle
+from geometry.curves.circlearc import CircleArc
+from geometry.curves.ellipse import Ellipse
+from geometry.curves.ellipsearc import EllipseArc
 from geometry.patch import Patch
 from he.topologicalEntities.vertex import Vertex
 from he.topologicalEntities.face import Face
@@ -12,6 +18,8 @@ from he.topologicalEntities.halfedge import HalfEdge
 from he.topologicalEntities.shell import Shell
 from geometry.attributes.attribsymbols import AttribSymbols
 from compgeom.compgeom import CompGeom
+from mesh.mesh1d import Mesh1D
+from geometry.segment import Segment
 import math
 
 
@@ -70,10 +78,7 @@ class HeFile():
         edges_list = []
         for edge in edges:
 
-            edge_pts = edge.segment.getPoints()
-            pts = []
-            for pt in edge_pts:
-                pts.append([pt.getX(), pt.getY()])
+            data_dict = edge.segment.getDataToInitCurve()
 
             attributes = edge.segment.attributes.copy()
             if edge.segment.nsudv is not None:
@@ -105,12 +110,13 @@ class HeFile():
                 'he1_ID': edge.he1.ID,
                 'he2_ID': edge.he2.ID,
                 'segment_type': f'{edge.segment.getType()}',
-                'points': pts,
+                'data': data_dict,
                 'attributes': attributes_dict
             }
 
             edges_list.append(edge_dict)
 
+        # saves the faces
         faces_list = []
         for face in faces:
 
@@ -233,6 +239,8 @@ class HeFile():
             else:
                 next_ID = face.next.ID
 
+            dataSurf_dict = face.patch.getDataToInitSurface()
+
             face_dict = {
                 'type': 'FACE',
                 'ID': face.ID,
@@ -240,7 +248,8 @@ class HeFile():
                 'next_ID': next_ID,
                 'loop': loop_dict,
                 'intLoops': intLoops,
-                'attributes': attributes_dict
+                'attributes': attributes_dict,
+                'dataSurf': dataSurf_dict
             }
 
             faces_list.append(face_dict)
@@ -278,17 +287,95 @@ class HeFile():
             edge_dict['edge'] = edge
 
             # set edge segment
-            edge_pts = edge_dict['points']
-            pts = []
-            for pt in edge_pts:
-                pts.append(Point(pt[0], pt[1]))
-
+            data_dict = edge_dict['data']
             type = edge_dict['segment_type']
 
             if type == 'LINE':
-                segment = Line(pts[0], pts[1])
+                pt0 = Pnt2D(data_dict['pt0'][0], data_dict['pt0'][1])
+                pt1 = Pnt2D(data_dict['pt1'][0], data_dict['pt1'][1])
+                curve = Line(pt0, pt1)
+                curvePoly = curve.getEquivPolyline()
+                segment = Segment(curvePoly, curve)
+
+                if data_dict['isReversed'] == True:
+                    segment.ReverseNurbs()
+
+                diff = data_dict['currentDegree'] - curve.nurbs.degree
+                if diff > 0:
+                    for i in range(diff):
+                        segment.degreeChange()
+
+                if data_dict['currentKnotVector'] != curve.nurbs.knotvector:
+                    segment.conformFromKnotVector(data_dict['currentKnotVector'])
+
             elif type == 'POLYLINE':
-                segment = Polyline(pts)
+                pts = []
+                for i in range (len(data_dict['pts'])):
+                    pts.append(Pnt2D(data_dict['pts'][i][0], data_dict['pts'][i][1]))
+                curve = Polyline(pts)
+                curvePoly = curve.getEquivPolyline()
+                segment = Segment(curvePoly, curve)
+
+                if data_dict['isReversed'] == True:
+                    segment.ReverseNurbs()
+                    
+                diff = data_dict['currentDegree'] - curve.nurbs.degree
+                if diff > 0:
+                    for i in range(diff):
+                        segment.degreeChange()
+
+                if data_dict['currentKnotVector'] != curve.nurbs.knotvector:
+                    segment.conformFromKnotVector(data_dict['currentKnotVector'])
+
+            elif type == 'CUBICSPLINE':
+                degree = data_dict['degree']
+                ctrlpts = data_dict['ctrlpts']
+                weights = data_dict['weights']
+                knotvector = data_dict['knotvector']
+                curve = CubicSpline(degree, ctrlpts, weights, knotvector)
+                curvePoly = curve.getEquivPolyline()
+                segment = Segment(curvePoly, curve)
+                segment.isReversed = data_dict['isReversed']
+
+            elif type == 'CIRCLEARC':
+                center = Pnt2D(data_dict['center'][0], data_dict['center'][1])
+                circ1 = Pnt2D(data_dict['circ1'][0], data_dict['circ1'][1])
+                circ2 = Pnt2D(data_dict['circ2'][0], data_dict['circ2'][1])
+                curve = CircleArc(center, circ1, circ2)
+                curvePoly = curve.getEquivPolyline()
+                segment = Segment(curvePoly, curve)
+
+                if data_dict['isReversed'] == True:
+                    segment.ReverseNurbs()
+                    
+                diff = data_dict['currentDegree'] - curve.nurbs.degree
+                if diff > 0:
+                    for i in range(diff):
+                        segment.degreeChange()
+
+                if data_dict['currentKnotVector'] != curve.nurbs.knotvector:
+                    segment.conformFromKnotVector(data_dict['currentKnotVector'])
+
+            elif type == 'ELLIPSEARC':
+                center = Pnt2D(data_dict['center'][0], data_dict['center'][1])
+                ellip1 = Pnt2D(data_dict['ellip1'][0], data_dict['ellip1'][1])
+                ellip2 = Pnt2D(data_dict['ellip2'][0], data_dict['ellip2'][1])
+                arc1 = Pnt2D(data_dict['arc1'][0], data_dict['arc1'][1])
+                arc2 = Pnt2D(data_dict['arc2'][0], data_dict['arc2'][1])
+                curve = EllipseArc(center, ellip1, ellip2, arc1, arc2)
+                curvePoly = curve.getEquivPolyline()
+                segment = Segment(curvePoly, curve)
+
+                if data_dict['isReversed'] == True:
+                    segment.ReverseNurbs()
+                    
+                diff = data_dict['currentDegree'] - curve.nurbs.degree
+                if diff > 0:
+                    for i in range(diff):
+                        segment.degreeChange()
+
+                if data_dict['currentKnotVector'] != curve.nurbs.knotvector:
+                    segment.conformFromKnotVector(data_dict['currentKnotVector'])
 
             edge.segment = segment
 
@@ -1519,8 +1606,7 @@ class HeFile():
             number = properties['Value']
             ratio = properties['Ratio']
 
-            points = CompGeom.getNumberOfSudvisions(
-                _seg, number, ratio, _isQuadratic)
+            points = Mesh1D.subdivideSegment(_seg, number, ratio, _isQuadratic)
 
         return points
 
