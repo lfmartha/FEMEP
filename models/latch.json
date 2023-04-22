@@ -13058,7 +13058,7 @@
             "symbol": "Material",
             "name": "Mat",
             "properties": {
-                "YoungsModulus": 200000.0,
+                "YoungsModulus": 10000.0,
                 "PoisonsRatio": 0.25,
                 "Conductivity": 0.0,
                 "SpecificHeat": 0.0,
