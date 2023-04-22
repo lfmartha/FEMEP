@@ -60,26 +60,57 @@ class MeshGeneration:
                 msg.setWindowTitle('Warning')
                 msg.setText('The number of segments must be equal to 4')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
 
             # Find west segment
-            west_SegmentIndex = 0
-            cornersPtsX = [segments[0].getXinit(), segments[0].getXend(), segments[2].getXinit(), segments[2].getXend()]
-            cornersPtsX.remove(max(cornersPtsX))
-            cornersPtsX.remove(max(cornersPtsX))
+            # west_SegmentIndex = 0
+            # cornersPtsX = [segments[0].getXinit(), segments[0].getXend(), segments[2].getXinit(), segments[2].getXend()]
+            # cornersPtsX.remove(max(cornersPtsX))
+            # cornersPtsX.remove(max(cornersPtsX))
             
+            # for i in range(4):
+            #     xInit_seg_i = segments[i].getXinit()
+            #     xEnd_seg_i = segments[i].getXend()
+
+            #     # Check if index i corresponds to the west segment
+            #     if ((xInit_seg_i >= cornersPtsX[0] - Curve.COORD_TOL and xInit_seg_i <= cornersPtsX[0] + Curve.COORD_TOL) or 
+            #         (xInit_seg_i >= cornersPtsX[1] - Curve.COORD_TOL and xInit_seg_i <= cornersPtsX[1] + Curve.COORD_TOL)):
+
+            #         if ((xEnd_seg_i >= cornersPtsX[0] - Curve.COORD_TOL and xEnd_seg_i <= cornersPtsX[0] + Curve.COORD_TOL) or 
+            #             (xEnd_seg_i >= cornersPtsX[1] - Curve.COORD_TOL and xEnd_seg_i <= cornersPtsX[1] + Curve.COORD_TOL)):
+
+            #             west_SegmentIndex = i
+            west_SegmentIndex = None
             for i in range(4):
-                xInit_seg_i = segments[i].getXinit()
-                xEnd_seg_i = segments[i].getXend()
-
-                # Check if index i corresponds to the west segment
-                if ((xInit_seg_i >= cornersPtsX[0] - Curve.COORD_TOL and xInit_seg_i <= cornersPtsX[0] + Curve.COORD_TOL) or 
-                    (xInit_seg_i >= cornersPtsX[1] - Curve.COORD_TOL and xInit_seg_i <= cornersPtsX[1] + Curve.COORD_TOL)):
-
-                    if ((xEnd_seg_i >= cornersPtsX[0] - Curve.COORD_TOL and xEnd_seg_i <= cornersPtsX[0] + Curve.COORD_TOL) or 
-                        (xEnd_seg_i >= cornersPtsX[1] - Curve.COORD_TOL and xEnd_seg_i <= cornersPtsX[1] + Curve.COORD_TOL)):
-
+                if segments[i].surfDirection == None:
+                    msg = QMessageBox(MeshGeneration.App)
+                    msg.setWindowTitle('Warning')
+                    msg.setText('Set surface directions of all curves')
+                    msg.exec()
+                    return False, None, None, None, None, None, None
+                # elif segments[i].surfDirection == 'V':
+                #     tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
+                #     seg_init_pt = Pnt2D(segments[i].getXinit(), segments[i].getYinit())
+                #     seg_end_pt = Pnt2D(segments[i].getXend(), segments[i].getYend())
+                #     previous_seg_init_pt = Pnt2D(segments[i - 1].getXinit(), segments[i - 1].getYinit())
+                #     previous_seg_end_pt = Pnt2D(segments[i - 1].getXend(), segments[i - 1].getYend())
+                #     if Pnt2D.equal(seg_end_pt, previous_seg_init_pt, tol) or Pnt2D.equal(seg_init_pt, previous_seg_end_pt, tol):
+                #         west_SegmentIndex = i
+                #         break
+                elif segments[i].surfDirection == 'V':
+                    tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
+                    seg_init_pt = Pnt2D(segments[i].getXinit(), segments[i].getYinit())
+                    next_seg_init_pt = Pnt2D(segments[i - 3].getXinit(), segments[i - 3].getYinit())
+                    if Pnt2D.equal(seg_init_pt, next_seg_init_pt, tol):
                         west_SegmentIndex = i
+                        break
+
+            if west_SegmentIndex == None:
+                msg = QMessageBox(MeshGeneration.App)
+                msg.setWindowTitle('Warning')
+                msg.setText('Check for reverse curves')
+                msg.exec()
+                return False, None, None, None, None, None, None
 
             # Get Nurbs
             nurbs_west = copy.deepcopy(segments[west_SegmentIndex].getNurbs())
@@ -93,7 +124,7 @@ class MeshGeneration:
                 msg.setWindowTitle('Warning')
                 msg.setText('Opposite segments must have the same degree')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
  
             # Check if opposite segments have conforming knot vectors
             if nurbs_west.knotvector != nurbs_east.knotvector or nurbs_south.knotvector != nurbs_north.knotvector:
@@ -101,14 +132,14 @@ class MeshGeneration:
                 msg.setWindowTitle('Warning')
                 msg.setText('Opposite segments must have conforming knotvectors')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
 
             check, coonsSurf = MeshGeneration.getCoonsSurface(nurbs_north, nurbs_south, nurbs_west, nurbs_east)
             if check:
                 _face.patch.nurbs = coonsSurf
                 return MeshGeneration.isogeometricMesh(coonsSurf)
             else:
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
 
 
         
@@ -123,7 +154,7 @@ class MeshGeneration:
                 msg.setWindowTitle('Warning')
                 msg.setText('The number of segments must be equal to 4')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
         
             return 0
 
@@ -147,7 +178,7 @@ class MeshGeneration:
                 msg.setWindowTitle('Warning')
                 msg.setText('The number of segments must be equal to 4')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
 
             if len(_face.intLoops) != 0:
                 msg = QMessageBox(MeshGeneration.App)
@@ -155,7 +186,7 @@ class MeshGeneration:
                 msg.setText(
                     'it is not possible to generate the mesh with inner loops')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
 
             m = side_pts[0]
             n = side_pts[1]
@@ -179,7 +210,7 @@ class MeshGeneration:
                 msg.setText(
                     'Opposite sides must have an equal number of subdivisions')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
 
         elif _mesh_type == 'Trilinear Transfinite':
 
@@ -188,7 +219,7 @@ class MeshGeneration:
                 msg.setWindowTitle('Warning')
                 msg.setText('The number of segments must be equal to 3')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
 
             if len(_face.intLoops) != 0:
                 msg = QMessageBox(MeshGeneration.App)
@@ -196,7 +227,7 @@ class MeshGeneration:
                 msg.setText(
                     'it is not possible to generate the mesh with inner loops')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
 
             m = side_pts[0]
             for number in side_pts:
@@ -206,7 +237,7 @@ class MeshGeneration:
                     msg.setText(
                         'All sides must have the same number of subdivisions')
                     msg.exec()
-                    return False, None, None, None, None, None
+                    return False, None, None, None, None, None, None
             return MeshGeneration.Msh2DTrilinear(polygon, _elem_type, m)
 
         elif _mesh_type == 'Quadrilateral Template':
@@ -218,7 +249,7 @@ class MeshGeneration:
                 msg.setText(
                     'The number of segments must be between 2 and 4')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
 
             if len(_face.intLoops) != 0:
                 msg = QMessageBox(MeshGeneration.App)
@@ -226,7 +257,7 @@ class MeshGeneration:
                 msg.setText(
                     'it is not possible to generate the mesh with inner loops')
                 msg.exec()
-                return False, None, None, None, None, None
+                return False, None, None, None, None, None, None
 
             subv = []
             for pts in side_pts:
@@ -298,7 +329,7 @@ class MeshGeneration:
                         msg.setText(
                             'The number of edge subdvisions cannot be odd')
                         msg.exec()
-                        return False, None, None, None, None, None
+                        return False, None, None, None, None, None, None
 
                 return MeshGeneration.Msh2DQuadSeam(polygon, _elem_type, num_loops, num_seg)
 
@@ -414,13 +445,13 @@ class MeshGeneration:
         lines = MeshGeneration.meshLines(coords, conn)
 
         if len(lines) > 0:
-            return True, lines, coords, conn, nno, nel
+            return True, lines, coords, conn, nno, nel, None
         else:
             msg = QMessageBox(MeshGeneration.App)
             msg.setWindowTitle('Warning')
             msg.setText('it is not possible to generate the mesh')
             msg.exec()
-            return False, lines, coords, conn, nno, nel
+            return False, lines, coords, conn, nno, nel, None
 
     def Msh2DTrilinear(_pts, _elem_type, _np):
         bry = aux.doublePointerWithValue(0.0, len(_pts)*2)
@@ -466,13 +497,13 @@ class MeshGeneration:
         lines = MeshGeneration.meshLines(coords, conn)
 
         if len(lines) > 0:
-            return True, lines,  coords, conn, nno, nel
+            return True, lines,  coords, conn, nno, nel, None
         else:
             msg = QMessageBox(MeshGeneration.App)
             msg.setWindowTitle('Warning')
             msg.setText('it is not possible to generate the mesh')
             msg.exec()
-            return False, lines, coords, conn, nno, nel
+            return False, lines, coords, conn, nno, nel, None
 
     def Msh2DBoundContraction(_pts, _elem_type, _num_loops, _num_seg, _bc_flag):
 
@@ -526,13 +557,13 @@ class MeshGeneration:
         lines = MeshGeneration.meshLines(coords, conn)
 
         if len(lines) > 0:
-            return True, lines, coords, conn, nno, nel
+            return True, lines, coords, conn, nno, nel, None
         else:
             msg = QMessageBox(MeshGeneration.App)
             msg.setWindowTitle('Warning')
             msg.setText('it is not possible to generate the mesh')
             msg.exec()
-            return False, lines, coords, conn, nno, nel
+            return False, lines, coords, conn, nno, nel, None
 
     def Msh2DShape(_pts, _elem_type, _num_loops, _num_seg):
 
@@ -584,13 +615,13 @@ class MeshGeneration:
         lines = MeshGeneration.meshLines(coords, conn)
 
         if len(lines) > 0:
-            return True, lines, coords, conn, nno, nel
+            return True, lines, coords, conn, nno, nel, None
         else:
             msg = QMessageBox(MeshGeneration.App)
             msg.setWindowTitle('Warning')
             msg.setText('it is not possible to generate the mesh')
             msg.exec()
-            return False, lines, coords, conn, nno, nel
+            return False, lines, coords, conn, nno, nel, None
 
     def Msh2DQuadSeam(_pts, _elem_type, _num_loops, _num_seg):
 
@@ -642,13 +673,13 @@ class MeshGeneration:
         lines = MeshGeneration.meshLines(coords, conn)
 
         if len(lines) > 0:
-            return True, lines, coords, conn, nno, nel
+            return True, lines, coords, conn, nno, nel, None
         else:
             msg = QMessageBox(MeshGeneration.App)
             msg.setWindowTitle('Warning')
             msg.setText('it is not possible to generate the mesh')
             msg.exec()
-            return False, lines, coords, conn, nno, nel
+            return False, lines, coords, conn, nno, nel, None
 
     def Msh2DTemplate(_pts, _elem_type, _num_seg, _subdv):
 
@@ -700,13 +731,13 @@ class MeshGeneration:
         lines = MeshGeneration.meshLines(coords, conn)
 
         if len(lines) > 0:
-            return True, lines, coords, conn, nno, nel
+            return True, lines, coords, conn, nno, nel, None
         else:
             msg = QMessageBox(MeshGeneration.App)
             msg.setWindowTitle('Warning')
             msg.setText('it is not possible to generate the mesh')
             msg.exec()
-            return False, lines, coords, conn, nno, nel
+            return False, lines, coords, conn, nno, nel, None
         
     # Based on nurbspy package developed by Roberto Agromayor PhD 
     # at Norwegian University of Science and Technology (NTNU) 
@@ -965,6 +996,44 @@ class MeshGeneration:
         return True, coonsSurf
     
     def isogeometricMesh(coonsSurf):
+        MeshCurves = MeshGeneration.getIsoCurves(coonsSurf)
+
+        Nu = coonsSurf.ctrlpts_size_u
+        Nv = coonsSurf.ctrlpts_size_v
+        degreeU = coonsSurf.degree_u
+        degreeV = coonsSurf.degree_v
+        knotvectorU = coonsSurf.knotvector_u
+        knotvectorV = coonsSurf.knotvector_v
+
+        nel = (len(set(coonsSurf.knotvector_u)) - 1) * (len(set(coonsSurf.knotvector_v)) - 1)
+        nno = Nu * Nv
+
+        coords = np.reshape(np.transpose(coonsSurf.ctrlpts), (2,Nu,Nv), order='C')
+        coords = list(np.transpose(coords).flat)
+
+        weights = np.reshape(coonsSurf.weights, (Nu,Nv), order='C')
+        weights = list(np.transpose(weights).flat)
+
+        elRangeU, elRangeV, element, index = MeshGeneration.connectivityIsogeometric(Nu, Nv, degreeU, degreeV, knotvectorU, knotvectorV)
+        element = list(element.flat)
+        element = [int(item) for item in element]
+        conn = []
+        nCtrlPts = (degreeU + 1) * (degreeV + 1)
+        conn.append(nCtrlPts)
+        for i in range(len(element)):
+            conn.append(element[i])
+            if (i + 1)%(nCtrlPts) == 0:
+                conn.append(nCtrlPts)
+        conn.pop()
+
+        iso_dict = {"weights": weights,
+                    "elRangeU": elRangeU.tolist(),
+                    "elRangeV": elRangeV.tolist(),
+                    "index": index.tolist()}
+
+        return True, MeshCurves, coords, conn, nno, nel, iso_dict
+
+    def getIsoCurves(coonsSurf):
         MeshCurves = []
         for i in set(coonsSurf.knotvector_u):
             if i == 0.0 or i == 1.0:
@@ -985,11 +1054,8 @@ class MeshGeneration:
                 isoCurvePoly = isoCurve.getEquivPolyline(0.01)
                 isoCurveSeg = Segment(isoCurvePoly, isoCurve)
                 MeshCurves.append(isoCurveSeg)
-
-        nel = (len(set(coonsSurf.knotvector_u)) - 1) * (len(set(coonsSurf.knotvector_v)) - 1)
-        nno = coonsSurf.ctrlpts_size_u * coonsSurf.ctrlpts_size_v
-        return True, MeshCurves, [], [], nno, nel
-
+        return MeshCurves
+    
     def getIsocurveU(coonsSurf, u0):
         # Surface properties
         degreeU = coonsSurf.degree_u
@@ -1136,5 +1202,88 @@ class MeshGeneration:
         # # Numba assertions
         # assert p >= 0    # The degree of the basis polynomials cannot be negative
         # assert p <= n    # The degree of the basis polynomials must be equal or lower than the number of basis polynomials
-
         return N
+    
+    def connectivityIsogeometric(noPtsU, noPtsV, p, q, uKnot, vKnot):
+        noElemsU = len(set(uKnot)) - 1
+        noElemsV = len(set(vKnot)) - 1
+        noElems = noElemsU * noElemsV
+
+        # chan for a 4x3 control points
+        chan = np.zeros((noPtsV, noPtsU))
+
+        count = 0
+        for i in range(noPtsV):
+            for j in range(noPtsU):
+                chan[i,j] = count
+                count = count + 1
+
+        # Determine our element ranges and the corresponding knot indices along each direction
+        elRangeU, elConnU = MeshGeneration.buildConnectivityIsogeometric(p, uKnot, noElemsU)
+        elRangeV, elConnV = MeshGeneration.buildConnectivityIsogeometric(q, vKnot, noElemsV)
+
+        # combine info from two directions to build the elements
+        # element is numbered as follows
+        #  5 | 6 | 7 | 8
+        # ---------------
+        #  1 | 2 | 3 | 4 
+        # for a 4x2 mesh
+        element = np.zeros((noElems, (p+1)*(q+1)))
+
+        e = 0
+        for v in range(noElemsV):
+            vConn = elConnV[v,:]
+            for u in range(noElemsU):
+                c = 0
+                uConn = elConnU[u,:]
+                for i in range(len(vConn)):
+                    for j in range(len(uConn)):
+                        element[e,c] = chan[vConn[i],uConn[j]]
+                        c = c + 1
+                e = e + 1
+
+        index = np.zeros((noElems, 2))
+        count = 0
+
+        for j in range(elRangeV.shape[0]):
+            for i in range(elRangeU.shape[0]):
+                index[count,0] = i
+                index[count,1] = j
+
+                count = count + 1
+
+        return elRangeU, elRangeV, element, index
+
+    def buildConnectivityIsogeometric(p, knotVec, noElems):
+        # compute connectivity of 1D NURBS (for one direction)
+        # also define the element ranges i.e. [xi1,xi2]
+        # Adapted from the IGABEM code of Robert Simpson, Cardiff, UK
+        # Vinh Phu Nguyen
+        # Delft University of Technology, The Netherlands
+        
+        elRange = np.zeros((noElems, 2))   
+        elKnotIndices = np.zeros((noElems, 2), dtype=int)
+        elConn = np.zeros((noElems, p+1), dtype=int)
+        ne = len(np.unique(knotVec)) - 1 # number of elements
+        
+        element = 0
+        previousKnotVal = 0
+        
+        for i in range(len(knotVec)):
+            currentKnotVal = knotVec[i]
+            if knotVec[i] != previousKnotVal:
+                elRange[element,:] = [previousKnotVal, currentKnotVal]
+                elKnotIndices[element,:] = [i-1, i]
+                element += 1
+            previousKnotVal = currentKnotVal
+        
+        numRepeatedKnots = 0
+        for e in range(ne):
+            indices = np.arange(elKnotIndices[e,0]-p+1, elKnotIndices[e,0]+1)
+            previousKnotVals = knotVec[(elKnotIndices[e,1]-p+1):elKnotIndices[e,1]]
+            currentKnotVals = np.ones(p)*knotVec[elKnotIndices[e,0]]
+            if np.array_equal(previousKnotVals,currentKnotVals) and len(np.nonzero(previousKnotVals)[0])>1:
+                numRepeatedKnots += 1
+            elConn[e,:] = np.arange(elKnotIndices[e,0]-p, elKnotIndices[e,0]+1)
+            
+        return elRange, elConn
