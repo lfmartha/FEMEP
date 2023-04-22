@@ -1470,7 +1470,7 @@ class HeController:
                     coonsSurf.knotvector_v = face_dict['dataSurf']['knotvector_v']
                     coonsSurf.sample_size = 10
                     face_dict['face'].patch.nurbs = coonsSurf
-                    check, lines, co, con, nno, nel = MeshGeneration.isogeometricMesh(coonsSurf)
+                    lines = MeshGeneration.getIsoCurves(coonsSurf)
                 else:
                     coords = mesh_dict['coords']
                     conn = mesh_dict['conn']
@@ -1881,6 +1881,50 @@ class HeController:
         self.undoredo.end()
         self.isChanged = True
         return True, None
+    
+    def setUCurves(self):
+        self.undoredo.begin()
+
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) == 0:
+            error_text = "Please select one or more curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.setSurfDirection("U")
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+    
+    def setVCurves(self):
+        self.undoredo.begin()
+
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) == 0:
+            error_text = "Please select one or more curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.setSurfDirection("V")
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
 
     def generateMesh(self, _mesh_type, _shape_type,  _elem_type, _diag_type, _bc_flag):
 
@@ -1926,7 +1970,7 @@ class HeController:
                         raise Error
 
             if not face.patch.isDeleted:
-                check, lines, coords, conn, nno, nel = MeshGeneration.generation(
+                check, lines, coords, conn, nno, nel, iso_dict = MeshGeneration.generation(
                     face, _mesh_type, elem_type, _diag_type, _bc_flag)
 
                 if check:
@@ -1941,6 +1985,7 @@ class HeController:
                         "name": mesh_name,
                         "coords": coords,
                         "conn": conn,
+                        "IsoGe": iso_dict,
                         "properties": {
                             "Element type": elem,
                             "Number of nodes": nno,
