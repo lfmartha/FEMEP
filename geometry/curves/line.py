@@ -215,19 +215,19 @@ class Line(Curve):
 
     # ---------------------------------------------------------------------
     def getXinit(self):
-        return self.pt0.getX()
+        return self.nurbs.ctrlpts[0][0]
 
     # ---------------------------------------------------------------------
     def getYinit(self):
-        return self.pt0.getY()
+        return self.nurbs.ctrlpts[0][1]
 
     # ---------------------------------------------------------------------
     def getXend(self):
-        return self.pt1.getX()
+        return self.nurbs.ctrlpts[-1][0]
 
     # ---------------------------------------------------------------------
     def getYend(self):
-        return self.pt1.getY()
+        return self.nurbs.ctrlpts[-1][1]
     
     # ---------------------------------------------------------------------
     def getInitPt(self):
