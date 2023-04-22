@@ -188,6 +188,9 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         self.mesh_display.genMeshpushButton.clicked.connect(self.generateMesh)
         self.mesh_display.delMeshpushButton.clicked.connect(self.delMesh)
+        self.mesh_display.surfUCurvespushButton.clicked.connect(self.setUCurves)
+        self.mesh_display.surfVCurvespushButton.clicked.connect(self.setVCurves)
+
         self.exportFile_display.exportpushButton.clicked.connect(
             self.exportFile)
 
@@ -1886,6 +1889,22 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
+    def setUCurves(self):
+        check, error_text = self.current_hecontroller.setUCurves()
+        if not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
+    def setVCurves(self):
+        check, error_text = self.current_hecontroller.setVCurves()
+        if not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
     def AttributeManager(self):
 
         # set corresponding mouse action on canvas
@@ -2232,6 +2251,9 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.mesh_display.diagcomboBox.hide()
         self.mesh_display.flagLabel.hide()
         self.mesh_display.flagcomboBox.hide()
+        self.mesh_display.surfCurvesLabel.hide()
+        self.mesh_display.surfUCurvespushButton.hide()
+        self.mesh_display.surfVCurvespushButton.hide()
         
         if mesh_type == "Bilinear Transfinite":
             self.mesh_display.elemTypesLAbel.show()
@@ -2266,20 +2288,24 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.mesh_display.elemcomboBox.setGeometry(
                 QtCore.QRect(25, 125, 150, 25))
             self.mesh_display.flagLabel.setGeometry(
-                QtCore.QRect(25, 170, 150, 25))
+                QtCore.QRect(25, 170, 150, 20))
             self.mesh_display.flagcomboBox.setGeometry(
                 QtCore.QRect(25, 190, 150, 25))
             self.mesh_display.genMeshpushButton.setGeometry(
                 QtCore.QRect(50, 235, 100, 25))
             self.mesh_display.delMeshpushButton.setGeometry(
                 QtCore.QRect(50, 265, 100, 25))
+            
         elif (mesh_type == "Isogeometric" or 
               mesh_type == "Isogeometric Template"):
-
+            self.mesh_display.surfCurvesLabel.show()
+            self.mesh_display.surfUCurvespushButton.show()
+            self.mesh_display.surfVCurvespushButton.show()
+            
             self.mesh_display.genMeshpushButton.setGeometry(
-                QtCore.QRect(50, 105, 100, 25))
+                QtCore.QRect(50, 200, 100, 25))
             self.mesh_display.delMeshpushButton.setGeometry(
-                QtCore.QRect(50, 135, 100, 25))
+                QtCore.QRect(50, 230, 100, 25))
 
     def setDiagOptions(self):
         shape_type = self.mesh_display.shapecomboBox.currentText()
