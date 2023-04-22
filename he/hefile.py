@@ -20,7 +20,10 @@ from geometry.attributes.attribsymbols import AttribSymbols
 from compgeom.compgeom import CompGeom
 from mesh.mesh1d import Mesh1D
 from geometry.segment import Segment
+from geometry.curves.curve import Curve
+import numpy as np
 import math
+import copy
 
 
 class HeFile():
@@ -296,6 +299,8 @@ class HeFile():
                 curve = Line(pt0, pt1)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
+                segment.originalNurbs = copy.deepcopy(curve.nurbs)
+                segment.isReversed = data_dict['isReversed']
 
                 if data_dict['isReversed'] == True:
                     segment.ReverseNurbs()
@@ -315,6 +320,8 @@ class HeFile():
                 curve = Polyline(pts)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
+                segment.originalNurbs = copy.deepcopy(curve.nurbs)
+                segment.isReversed = data_dict['isReversed']
 
                 if data_dict['isReversed'] == True:
                     segment.ReverseNurbs()
@@ -335,6 +342,7 @@ class HeFile():
                 curve = CubicSpline(degree, ctrlpts, weights, knotvector)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
+                segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
 
             elif type == 'CIRCLEARC':
@@ -344,6 +352,8 @@ class HeFile():
                 curve = CircleArc(center, circ1, circ2)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
+                segment.originalNurbs = copy.deepcopy(curve.nurbs)
+                segment.isReversed = data_dict['isReversed']
 
                 if data_dict['isReversed'] == True:
                     segment.ReverseNurbs()
@@ -365,6 +375,8 @@ class HeFile():
                 curve = EllipseArc(center, ellip1, ellip2, arc1, arc2)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
+                segment.originalNurbs = copy.deepcopy(curve.nurbs)
+                segment.isReversed = data_dict['isReversed']
 
                 if data_dict['isReversed'] == True:
                     segment.ReverseNurbs()
@@ -567,12 +579,16 @@ class HeFile():
     # Export to Femoolab - Finite Element Model Laboratory
     def exportFileToFemoolabPlaneStress(_shell, _filename, _gpT3, _gpT6, _gpQ4, _qpQ8):
 
-        # create/ open a file
         split_name = _filename.split('.')
         if split_name[-1] == 'json':
-            filename = split_name[0]
-        else:
-            filename = _filename
+            split_name.remove('json')
+
+        filename = ''
+        for i in range(len(split_name)):
+            if i == 0:
+                filename += split_name[i]
+            else:
+                filename += '.' + split_name[i]
 
         faces = _shell.faces
         edges = _shell.edges
@@ -584,12 +600,14 @@ class HeFile():
 
         sc_points = []  # points that have support conditions
         ul_segments = []  # segments that have uniform load
+        cl_points = []  # points that have concentrated load
         for edge in edges:
             attributes = edge.segment.attributes
             support_condition = None
             number_subdv = None
             uniform_load = None
             isQuadratic = False
+            isIsogeometric = False
             incidentFaces = edge.incidentFaces()
 
             for face in incidentFaces:
@@ -597,6 +615,9 @@ class HeFile():
                     mesh_dict = face.patch.mesh.mesh_dict
                     if mesh_dict['properties']['Element type'] == "T6" or mesh_dict['properties']['Element type'] == "Q8":
                         isQuadratic = True
+
+                    if mesh_dict['properties']['Element type'] == "Isogeometric":
+                        isIsogeometric = True
 
             for att in attributes:
                 if att["type"] == "Uniform Load":
@@ -609,7 +630,7 @@ class HeFile():
             if support_condition is not None:
                 if number_subdv is not None:
                     subdv_pts = HeFile.Nsbdvs(
-                        number_subdv, edge.segment, isQuadratic)
+                        number_subdv, edge.segment, isQuadratic, isIsogeometric)
 
                     for pt in subdv_pts:
                         sc_point = {
@@ -629,26 +650,43 @@ class HeFile():
 
                 if number_subdv is not None:
                     subdv_pts = HeFile.Nsbdvs(
-                        number_subdv, edge.segment, isQuadratic)
+                        number_subdv, edge.segment, isQuadratic, isIsogeometric)
                     edge_pts = edge.segment.getPoints()
                     subdv_pts.insert(0, edge_pts[0])
                     subdv_pts.append(edge_pts[-1])
 
                     while len(subdv_pts) > 1:
-                        seg = Line(subdv_pts.pop(0), subdv_pts[0])
+                        if isIsogeometric:
+                            seg = Polyline(subdv_pts)
 
-                        if localUL:
-                            load = HeFile.getUniformLoadGlobalValues(
-                                uniform_load, seg)
+                            if localUL:
+                                load = HeFile.getUniformLoadGlobalValues(
+                                    uniform_load, seg)
 
-                        ul_segment = {
-                            "segment": seg,
-                            "load": load,
-                            "mesh_pt1": None,
-                            "mesh_pt2": None
-                        }
-                        ul_segments.append(ul_segment)
+                            ul_segment = {
+                                "segment": seg,
+                                "load": load,
+                                "mesh_pts": [0] * len(subdv_pts)
+                            }
+                            ul_segments.append(ul_segment)
+                            subdv_pts = []
+
+                        else: 
+                            seg = Line(subdv_pts.pop(0), subdv_pts[0])
+
+                            if localUL:
+                                load = HeFile.getUniformLoadGlobalValues(
+                                    uniform_load, seg)
+
+                            ul_segment = {
+                                "segment": seg,
+                                "load": load,
+                                "mesh_pt1": None,
+                                "mesh_pt2": None
+                            }
+                            ul_segments.append(ul_segment)
                 else:
+                    # ???
                     ul_segment = {
                         "segment": edge.segment,
                         "load": load,
@@ -657,21 +695,20 @@ class HeFile():
                     }
                     ul_segments.append(ul_segment)
 
-        cl_points = []  # points that have concentrated load
         for vertex in vertices:
             attributes = vertex.point.attributes
 
             for att in attributes:
                 if att["type"] == "Support Conditions":
                     sc_point = {
-                        "point": vertex.point,
+                        "point": Pnt2D(vertex.point.getX(), vertex.point.getY()),
                         "support": att
                     }
                     sc_points.append(sc_point)
 
                 elif att["type"] == "Concentrated Load":
                     cl_point = {
-                        "point": vertex.point,
+                        "point": Pnt2D(vertex.point.getX(), vertex.point.getY()),
                         "load": att
                     }
                     cl_points.append(cl_point)
@@ -692,14 +729,26 @@ class HeFile():
         material_index = 1  # index of material
         thickness_index = 1  # index of thickness
         mesh_index = 0  # index of meshes
+        surf_map = [] # list of nurbs surface
 
         for i in range(1, len(faces)):
-
+            local_index = 1
             if faces[i].patch.isDeleted:
                 continue
 
+            # collect nurbs surface properties
+            nurbs_surf = faces[i].patch.nurbs
+            if nurbs_surf != []:
+                surf_dict = {'degree_u': nurbs_surf.degree_u,
+                             'degree_v': nurbs_surf.degree_v,
+                             'ctrlpts_size_u': nurbs_surf.ctrlpts_size_u,
+                             'ctrlpts_size_v': nurbs_surf.ctrlpts_size_v,
+                             'knotvector_u': nurbs_surf.knotvector_u,
+                             'knotvector_v': nurbs_surf.knotvector_v
+                             }
+                surf_map.append(surf_dict)
+                             
             mesh_index += 1
-            local_index = 1
             mesh_map = []
             pressure = None
 
@@ -757,13 +806,16 @@ class HeFile():
 
             # collect the mesh points
             coords = mesh['coords'].copy()
+            if isIsogeometric:
+                weights = mesh['IsoGe']['weights'].copy()
             while len(coords) > 0:
-                point = Point(coords[0], coords[1])
+                point = Pnt2D(coords[0], coords[1])
                 local_index = 1
 
                 insert = True
                 for pt_dict in mesh_points:
-                    if pt_dict["point"] == point:
+                    tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
+                    if Pnt2D.equal(pt_dict["point"], point, tol):
                         insert = False
                         pt_dict_target = pt_dict
                         break
@@ -775,12 +827,18 @@ class HeFile():
                         "local_index": local_index,
                         "global_index": global_index
                     }
+
+                    if isIsogeometric:
+                        mesh_point_dict["weight"] = weights[0]
+
                     mesh_points.append(mesh_point_dict)
                     global_index += 1
 
                     # support conditions
                     for sc_point in sc_points:
-                        if sc_point["point"] == point:
+                        tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
+                        if Pnt2D.equal(sc_point["point"], point, tol):
+                        # if sc_point["point"] == point:
                             sc = sc_point["support"]["properties"]
                             mesh_point_dict["support"] = [0, 0, 0]
 
@@ -806,13 +864,21 @@ class HeFile():
                             break
 
                     # uniform load
-                    tol = Point(0.01, 0.01)
+                    tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
                     for ul_segment in ul_segments:
-                        pts = ul_segment['segment'].getPoints()
-                        if point.equal(pts[0], tol):
-                            ul_segment['mesh_pt1'] = mesh_point_dict
-                        elif point.equal(pts[1], tol):
-                            ul_segment['mesh_pt2'] = mesh_point_dict
+
+                        if isIsogeometric:
+                            pts = ul_segment['segment'].getEquivPolyline()
+                            for j in range(len(pts)):
+                                if Pnt2D.equal(pts[j], point, tol):
+                                    ul_segment['mesh_pts'][j] = mesh_point_dict
+
+                        else:
+                            pts = ul_segment['segment'].getEquivPolyline()
+                            if Pnt2D.equal(pts[0], point, tol):
+                                ul_segment['mesh_pt1'] = mesh_point_dict
+                            elif Pnt2D.equal(pts[1], point, tol):
+                                ul_segment['mesh_pt2'] = mesh_point_dict
 
                 else:
                     mesh_point_dict = pt_dict_target.copy()
@@ -823,6 +889,8 @@ class HeFile():
                 local_index += 1
                 coords.pop(0)
                 coords.pop(0)
+                if isIsogeometric:
+                    weights.pop(0)
 
             meshes_map_pts.append(mesh_map)
 
@@ -830,13 +898,15 @@ class HeFile():
         T6 = []
         Q4 = []
         Q8 = []
+        Iso = []
 
         nel_index = 0  # index of global elements
         mesh_elem = []  # mesh element list
         elem_pressure = []  # list of elements that are under pressure
+        copy_meshes_map_pts = meshes_map_pts.copy() # copy of meshes_map_pts
         for mesh in meshes:
             conn = mesh['mesh']['conn'].copy()
-            mesh_map = meshes_map_pts.pop(0)
+            mesh_map = copy_meshes_map_pts.pop(0)
 
             while len(conn) > 0:
                 stop = conn.pop(0)
@@ -845,7 +915,10 @@ class HeFile():
 
                 elem_con = []
                 while step < stop:
-                    elem_index = mesh_map[conn.pop(0)]['global_index']
+                    try:
+                        elem_index = mesh_map[conn.pop(0)]['global_index']
+                    except:
+                        print(conn)
                     if elem_index not in elem_con:
                         elem_con.append(elem_index)
                     else:
@@ -874,7 +947,9 @@ class HeFile():
 
                 mesh_elem.append(elem_dict)
 
-                if elem_type == 3:
+                if isIsogeometric:
+                    Iso.append(elem_dict)
+                elif elem_type == 3:
                     T3.append(elem_dict)
                 elif elem_type == 4:
                     Q4.append(elem_dict)
@@ -894,7 +969,7 @@ class HeFile():
 
             # initial information
             file.write("%HEADER\n")
-            file.write("Output file created by FEMEP (version October/2021).\n")
+            file.write("Output file created by FEMEP (version April/2023).\n")
             file.write("'File created by FEMEP program'\n")
             file.write("\n")
 
@@ -902,6 +977,15 @@ class HeFile():
             file.write("%HEADER.ANALYSIS\n")
             file.write("'plane_stress'\n")
             file.write("\n")
+
+            # analysis method
+            file.write("%HEADER.ANALYSIS.METHOD\n")
+            if isIsogeometric:
+                file.write("'ISOGEOMETRIC'\n")
+                file.write("\n")
+            else:
+                file.write("'ISOPARAMETRIC'\n")
+                file.write("\n")
 
             # number of nodes
             file.write("%NODE\n")
@@ -913,8 +997,17 @@ class HeFile():
             file.write(f"{len(mesh_points)}\n")
             for mesh_point in mesh_points:
                 file.write(
-                    f"{mesh_point['global_index']} {round(mesh_point['point'].getX(),6):.6f} {round(mesh_point['point'].getY(),6):.6f} {0.000000:.6f}\n")
+                    f"{mesh_point['global_index']}   {round(mesh_point['point'].getX(),6):.6f} {round(mesh_point['point'].getY(),6):.6f} {0.000000:.6f}\n")
             file.write("\n")
+
+            # node weights
+            if isIsogeometric:
+                file.write("%NODE.WEIGHT\n")
+                file.write(f"{len(mesh_points)}\n")
+                for mesh_point in mesh_points:
+                    file.write(
+                        f"{mesh_point['global_index']}   {round(mesh_point['weight'],6):.6f}\n")
+                file.write("\n")
 
             # supoort conditions
             file.write("%NODE.SUPPORT\n")
@@ -922,7 +1015,7 @@ class HeFile():
 
             for mesh_pt in mesh_support_pts:
                 file.write(
-                    f"{mesh_pt['global_index']} {mesh_pt['support'][0]} {mesh_pt['support'][1]} 0 0 0 {mesh_pt['support'][2]}\n")
+                    f"{mesh_pt['global_index']}   {mesh_pt['support'][0]} {mesh_pt['support'][1]} 0 0 0 {mesh_pt['support'][2]}\n")
             file.write("\n")
 
             # material
@@ -930,24 +1023,18 @@ class HeFile():
             file.write(f"{len(materials)}\n")
             file.write("\n")
 
-            file.write("%MATERIAL.LABEL\n")
-            file.write(f"{len(materials)}\n")
-            for i in range(0, len(materials)):
-                file.write(f"{i+1} '{materials[i]['material']['name']}'\n")
-            file.write("\n")
-
             file.write("%MATERIAL.ISOTROPIC\n")
             file.write(f"{len(materials)}\n")
             for i in range(0, len(materials)):
                 file.write(
-                    f"{i+1} {round(materials[i]['material']['properties']['YoungsModulus'],6):.1f} {round(materials[i]['material']['properties']['PoisonsRatio'],6):.6f}\n")
+                    f"{i+1}   {round(materials[i]['material']['properties']['YoungsModulus'],6):.1f} {round(materials[i]['material']['properties']['PoisonsRatio'],6):.6f}\n")
             file.write("\n")
 
             file.write("%THICKNESS\n")
             file.write(f"{len(thicknesses)}\n")
             for i in range(0, len(thicknesses)):
                 file.write(
-                    f"{i+1} {round(thicknesses[i]['thickness']['properties']['Value'],6):.6f}\n")
+                    f"{i+1}   {round(thicknesses[i]['thickness']['properties']['Value'],6):.6f}\n")
             file.write("\n")
 
             # Integration order
@@ -975,9 +1062,72 @@ class HeFile():
             file.write(f"{4} 2 2 1 2 2 1\n")
             file.write("\n")
 
+            # surface
+            if isIsogeometric:
+                file.write("%SURFACE\n")
+                file.write(f"{len(surf_map)}\n")
+                file.write("\n")
+
+                # surface degrees
+                file.write("%SURFACE.DEGREE\n")
+                for i in range(len(surf_map)):
+                    file.write(f"{i+1}   {surf_map[i]['degree_u']} {surf_map[i]['degree_v']}\n")
+                file.write("\n")
+
+                # surface knot vectors
+                file.write("%SURFACE.KNOTVECTOR\n")
+                for i in range(len(surf_map)):
+
+                    knotvector_u = ''
+                    for knot in surf_map[i]['knotvector_u']:
+                        knotvector_u += str(round(knot,6)) + ' '
+                    knotvector_u = knotvector_u[:-1]
+
+                    knotvector_v = ''
+                    for knot in surf_map[i]['knotvector_v']:
+                        knotvector_v += str(round(knot,6)) + ' '
+                    knotvector_v = knotvector_v[:-1]
+
+                    file.write(f"{i+1}   {len(surf_map[i]['knotvector_u'])}   {knotvector_u}   {len(surf_map[i]['knotvector_v'])}   {knotvector_v}\n")
+                file.write("\n")
+
+                # surface control net
+                file.write("%SURFACE.CTRLNET\n")
+                copy_meshes_map_pts = meshes_map_pts.copy()
+                for i in range(len(copy_meshes_map_pts)):
+                    file.write(f"{i+1}\n")
+                    Nu = surf_map[i]['ctrlpts_size_u']
+                    Nv = surf_map[i]['ctrlpts_size_v']
+                    for j in range(Nv):
+                        for k in range(Nu):
+                            file.write(f"{copy_meshes_map_pts[i][0]['global_index']}  ")
+                            copy_meshes_map_pts[i].pop(0)
+                        file.write("\n")
+                file.write("\n")
+
             # elements
             file.write("%ELEMENT\n")
             file.write(f"{nel_index}\n")
+            file.write("\n")
+
+            index = 0
+            if len(Iso) > 0:
+                file.write("%ELEMENT.ISOGEOMETRIC\n")
+                for i in range(len(surf_map)):
+                    uniqueKnotVectorU = sorted(set(surf_map[i]['knotvector_u']))
+                    uniqueKnotVectorV = sorted(set(surf_map[i]['knotvector_v']))
+                    NelemU = len(uniqueKnotVectorU) - 1
+                    NelemV = len(uniqueKnotVectorV) - 1
+                    Nelem = NelemU * NelemV
+                    # Nelem = (len(set(surf_map[i]['knotvector_u'])) - 1) * (len(set(surf_map[i]['knotvector_v'])) - 1)
+                    file.write(f"{i+1}   {Nelem}\n")
+                    for j in range(NelemV):
+                        for k in range(NelemU):
+                            file.write(f"{Iso[index]['index']}   {Iso[index]['material']} {Iso[index]['thickness']} {4}   {len(Iso[index]['conn_list'])}   {Iso[index]['conn']}   {round(uniqueKnotVectorU[0],6)} {round(uniqueKnotVectorU[1],6)}   {round(uniqueKnotVectorV[0],6)} {round(uniqueKnotVectorV[1],6)}\n")
+                            index += 1
+                            uniqueKnotVectorU.pop(0)
+                        uniqueKnotVectorU = sorted(set(surf_map[i]['knotvector_u']))
+                        uniqueKnotVectorV.pop(0)
             file.write("\n")
 
             if len(T3) > 0:
@@ -986,7 +1136,7 @@ class HeFile():
 
                 for elem in T3:
                     file.write(
-                        f"{elem['index']} {elem['material']} {elem['thickness']} {1} {elem['conn']}\n")
+                        f"{elem['index']}   {elem['material']} {elem['thickness']} {1} {elem['conn']}\n")
                     nel_index += 1
                 file.write("\n")
 
@@ -996,7 +1146,7 @@ class HeFile():
 
                 for elem in T6:
                     file.write(
-                        f"{elem['index']} {elem['material']} {elem['thickness']} {2} {elem['conn']}\n")
+                        f"{elem['index']}   {elem['material']} {elem['thickness']} {2} {elem['conn']}\n")
                     nel_index += 1
                 file.write("\n")
 
@@ -1006,7 +1156,7 @@ class HeFile():
 
                 for elem in Q4:
                     file.write(
-                        f"{elem['index']} {elem['material']} {elem['thickness']} {3} {elem['conn']}\n")
+                        f"{elem['index']}   {elem['material']} {elem['thickness']} {3} {elem['conn']}\n")
                     nel_index += 1
 
                 file.write("\n")
@@ -1017,7 +1167,7 @@ class HeFile():
 
                 for elem in Q8:
                     file.write(
-                        f"{elem['index']} {elem['material']} {elem['thickness']} {4} {elem['conn']}\n")
+                        f"{elem['index']}   {elem['material']} {elem['thickness']} {4} {elem['conn']}\n")
                     nel_index += 1
 
                 file.write("\n")
@@ -1047,42 +1197,80 @@ class HeFile():
             ul_quadraticElem = []  # list of quadratic elem with uniform load
             string_loads = []
             if len(ul_segments) > 0:
-                for ul_segment in ul_segments:
-                    index_pt1 = ul_segment['mesh_pt1']['global_index']
-                    index_pt2 = ul_segment['mesh_pt2']['global_index']
-                    Qx = ul_segment['load'][0]
-                    Qy = ul_segment['load'][1]
-                    for elem in mesh_elem:
-                        if index_pt1 in elem['conn_list'] and index_pt2 in elem['conn_list']:
-                            elem_target = elem
-                            elem_index = elem['index']
-                            break
+                if isIsogeometric:
+                    count_load_elems = 0
+                    file.write("%LOAD.CASE.LINE.FORCE.UNIFORM\n")
+                    for ul_segment in ul_segments:
+                        Qx = ul_segment['load'][0]
+                        Qy = ul_segment['load'][1]
+                        pts_dicts_list = ul_segment['mesh_pts']
+                        pts_index = [pts["global_index"] for pts in pts_dicts_list]
+                        for elem in Iso:
+                            surf_index = elem['mesh_index'] - 1
+                            NuElem = surf_map[surf_index]['degree_u'] + 1
+                            NvElem = surf_map[surf_index]['degree_v'] + 1
+                            conn = np.array(elem['conn_list'])
+                            conn_matrix = np.array(conn).reshape((NvElem, NuElem))
+                            
+                            row_in_matrix = np.where(np.all(np.isin(conn_matrix, pts_index), axis=1))[0].tolist()
+                            column_in_matrix = np.where(np.all(np.isin(conn_matrix, pts_index), axis=0))[0].tolist()
 
-                    if elem_target['type'] == 6 or elem_target['type'] == 8:
-                        ul_quadraticElem.append([ul_segment, elem_target])
-                        continue
+                            if len(row_in_matrix) > 0:
+                                row = conn_matrix[row_in_matrix[0],:]
+                                index_pt1 = row[0]
+                                index_pt2 = row[-1]
+                                string_loads.append(f"{elem['index']}   {index_pt1} {index_pt2}   0   {Qx:.6f} {Qy:.6f} 0.000000")
+                                count_load_elems += 1
 
-                    string_loads.append(
-                        f"{elem_index}	{index_pt1}	{index_pt2}	0	{Qx:.6f}	{Qy:.6f}	0.000000")
+                            if len(column_in_matrix) > 0:
+                                column = conn_matrix[:,column_in_matrix[0]]
+                                index_pt1 = column[-1]
+                                index_pt2 = row[0]
+                                string_loads.append(f"{elem['index']}   {index_pt1} {index_pt2}   0   {Qx:.6f} {Qy:.6f} 0.000000")
+                                count_load_elems += 1
 
-                len_quadricElem = len(ul_quadraticElem)
-                while len(ul_quadraticElem) > 0:
-                    quadElem1 = ul_quadraticElem.pop(0)
-                    quadElem2 = ul_quadraticElem.pop(0)
-                    index_pt1 = quadElem1[0]['mesh_pt1']['global_index']
-                    index_pt2 = quadElem2[0]['mesh_pt2']['global_index']
-                    Qx = quadElem1[0]['load'][0]
-                    Qy = quadElem2[0]['load'][1]
-                    elem_index = quadElem1[1]['index']
+                    file.write(f"{count_load_elems}\n")
+                    for load in string_loads:
+                        file.write(f"{load}\n")
+                    file.write("\n")
 
-                    string_loads.append(
-                        f"{elem_index}	{index_pt1}	{index_pt2}	0	{Qx:.6f}	{Qy:.6f}	0.000000")
+                else:
+                    for ul_segment in ul_segments:
+                        index_pt1 = ul_segment['mesh_pt1']['global_index']
+                        index_pt2 = ul_segment['mesh_pt2']['global_index']
+                        Qx = ul_segment['load'][0]
+                        Qy = ul_segment['load'][1]
+                        for elem in mesh_elem:
+                            if index_pt1 in elem['conn_list'] and index_pt2 in elem['conn_list']:
+                                elem_target = elem
+                                elem_index = elem['index']
+                                break
 
-                file.write("%LOAD.CASE.LINE.FORCE.UNIFORM\n")
-                file.write(f"{int(len(ul_segments)-len_quadricElem/2)}\n")
-                for load in string_loads:
-                    file.write(f"{load}\n")
-                file.write("\n")
+                        if elem_target['type'] == 6 or elem_target['type'] == 8:
+                            ul_quadraticElem.append([ul_segment, elem_target])
+                            continue
+
+                        string_loads.append(
+                            f"{elem_index}	{index_pt1}	{index_pt2}	0	{Qx:.6f}	{Qy:.6f}	0.000000")
+
+                    len_quadricElem = len(ul_quadraticElem)
+                    while len(ul_quadraticElem) > 0:
+                        quadElem1 = ul_quadraticElem.pop(0)
+                        quadElem2 = ul_quadraticElem.pop(0)
+                        index_pt1 = quadElem1[0]['mesh_pt1']['global_index']
+                        index_pt2 = quadElem2[0]['mesh_pt2']['global_index']
+                        Qx = quadElem1[0]['load'][0]
+                        Qy = quadElem2[0]['load'][1]
+                        elem_index = quadElem1[1]['index']
+
+                        string_loads.append(
+                            f"{elem_index}	{index_pt1}	{index_pt2}	0	{Qx:.6f}	{Qy:.6f}	0.000000")
+
+                    file.write("%LOAD.CASE.LINE.FORCE.UNIFORM\n")
+                    file.write(f"{int(len(ul_segments)-len_quadricElem/2)}\n")
+                    for load in string_loads:
+                        file.write(f"{load}\n")
+                    file.write("\n")
 
             if len(elem_pressure) > 0:
                 file.write("%LOAD.CASE.DOMAIN.FORCE.UNIFORM\n")
@@ -1598,7 +1786,7 @@ class HeFile():
 
             file.write("%END")
 
-    def Nsbdvs(_attribute, _seg, _isQuadratic):
+    def Nsbdvs(_attribute, _seg, _isQuadratic, _isIsogeometric):
         points = []
 
         if _attribute is not None:
@@ -1606,7 +1794,14 @@ class HeFile():
             number = properties['Value']
             ratio = properties['Ratio']
 
-            points = Mesh1D.subdivideSegment(_seg, number, ratio, _isQuadratic)
+            if _isIsogeometric:
+                ctrlpts = _seg.getCtrlPts().copy()
+                ctrlpts.pop(0)
+                ctrlpts.pop()
+                for ctrlpt in ctrlpts:
+                    points.append(Pnt2D(ctrlpt[0], ctrlpt[1]))
+            else:
+                points = Mesh1D.subdivideSegment(_seg, number, ratio, _isQuadratic)
 
         return points
 
