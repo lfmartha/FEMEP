@@ -23,6 +23,7 @@ class Segment():
         self.sdvPoints = None
         self.originalNurbs = None
         self.CtrlPolyView = False
+        self.surfDirection = None
         self.isReversed = False
         self.currentDegree = self.curve.nurbs.degree
         self.currentKnotVector = self.curve.nurbs.knotvector
@@ -190,27 +191,28 @@ class Segment():
 
     # ---------------------------------------------------------------------
     def evalPoint(self, _t):
-        return self.curve.evalPoint(_t)
+        pt = self.curve.evalPoint(_t)
+        return pt
 
     # ---------------------------------------------------------------------
     def getXinit(self):
-        pt = self.polyline[0]
-        return pt.getX()
+        pt = self.curve.getXinit()
+        return pt
 
     # ---------------------------------------------------------------------
     def getYinit(self):
-        pt = self.polyline[0]
-        return pt.getY()
+        pt = self.curve.getYinit()
+        return pt
 
     # ---------------------------------------------------------------------
     def getXend(self):
-        pt = self.polyline[-1]
-        return pt.getX()
+        pt = self.curve.getXend()
+        return pt
 
     # ---------------------------------------------------------------------
     def getYend(self):
-        pt = self.polyline[-1]
-        return pt.getY()
+        pt = self.curve.getYend()
+        return pt
     
     # ---------------------------------------------------------------------
     def getInitPt(self):
@@ -517,6 +519,10 @@ class Segment():
         data['currentKnotVector'] = self.currentKnotVector
         return data
     
+    # ---------------------------------------------------------------------
+    def setSurfDirection(self, direc):
+        self.surfDirection = direc
+
     # ---------------------------------------------------------------------
     @staticmethod
     def joinTwoCurves(_seg1, _seg2, _pt, _tol):
