@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 from appcontroller import AppController
 
+
 # ----------------------- UTILIDADES ----------------------------
 # Codigo utilizado para converter .ui->.py: pyuic5 GM2DTool.ui -o GM2DTool.py
 # Ambiente virtual : .env/Scripts/Activate.ps1 ---> deactivate
