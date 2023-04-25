@@ -299,8 +299,12 @@ class HeFile():
                 curve = Line(pt0, pt1)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
-                segment.originalNurbs = copy.deepcopy(curve.nurbs)
+                #segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
+                try:
+                    segment.surfDirection = data_dict['surfDirection']
+                except:
+                    pass
 
                 if data_dict['isReversed'] == True:
                     segment.ReverseNurbs()
@@ -322,6 +326,10 @@ class HeFile():
                 segment = Segment(curvePoly, curve)
                 segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
+                try:
+                    segment.surfDirection = data_dict['surfDirection']
+                except:
+                    pass
 
                 if data_dict['isReversed'] == True:
                     segment.ReverseNurbs()
@@ -344,6 +352,10 @@ class HeFile():
                 segment = Segment(curvePoly, curve)
                 segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
+                try:
+                    segment.surfDirection = data_dict['surfDirection']
+                except:
+                    pass
 
             elif type == 'CIRCLEARC':
                 center = Pnt2D(data_dict['center'][0], data_dict['center'][1])
@@ -354,6 +366,10 @@ class HeFile():
                 segment = Segment(curvePoly, curve)
                 segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
+                try:
+                    segment.surfDirection = data_dict['surfDirection']
+                except:
+                    pass
 
                 if data_dict['isReversed'] == True:
                     segment.ReverseNurbs()
@@ -377,6 +393,10 @@ class HeFile():
                 segment = Segment(curvePoly, curve)
                 segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
+                try:
+                    segment.surfDirection = data_dict['surfDirection']
+                except:
+                    pass
 
                 if data_dict['isReversed'] == True:
                     segment.ReverseNurbs()
