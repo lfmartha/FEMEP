@@ -120,114 +120,128 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.actionNsudv.triggered.connect(self.on_action_nsudv)
         self.actionMesh.triggered.connect(self.on_action_Mesh)
 
-        # Grid QpushButton
+        # ---------------------------------------------------------------------
+        # QPushButtons
+        # Grid QPushButton
         self.grid_display.gridOKpushButton.clicked.connect(self.setgrid)
 
-        # Line QpushButtons
+        # Point QPushButton
+        self.point_display.addPointpushButton.clicked.connect(self.add_point)
+
+        # Line QPushButton
         self.line_display.InitialPointpushButton.clicked.connect(self.add_lineInitialPoint)
         self.line_display.addLinepushButton.clicked.connect(self.add_line)
 
-        # Polyline QpushButtons
+        # Polyline QPushButton
         self.polyline_display.InitialPointpushButton.clicked.connect(self.add_polylineInitialPoint)
         self.polyline_display.addPolylinepushButton.clicked.connect(self.add_polylineEndPoint)
         self.polyline_display.endPolylinepushButton.clicked.connect(self.end_polyline)
 
-        # Cubic Spline QpushButtons
+        # Cubic Spline QPushButton
         self.cubicspline_display.InitialPointpushButton.clicked.connect(self.add_cubicsplineInitialPoint)
         self.cubicspline_display.addCubicSplinepushButton.clicked.connect(self.add_cubicsplineEndPoint)
         self.cubicspline_display.endCubicSplinepushButton.clicked.connect(self.end_cubicspline)
 
-        # Circle QpushButtons
+        # Circle QPushButton
         self.circle_display.setCenterpushButton.clicked.connect(self.set_circleCenter)
         self.circle_display.addCirclepushButton.clicked.connect(self.add_circle)
 
-        # Circle Arc QpushButtons
+        # Circle Arc QPushButton
         self.circlearc_display.setCenterpushButton.clicked.connect(self.set_circlearcCenter)
         self.circlearc_display.setFirstArcPointpushButton.clicked.connect(self.set_circlearcFirstArcPoint)
         self.circlearc_display.addCircleArcpushButton.clicked.connect(self.add_circlearc)
 
-        # Ellipse QpushButtons
+        # Ellipse QPushButton
         self.ellipse_display.setCenterpushButton.clicked.connect(self.set_ellipseCenter)
         self.ellipse_display.setFirstAxispushButton.clicked.connect(self.set_ellipseFirstAxis)
         self.ellipse_display.addEllipsepushButton.clicked.connect(self.add_ellipse)
 
-        # Ellipse Arc QpushButtons
+        # Ellipse Arc QPushButton
         self.ellipsearc_display.setCenterpushButton.clicked.connect(self.set_ellipsearcCenter)
         self.ellipsearc_display.setFirstAxispushButton.clicked.connect(self.set_ellipsearcFirstAxis)
         self.ellipsearc_display.setSecondAxispushButton.clicked.connect(self.set_ellipsearcSecondAxis)
         self.ellipsearc_display.setFirstArcPointpushButton.clicked.connect(self.set_ellipsearcFirstArcPoint)
         self.ellipsearc_display.addEllipseArcpushButton.clicked.connect(self.add_ellipsearc)
 
-        # Subdivisions QpushButtons
-        self.nsudv_display.nsudvpushButton.clicked.connect(self.setNumberSdv)
-        self.nsudv_display.knotrefinementpushButton.clicked.connect(self.refineNumberSdv)
-        self.nsudv_display.rescuepushButton.clicked.connect(self.BackToOriginalNurbsKnot)
-        self.nsudv_display.knotconformpushButton.clicked.connect(self.conformSegs)
+        # Select QPushButton
+        self.select_display.propertiespushButton.clicked.connect(self.properties)
 
-        # Prop QpushButtons
-        self.prop_face_display.closepushbutton.clicked.connect(self.close_propFace)
-        self.prop_edge_display.degreeChange.clicked.connect(self.degreeChange)
-        self.prop_edge_display.rescuepushbutton.clicked.connect(self.BackToOriginalNurbsDegree)
-        self.prop_edge_display.reversepushbutton.clicked.connect(self.ReverseNurbs)
-        self.prop_edge_display.swappushbutton.clicked.connect(self.close_propEdge)
+        # Prop vertex QPushButton
         self.prop_vertex_display.closepushbutton.clicked.connect(self.close_propVertex)
 
-        self.point_display.addPointpushButton.clicked.connect(self.add_point)
-        self.select_display.propertiespushButton.clicked.connect(
-            self.properties)
-        self.attribute_display.addpushButton.clicked.connect(self.addAttribute)
-        self.attribute_display.saveAttpushButton.clicked.connect(
-            self.saveAttributeValues)
-        self.attribute_display.delpushButton.clicked.connect(self.delAttribute)
-        self.attribute_display.setAttpushButton.clicked.connect(
-            self.setAttribute)
-        self.attribute_display.unsetpushButton.clicked.connect(
-            self.unSetAttribute)
-        self.attribute_display.renamepushButton.clicked.connect(
-            self.renameAttribute)
+        # Prop edge QPushButton
+        self.prop_edge_display.degreeChange.clicked.connect(self.degreeChange)
+        self.prop_edge_display.rescuepushbutton.clicked.connect(self.BackToOriginalNurbs)
+        self.prop_edge_display.reversepushbutton.clicked.connect(self.ReverseNurbs)
+        self.prop_edge_display.swappushbutton.clicked.connect(self.close_propEdge)
 
+        # Prop face QPushButton
+        self.prop_face_display.closepushbutton.clicked.connect(self.close_propFace)
+
+        # Subdivisions QPushButton
+        self.nsudv_display.nsudvpushButton.clicked.connect(self.setNumberSdv)
+        self.nsudv_display.knotrefinementpushButton.clicked.connect(self.refineNumberSdv)
+        self.nsudv_display.rescuepushButton.clicked.connect(self.BackToOriginalNurbsRefine)
+        self.nsudv_display.knotconformpushButton.clicked.connect(self.conformSegs)
+
+        # Mesh QPushButton
         self.mesh_display.genMeshpushButton.clicked.connect(self.generateMesh)
         self.mesh_display.delMeshpushButton.clicked.connect(self.delMesh)
         self.mesh_display.surfUCurvespushButton.clicked.connect(self.setUCurves)
         self.mesh_display.surfVCurvespushButton.clicked.connect(self.setVCurves)
 
-        self.exportFile_display.exportpushButton.clicked.connect(
-            self.exportFile)
+        # Attributes QPushButton
+        self.attribute_display.addpushButton.clicked.connect(self.addAttribute)
+        self.attribute_display.saveAttpushButton.clicked.connect(self.saveAttributeValues)
+        self.attribute_display.delpushButton.clicked.connect(self.delAttribute)
+        self.attribute_display.setAttpushButton.clicked.connect(self.setAttribute)
+        self.attribute_display.unsetpushButton.clicked.connect(self.unSetAttribute)
+        self.attribute_display.renamepushButton.clicked.connect(self.renameAttribute)
 
-        # checkBoxes
+        # Export QPushButton
+        self.exportFile_display.exportpushButton.clicked.connect(self.exportFile)
+
+        # ---------------------------------------------------------------------
+        # QCheckBoxes
+        # Snap QCheckBox
         self.snapcheckBox.clicked.connect(self.change_snapgrid)
+
+        # Select QCheckBox
         self.select_display.pointcheckBox.clicked.connect(self.change_select)
         self.select_display.segmentcheckBox.clicked.connect(self.change_select)
         self.select_display.patchcheckBox.clicked.connect(self.change_select)
 
-        # Prop edge checkbox
+        # Prop edge Checkbox
         self.prop_edge_display.ctrlPolygonCheckBox.clicked.connect(self.updateCtrlPolyView)
 
-        # comboBoxes
-        self.attribute_display.attcomboBox.activated.connect(
-            self.setAttPropertiesDisplay)
-        self.mesh_display.meshcomboBox.activated.connect(self.setMeshOptions)
-        self.mesh_display.shapecomboBox.activated.connect(self.setDiagOptions)
-
-        # Circle comboBox
+        # ---------------------------------------------------------------------
+        # QComboBoxes
+        # Circle QComboBox
         self.circle_display.RadiuscomboBox.activated.connect(self.setCircleRadiusOptions)
 
-        # Circle Arc comboBox
+        # Circle Arc QComboBox
         self.circlearc_display.FirstArcPointcomboBox.activated.connect(self.setCircleArcFirstArcPointOptions)
         self.circlearc_display.SecondArcPointcomboBox.activated.connect(self.setCircleArcSecondArcPointOptions)
         
-        # Ellipse comboBoxes
+        # Ellipse QComboBox
         self.ellipse_display.FirstAxiscomboBox.activated.connect(self.setEllipseFirstAxisOptions)
         self.ellipse_display.SecondAxiscomboBox.activated.connect(self.setEllipseSecondAxisOptions)
 
-        # Ellipse Arc comboBoxes
+        # Ellipse Arc QComboBox
         self.ellipsearc_display.FirstAxiscomboBox.activated.connect(self.setEllipseArcFirstAxisOptions)
         self.ellipsearc_display.SecondAxiscomboBox.activated.connect(self.setEllipseArcSecondAxisOptions)
         self.ellipsearc_display.FirstArcPointcomboBox.activated.connect(self.setEllipseArcFirstArcPointOptions)
         self.ellipsearc_display.SecondArcPointcomboBox.activated.connect(self.setEllipseArcSecondArcPointOptions)
 
-        # Subdivisions comboBox
+        # Subdivisions QComboBox
         self.nsudv_display.nsudvcomboBox.activated.connect(self.setNumSubdivisionsOptions)
+
+        # Attribute QComboBox
+        self.attribute_display.attcomboBox.activated.connect(self.setAttPropertiesDisplay)
+
+        # Mesh QComboBox
+        self.mesh_display.meshcomboBox.activated.connect(self.setMeshOptions)
+        self.mesh_display.shapecomboBox.activated.connect(self.setDiagOptions)
 
     def resizeEvent(self, a0: QtGui.QResizeEvent):
         self.attribute_display.resizeEvent(a0)
@@ -1811,15 +1825,15 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def BackToOriginalNurbsKnot(self):
+    def BackToOriginalNurbsRefine(self):
 
-        self.current_hecontroller.BackToOriginalNurbsKnot()
+        self.current_hecontroller.BackToOriginalNurbsRefine()
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def BackToOriginalNurbsDegree(self):
+    def BackToOriginalNurbs(self):
 
-        check, error_text = self.current_hecontroller.BackToOriginalNurbsDegree()
+        check, error_text = self.current_hecontroller.BackToOriginalNurbs()
         if check:
             self.close_propEdge()
         elif not check:
@@ -2351,14 +2365,13 @@ class AppController(QMainWindow, Ui_MainWindow):
         else:
             shape_type = self.mesh_display.shapecomboBox.currentText()
 
-        # try:
-        self.current_canvas.generateMesh(
-            mesh_type, shape_type, elem_type, diag_type, bc_flag)
-        # except:
-        #     msg = QMessageBox(self)
-        #     msg.setWindowTitle('Warning')
-        #     msg.setText('It was not possible to generate the mesh')
-        #     msg.exec()
+        try:
+            self.current_canvas.generateMesh(mesh_type, shape_type, elem_type, diag_type, bc_flag)
+        except:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Warning')
+            msg.setText('It was not possible to generate the mesh')
+            msg.exec()
 
     def delMesh(self):
         self.current_canvas.delMesh()
