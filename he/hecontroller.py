@@ -1751,18 +1751,18 @@ class HeController:
         self.undoredo.end()
         self.isChanged = True
 
-    def BackToOriginalNurbsKnot(self):
+    def BackToOriginalNurbsRefine(self):
         self.undoredo.begin()
         segments = self.hemodel.getSegments()
 
         for seg in segments:
             if seg.isSelected():
-                seg.BackToOriginalNurbs()
+                seg.BackToOriginalNurbsRefine()
 
         self.undoredo.end()
         self.isChanged = True
 
-    def BackToOriginalNurbsDegree(self):
+    def BackToOriginalNurbs(self):
         self.undoredo.begin()
 
         segments = self.hemodel.getSegments()
