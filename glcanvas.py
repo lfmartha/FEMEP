@@ -414,7 +414,10 @@ class Canvas(QtOpenGL.QGLWidget):
                         glBegin(GL_LINE_STRIP)
 
                         for j in range(0, len(Pts)):
-                            glVertex2d(Pts[j].getX(), Pts[j].getY())
+                            x = Pts[j].getX()
+                            y = Pts[j].getY()
+                            glVertex2f(x, y)
+
                         glEnd()
 
         # Draw segments
@@ -963,6 +966,8 @@ class Canvas(QtOpenGL.QGLWidget):
             # Try to attract point to a point.
             # Try to attract point to a segment.
             xW, yW = self.snapMousePt(xW, yW, pick_tol * 10)
+            # Aqui
+            # xW, yW = self.snapMousePt(xW, yW, pick_tol)
 
             # Only consider current point if left mouse button was used,
             # if not button pressed, and if current point is not at the
@@ -1062,13 +1067,13 @@ class Canvas(QtOpenGL.QGLWidget):
                                abs(self.top-self.bottom))
                 pick_tol = max_size * self.pickTolFac
 
-                #try:
-                self.hecontroller.insertSegment(curve, pick_tol)
-                #except:
-                    # msg = QMessageBox(self.Apptools)
-                    # msg.setWindowTitle('Error')
-                    # msg.setText('It was not possible to add the segment')
-                    # msg.exec()
+                try:
+                    self.hecontroller.insertSegment(curve, pick_tol)
+                except:
+                    msg = QMessageBox(self.Apptools)
+                    msg.setWindowTitle('Error')
+                    msg.setText('It was not possible to add the segment')
+                    msg.exec()
 
                 self.collector.endGeoCollection()
                 self.Apptools.set_curves_lineEdits()
