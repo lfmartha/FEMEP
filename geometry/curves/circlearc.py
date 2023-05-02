@@ -577,13 +577,13 @@ class CircleArc(Curve):
 
         tolLen = self.length()
         t = arcLen / tolLen
-        if (t > -Curve.PARAM_TOL) and (t < Curve.PARAM_TOL):
+        if (t > - 10000 * Curve.PARAM_TOL) and (t < 10000 * Curve.PARAM_TOL):
             t = 0.0
             seg = 0
             clstPt = self.eqPoly[seg]
             tang = self.eqPoly[seg + 1] - self.eqPoly[seg]
             status = True
-        elif (t > 1.0 - Curve.PARAM_TOL) and (t < 1.0 + Curve.PARAM_TOL):
+        elif (t > 1.0 - 10000 * Curve.PARAM_TOL) and (t < 1.0 + 10000 * Curve.PARAM_TOL):
             t = 1.0
             seg = len(self.eqPoly) - 2
             clstPt = self.eqPoly[seg + 1]
