@@ -108,8 +108,8 @@ class Segment():
         Maybe = False
         # Check knot vector:
         if len(_segment.curve.nurbs.knotvector) == len(self.curve.nurbs.knotvector):
-            knotvector1 = _segment.curve.nurbs.knotvector
-            knotvector2 = self.curve.nurbs.knotvector
+            knotvector1 = copy.deepcopy(_segment.curve.nurbs.knotvector)
+            knotvector2 = copy.deepcopy(self.curve.nurbs.knotvector)
             for i in range (len(knotvector1)):
                 diff = knotvector1[i] - knotvector2[i]
                 if abs(diff) > Curve.PARAM_TOL:
@@ -119,8 +119,8 @@ class Segment():
 
         # Check ctrlpts
         if len(_segment.curve.nurbs.ctrlpts) == len(self.curve.nurbs.ctrlpts):
-            ctrlpts1 = _segment.curve.nurbs.ctrlpts
-            ctrlpts2 = self.curve.nurbs.ctrlpts
+            ctrlpts1 = copy.deepcopy(_segment.curve.nurbs.ctrlpts)
+            ctrlpts2 = copy.deepcopy(self.curve.nurbs.ctrlpts)
             for i in range (len(ctrlpts1)):
                 Pt1 = Pnt2D(ctrlpts1[i][0], ctrlpts1[i][1])
                 Pt2 = Pnt2D(ctrlpts2[i][0], ctrlpts2[i][1])
@@ -132,8 +132,8 @@ class Segment():
 
         # Check weights
         if len(_segment.curve.nurbs.weights) == len(self.curve.nurbs.weights):
-            weights1 = _segment.curve.nurbs.weights
-            weights2 = self.curve.nurbs.weights
+            weights1 = copy.deepcopy(_segment.curve.nurbs.weights)
+            weights2 = copy.deepcopy(self.curve.nurbs.weights)
             for i in range (len(weights1)):
                 diff = weights1[i] - weights2[i]
                 if abs(diff) > Curve.PARAM_TOL:
@@ -144,8 +144,11 @@ class Segment():
         # Try inversed curve
         if Maybe:
             for i in range(len(knotvector1)):
-                if knotvector1[i] != 1.0 and knotvector1[i] != 0.0:
-                    knotvector1[i] = 1.0 - knotvector1[i]
+                knotvector1[i] = 1.0 - knotvector1[i]
+            knotvector1.reverse()
+            # for i in range(len(knotvector1)):
+            #     if knotvector1[i] != 1.0 and knotvector1[i] != 0.0:
+            #         knotvector1[i] = 1.0 - knotvector1[i]
             ctrlpts1.reverse()
             weights1.reverse()
 
