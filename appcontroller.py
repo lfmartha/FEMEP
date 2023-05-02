@@ -812,7 +812,13 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, pick_tol)
+        try:
+            canvas.hecontroller.insertSegment(segment, pick_tol)
+        except:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText('It was not possible to add the segment')
+            msg.exec()
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -912,7 +918,13 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, pick_tol)
+        try:
+            canvas.hecontroller.insertSegment(segment, pick_tol)
+        except:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText('It was not possible to add the segment')
+            msg.exec()
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -1012,7 +1024,13 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, pick_tol)
+        try:
+            canvas.hecontroller.insertSegment(segment, pick_tol)
+        except:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText('It was not possible to add the segment')
+            msg.exec()
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -1088,7 +1106,13 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, pick_tol)
+        try:
+            canvas.hecontroller.insertSegment(segment, pick_tol)
+        except:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText('It was not possible to add the segment')
+            msg.exec()
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -1210,7 +1234,13 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, pick_tol)
+        try:
+            canvas.hecontroller.insertSegment(segment, pick_tol)
+        except:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText('It was not possible to add the segment')
+            msg.exec()
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -1332,7 +1362,13 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, pick_tol)
+        try:
+            canvas.hecontroller.insertSegment(segment, pick_tol)
+        except:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText('It was not possible to add the segment')
+            msg.exec()
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
@@ -1557,7 +1593,13 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # end collection:
         segment = canvas.collector.getCollectedGeo()
-        canvas.hecontroller.insertSegment(segment, pick_tol)
+        try:
+            canvas.hecontroller.insertSegment(segment, pick_tol)
+        except:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText('It was not possible to add the segment')
+            msg.exec()
         canvas.collector.endGeoCollection()
         canvas.updatedDsp = False
         canvas.update()
