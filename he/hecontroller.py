@@ -101,7 +101,6 @@ class HeController:
         segmentPts = _curve.getEquivPolyline()
         segment = Segment(segmentPts, _curve)
         self.addSegment(segment, _tol)
-
         self.undoredo.end()
         self.update()
 
