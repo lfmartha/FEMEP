@@ -1739,13 +1739,13 @@ class HeController:
         self.undoredo.end()
         self.isChanged = True
 
-    def refineNumberSdv(self):
+    def refineUsingKnotInsertion(self):
         self.undoredo.begin()
         segments = self.hemodel.getSegments()
 
         for seg in segments:
             if seg.isSelected():
-                seg.refineNumberSdv()
+                seg.refineUsingKnotInsertion()
 
         self.undoredo.end()
         self.isChanged = True
@@ -1786,7 +1786,7 @@ class HeController:
         self.isChanged = True
         return True, None
 
-    def degreeChange(self):
+    def degreeElevation(self):
         self.undoredo.begin()
 
         segments = self.hemodel.getSegments()
@@ -1805,7 +1805,7 @@ class HeController:
         
         for seg in segments:
             if seg.isSelected():
-                seg.degreeChange()
+                seg.degreeElevation()
 
         self.undoredo.end()
         self.isChanged = True
@@ -1830,7 +1830,7 @@ class HeController:
         
         for seg in segments:
             if seg.isSelected():
-                seg.ReverseNurbs()
+                seg.ReverseNurbs(False)
 
         self.undoredo.end()
         self.isChanged = True
@@ -1859,67 +1859,48 @@ class HeController:
     def updateCtrlPolyView(self, status):
         self.undoredo.begin()
 
-        segments = self.hemodel.getSegments()
+        selectedEntities = []
+        selectedEdges = self.hemodel.selectedEdges()
+        selectedFaces = self.hemodel.selectedFaces()
+        selectedEntities.extend(selectedEdges)
+        selectedEntities.extend(selectedFaces)
 
-        seg_list = []
-        for seg in segments:
-            if seg.isSelected():
-                seg_list.append(seg)
-
-        if len(seg_list) > 1:
-            error_text = "Please select just one curve"
-            return False, error_text
-        elif len(seg_list) == 0:
-            error_text = "Please select a curve"
+        if len(selectedEntities) == 1:
+            if len(selectedEdges) == 1:
+                selectedEntities[0].segment.updateCtrlPolyView(status)
+            elif (not selectedEntities[0].patch.isDeleted and 
+                  selectedEntities[0].patch.mesh is not None):
+                selectedEntities[0].patch.updateCtrlNetView(status)
+            else:
+                error_text = "Please check surface"
+                return False, error_text
+        
+        elif len(selectedEntities) > 1:
+            error_text = "Please select just one entity"
             return False, error_text
         
-        for seg in segments:
-            if seg.isSelected():
-                seg.updateCtrlPolyView(status)
-
-        self.undoredo.end()
-        self.isChanged = True
-        return True, None
-    
-    def setUCurves(self):
-        self.undoredo.begin()
-
-        segments = self.hemodel.getSegments()
-
-        seg_list = []
-        for seg in segments:
-            if seg.isSelected():
-                seg_list.append(seg)
-
-        if len(seg_list) == 0:
-            error_text = "Please select one or more curve"
+        elif len(selectedEntities) == 0:
+            error_text = "Please select an entity"
             return False, error_text
+
+
+        # segments = self.hemodel.getSegments()
+
+        # seg_list = []
+        # for seg in segments:
+        #     if seg.isSelected():
+        #         seg_list.append(seg)
+
+        # if len(seg_list) > 1:
+        #     error_text = "Please select just one entity"
+        #     return False, error_text
+        # elif len(seg_list) == 0:
+        #     error_text = "Please select a entity"
+        #     return False, error_text
         
-        for seg in segments:
-            if seg.isSelected():
-                seg.setSurfDirection("U")
-
-        self.undoredo.end()
-        self.isChanged = True
-        return True, None
-    
-    def setVCurves(self):
-        self.undoredo.begin()
-
-        segments = self.hemodel.getSegments()
-
-        seg_list = []
-        for seg in segments:
-            if seg.isSelected():
-                seg_list.append(seg)
-
-        if len(seg_list) == 0:
-            error_text = "Please select one or more curve"
-            return False, error_text
-        
-        for seg in segments:
-            if seg.isSelected():
-                seg.setSurfDirection("V")
+        # for seg in segments:
+        #     if seg.isSelected():
+        #         seg.updateCtrlPolyView(status)
 
         self.undoredo.end()
         self.isChanged = True
