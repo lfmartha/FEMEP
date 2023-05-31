@@ -62,84 +62,67 @@ class MeshGeneration:
                 msg.exec()
                 return False, None, None, None, None, None, None
 
-            # Find west segment
-            # west_SegmentIndex = 0
-            # cornersPtsX = [segments[0].getXinit(), segments[0].getXend(), segments[2].getXinit(), segments[2].getXend()]
-            # cornersPtsX.remove(max(cornersPtsX))
-            # cornersPtsX.remove(max(cornersPtsX))
-            
+            # west_SegmentIndex = None
             # for i in range(4):
-            #     xInit_seg_i = segments[i].getXinit()
-            #     xEnd_seg_i = segments[i].getXend()
+            #     if segments[i].surfDirection == None:
+            #         msg = QMessageBox(MeshGeneration.App)
+            #         msg.setWindowTitle('Warning')
+            #         msg.setText('Set surface directions of all curves')
+            #         msg.exec()
+            #         return False, None, None, None, None, None, None
 
-            #     # Check if index i corresponds to the west segment
-            #     if ((xInit_seg_i >= cornersPtsX[0] - Curve.COORD_TOL and xInit_seg_i <= cornersPtsX[0] + Curve.COORD_TOL) or 
-            #         (xInit_seg_i >= cornersPtsX[1] - Curve.COORD_TOL and xInit_seg_i <= cornersPtsX[1] + Curve.COORD_TOL)):
-
-            #         if ((xEnd_seg_i >= cornersPtsX[0] - Curve.COORD_TOL and xEnd_seg_i <= cornersPtsX[0] + Curve.COORD_TOL) or 
-            #             (xEnd_seg_i >= cornersPtsX[1] - Curve.COORD_TOL and xEnd_seg_i <= cornersPtsX[1] + Curve.COORD_TOL)):
-
+            #     elif segments[i].surfDirection == 'V':
+            #         tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
+            #         seg_init_pt = Pnt2D(segments[i].getXinit(), segments[i].getYinit())
+            #         next_seg_init_pt = Pnt2D(segments[i - 3].getXinit(), segments[i - 3].getYinit())
+            #         if Pnt2D.equal(seg_init_pt, next_seg_init_pt, tol):
             #             west_SegmentIndex = i
-            west_SegmentIndex = None
-            for i in range(4):
-                if segments[i].surfDirection == None:
-                    msg = QMessageBox(MeshGeneration.App)
-                    msg.setWindowTitle('Warning')
-                    msg.setText('Set surface directions of all curves')
-                    msg.exec()
-                    return False, None, None, None, None, None, None
-                # elif segments[i].surfDirection == 'V':
-                #     tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
-                #     seg_init_pt = Pnt2D(segments[i].getXinit(), segments[i].getYinit())
-                #     seg_end_pt = Pnt2D(segments[i].getXend(), segments[i].getYend())
-                #     previous_seg_init_pt = Pnt2D(segments[i - 1].getXinit(), segments[i - 1].getYinit())
-                #     previous_seg_end_pt = Pnt2D(segments[i - 1].getXend(), segments[i - 1].getYend())
-                #     if Pnt2D.equal(seg_end_pt, previous_seg_init_pt, tol) or Pnt2D.equal(seg_init_pt, previous_seg_end_pt, tol):
-                #         west_SegmentIndex = i
-                #         break
-                elif segments[i].surfDirection == 'V':
-                    tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
-                    seg_init_pt = Pnt2D(segments[i].getXinit(), segments[i].getYinit())
-                    next_seg_init_pt = Pnt2D(segments[i - 3].getXinit(), segments[i - 3].getYinit())
-                    if Pnt2D.equal(seg_init_pt, next_seg_init_pt, tol):
-                        west_SegmentIndex = i
-                        break
+            #             break
 
-            if west_SegmentIndex == None:
-                msg = QMessageBox(MeshGeneration.App)
-                msg.setWindowTitle('Warning')
-                msg.setText('Check for reverse curves')
-                msg.exec()
-                return False, None, None, None, None, None, None
+            # if west_SegmentIndex == None:
+            #     msg = QMessageBox(MeshGeneration.App)
+            #     msg.setWindowTitle('Warning')
+            #     msg.setText('Check for reverse curves')
+            #     msg.exec()
+            #     return False, None, None, None, None, None, None
 
             # Get Nurbs
-            nurbs_west = copy.deepcopy(segments[west_SegmentIndex].getNurbs())
-            nurbs_south = copy.deepcopy(segments[west_SegmentIndex - 3].getNurbs())
-            nurbs_east = copy.deepcopy(segments[west_SegmentIndex - 2].getNurbs())
-            nurbs_north = copy.deepcopy(segments[west_SegmentIndex - 1].getNurbs())
+            for i in range(4):
+                west_SegmentIndex = i
+                try:
+                    nurbs_west = copy.deepcopy(segments[west_SegmentIndex].getNurbs())
+                    nurbs_south = copy.deepcopy(segments[west_SegmentIndex - 3].getNurbs())
+                    nurbs_east = copy.deepcopy(segments[west_SegmentIndex - 2].getNurbs())
+                    nurbs_north = copy.deepcopy(segments[west_SegmentIndex - 1].getNurbs())
 
-            # Check if opposite segments have the same degree
-            if nurbs_west.degree != nurbs_east.degree or nurbs_south.degree != nurbs_north.degree:
-                msg = QMessageBox(MeshGeneration.App)
-                msg.setWindowTitle('Warning')
-                msg.setText('Opposite segments must have the same degree')
-                msg.exec()
-                return False, None, None, None, None, None, None
- 
-            # Check if opposite segments have conforming knot vectors
-            if nurbs_west.knotvector != nurbs_east.knotvector or nurbs_south.knotvector != nurbs_north.knotvector:
-                msg = QMessageBox(MeshGeneration.App)
-                msg.setWindowTitle('Warning')
-                msg.setText('Opposite segments must have conforming knotvectors')
-                msg.exec()
-                return False, None, None, None, None, None, None
+                    # Check if opposite segments have the same degree
+                    if nurbs_west.degree != nurbs_east.degree or nurbs_south.degree != nurbs_north.degree:
+                        msg = QMessageBox(MeshGeneration.App)
+                        msg.setWindowTitle('Warning')
+                        msg.setText('Opposite segments must have the same degree')
+                        msg.exec()
+                        return False, None, None, None, None, None, None
+        
+                    # Check if opposite segments have conforming knot vectors
+                    if nurbs_west.knotvector != nurbs_east.knotvector or nurbs_south.knotvector != nurbs_north.knotvector:
+                        msg = QMessageBox(MeshGeneration.App)
+                        msg.setWindowTitle('Warning')
+                        msg.setText('Opposite segments must have conforming knotvectors')
+                        msg.exec()
+                        return False, None, None, None, None, None, None
 
-            check, coonsSurf = MeshGeneration.getCoonsSurface(nurbs_north, nurbs_south, nurbs_west, nurbs_east)
-            if check:
-                _face.patch.nurbs = coonsSurf
-                return MeshGeneration.isogeometricMesh(coonsSurf)
-            else:
-                return False, None, None, None, None, None, None
+                    check, coonsSurf = MeshGeneration.getCoonsSurface(nurbs_north, nurbs_south, nurbs_west, nurbs_east)
+                    if check:
+                        _face.patch.nurbs = coonsSurf
+                        return MeshGeneration.isogeometricMesh(coonsSurf)
+                except:
+                    pass
+            msg = QMessageBox(MeshGeneration.App)
+            msg.setWindowTitle('Warning')
+            msg.setText('Check for corner compatibility')
+            msg.exec()
+            return False, None, None, None, None, None, None
+
 
 
         
@@ -749,62 +732,62 @@ class MeshGeneration:
 
         # Check the number of control points
         if len(nurbs_north.ctrlpts) != len(nurbs_south.ctrlpts):
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("Curves north and south must have conforming arrays of control points")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("Curves north and south must have conforming arrays of control points")
+            # msg.exec()
             return False, None
 
         if len(nurbs_west.ctrlpts) != len(nurbs_east.ctrlpts):
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("Curves north and south must have conforming arrays of control points")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("Curves north and south must have conforming arrays of control points")
+            # msg.exec()
             return False, None
 
         # Check the number of weights
         if len(nurbs_north.weights) != len(nurbs_south.weights):
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("Curves north and south must have conforming arrays of weights")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("Curves north and south must have conforming arrays of weights")
+            # msg.exec()
             return False, None
 
         if len(nurbs_west.weights) != len(nurbs_east.weights):
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("Curves west and east must have conforming arrays of weights")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("Curves west and east must have conforming arrays of weights")
+            # msg.exec()
             return False, None
 
         # Check the curve degrees
         if nurbs_north.degree != nurbs_south.degree:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("Curves north and south must have the same degree")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("Curves north and south must have the same degree")
+            # msg.exec()
             return False, None
 
         if nurbs_west.degree != nurbs_east.degree:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("Curves west and east must have the same degree")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("Curves west and east must have the same degree")
+            # msg.exec()
             return False, None
 
         # Check the knot vectors
         if nurbs_north.knotvector != nurbs_south.knotvector:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("Curves north and south must have the same knotvector")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("Curves north and south must have the same knotvector")
+            # msg.exec()
             return False, None
 
         if nurbs_west.knotvector != nurbs_east.knotvector:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("Curves west and east must have the same knotvector")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("Curves west and east must have the same knotvector")
+            # msg.exec()
             return False, None
 
         # Check corner control point compatibility
@@ -818,10 +801,10 @@ class MeshGeneration:
 
             P_nw = np.array([nurbs_north.ctrlpts[0][0], nurbs_north.ctrlpts[0][1]])
         else:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("The north-west corner is not compatible")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("The north-west corner is not compatible")
+            # msg.exec()
             return False, None
 
         if ((nurbs_south.ctrlpts[0][0] - nurbs_west.ctrlpts[0][0] <= Curve.COORD_TOL) and
@@ -834,10 +817,10 @@ class MeshGeneration:
 
             P_sw = np.array([nurbs_south.ctrlpts[0][0], nurbs_south.ctrlpts[0][1]])
         else:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("The sourth-west corner is not compatible")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("The sourth-west corner is not compatible")
+            # msg.exec()
             return False, None
 
         if ((nurbs_south.ctrlpts[-1][0] - nurbs_east.ctrlpts[0][0] <= Curve.COORD_TOL) and
@@ -850,10 +833,10 @@ class MeshGeneration:
 
             P_se = np.array([nurbs_south.ctrlpts[-1][0], nurbs_south.ctrlpts[-1][1]])
         else:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("The sourth-east corner is not compatible")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("The sourth-east corner is not compatible")
+            # msg.exec()
             return False, None
 
         if ((nurbs_north.ctrlpts[-1][0] - nurbs_east.ctrlpts[-1][0] <= Curve.COORD_TOL) and
@@ -866,10 +849,10 @@ class MeshGeneration:
 
             P_ne = np.array([nurbs_north.ctrlpts[-1][0], nurbs_north.ctrlpts[-1][1]])
         else:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("The sourth-east corner is not compatible")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("The sourth-east corner is not compatible")
+            # msg.exec()
             return False, None
 
         # Check corner weight compatibility
@@ -881,10 +864,10 @@ class MeshGeneration:
 
             W_nw = np.array(nurbs_north.weights)[0]
         else:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("The north-west weight is not compatible")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("The north-west weight is not compatible")
+            # msg.exec()
             return False, None
 
         if ((nurbs_south.weights[0] - nurbs_west.weights[0] <= Curve.PARAM_TOL) and
@@ -895,10 +878,10 @@ class MeshGeneration:
 
             W_sw = np.array(nurbs_south.weights)[0]
         else:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("The sourth-west weight is not compatible")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("The sourth-west weight is not compatible")
+            # msg.exec()
             return False, None
 
         if ((nurbs_south.weights[-1] - nurbs_east.weights[0] <= Curve.PARAM_TOL) and
@@ -909,10 +892,10 @@ class MeshGeneration:
 
             W_se = np.array(nurbs_south.weights)[-1]
         else:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("The sourth-east weight is not compatible")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("The sourth-east weight is not compatible")
+            # msg.exec()
             return False, None
 
         if ((nurbs_north.weights[-1] - nurbs_east.weights[-1] <= Curve.PARAM_TOL) and
@@ -923,10 +906,10 @@ class MeshGeneration:
 
             W_ne = np.array(nurbs_north.weights)[-1]
         else:
-            msg = QMessageBox(MeshGeneration.App)
-            msg.setWindowTitle("Warning")
-            msg.setText("The sourth-east weight is not compatible")
-            msg.exec()
+            # msg = QMessageBox(MeshGeneration.App)
+            # msg.setWindowTitle("Warning")
+            # msg.setText("The sourth-east weight is not compatible")
+            # msg.exec()
             return False, None
 
         # Make the Coons surface NURBS representation
