@@ -296,91 +296,69 @@ class HeFile():
             if type == 'LINE':
                 pt0 = Pnt2D(data_dict['pt0'][0], data_dict['pt0'][1])
                 pt1 = Pnt2D(data_dict['pt1'][0], data_dict['pt1'][1])
+
                 curve = Line(pt0, pt1)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
-                #segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
-                try:
-                    segment.surfDirection = data_dict['surfDirection']
-                except:
-                    pass
 
                 if data_dict['isReversed'] == True:
-                    segment.ReverseNurbs()
+                    segment.ReverseNurbs(True)
 
-                diff = data_dict['currentDegree'] - curve.nurbs.degree
-                if diff > 0:
-                    for i in range(diff):
-                        segment.degreeChange()
-
-                if data_dict['currentKnotVector'] != curve.nurbs.knotvector:
-                    segment.conformFromKnotVector(data_dict['currentKnotVector'])
+                for ref in data_dict['refinement']:
+                    if ref == 'degreeElevation':
+                        segment.degreeElevation()
+                    elif ref == 'knotInsertion':
+                        segment.refineUsingKnotInsertion()
 
             elif type == 'POLYLINE':
                 pts = []
                 for i in range (len(data_dict['pts'])):
                     pts.append(Pnt2D(data_dict['pts'][i][0], data_dict['pts'][i][1]))
+
                 curve = Polyline(pts)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
-                segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
-                try:
-                    segment.surfDirection = data_dict['surfDirection']
-                except:
-                    pass
 
                 if data_dict['isReversed'] == True:
-                    segment.ReverseNurbs()
-                    
-                diff = data_dict['currentDegree'] - curve.nurbs.degree
-                if diff > 0:
-                    for i in range(diff):
-                        segment.degreeChange()
+                    segment.ReverseNurbs(True)
 
-                if data_dict['currentKnotVector'] != curve.nurbs.knotvector:
-                    segment.conformFromKnotVector(data_dict['currentKnotVector'])
+                for ref in data_dict['refinement']:
+                    if ref == 'degreeElevation':
+                        segment.degreeElevation()
+                    elif ref == 'knotInsertion':
+                        segment.refineUsingKnotInsertion()
 
             elif type == 'CUBICSPLINE':
                 degree = data_dict['degree']
                 ctrlpts = data_dict['ctrlpts']
                 weights = data_dict['weights']
                 knotvector = data_dict['knotvector']
+
                 curve = CubicSpline(degree, ctrlpts, weights, knotvector)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
-                segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
-                try:
-                    segment.surfDirection = data_dict['surfDirection']
-                except:
-                    pass
 
             elif type == 'CIRCLEARC':
                 center = Pnt2D(data_dict['center'][0], data_dict['center'][1])
                 circ1 = Pnt2D(data_dict['circ1'][0], data_dict['circ1'][1])
                 circ2 = Pnt2D(data_dict['circ2'][0], data_dict['circ2'][1])
+
                 curve = CircleArc(center, circ1, circ2)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
-                segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
-                try:
-                    segment.surfDirection = data_dict['surfDirection']
-                except:
-                    pass
-
-                if data_dict['isReversed'] == True:
-                    segment.ReverseNurbs()
                     
-                diff = data_dict['currentDegree'] - curve.nurbs.degree
-                if diff > 0:
-                    for i in range(diff):
-                        segment.degreeChange()
+                if data_dict['isReversed'] == True:
+                    segment.ReverseNurbs(True)
 
-                if data_dict['currentKnotVector'] != curve.nurbs.knotvector:
-                    segment.conformFromKnotVector(data_dict['currentKnotVector'])
+                for ref in data_dict['refinement']:
+                    if ref == 'degreeElevation':
+                        segment.degreeElevation()
+                    elif ref == 'knotInsertion':
+                        segment.refineUsingKnotInsertion()
 
             elif type == 'ELLIPSEARC':
                 center = Pnt2D(data_dict['center'][0], data_dict['center'][1])
@@ -388,26 +366,20 @@ class HeFile():
                 ellip2 = Pnt2D(data_dict['ellip2'][0], data_dict['ellip2'][1])
                 arc1 = Pnt2D(data_dict['arc1'][0], data_dict['arc1'][1])
                 arc2 = Pnt2D(data_dict['arc2'][0], data_dict['arc2'][1])
+
                 curve = EllipseArc(center, ellip1, ellip2, arc1, arc2)
                 curvePoly = curve.getEquivPolyline()
                 segment = Segment(curvePoly, curve)
-                segment.originalNurbs = copy.deepcopy(curve.nurbs)
                 segment.isReversed = data_dict['isReversed']
-                try:
-                    segment.surfDirection = data_dict['surfDirection']
-                except:
-                    pass
 
                 if data_dict['isReversed'] == True:
-                    segment.ReverseNurbs()
-                    
-                diff = data_dict['currentDegree'] - curve.nurbs.degree
-                if diff > 0:
-                    for i in range(diff):
-                        segment.degreeChange()
+                    segment.ReverseNurbs(True)
 
-                if data_dict['currentKnotVector'] != curve.nurbs.knotvector:
-                    segment.conformFromKnotVector(data_dict['currentKnotVector'])
+                for ref in data_dict['refinement']:
+                    if ref == 'degreeElevation':
+                        segment.degreeElevation()
+                    elif ref == 'knotInsertion':
+                        segment.refineUsingKnotInsertion()
 
             edge.segment = segment
 
