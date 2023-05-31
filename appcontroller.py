@@ -170,25 +170,23 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.prop_vertex_display.closepushbutton.clicked.connect(self.close_propVertex)
 
         # Prop edge QPushButton
-        self.prop_edge_display.degreeChange.clicked.connect(self.degreeChange)
+        self.prop_edge_display.degreeElevation.clicked.connect(self.degreeElevation)
         self.prop_edge_display.rescuepushbutton.clicked.connect(self.BackToOriginalNurbs)
         self.prop_edge_display.reversepushbutton.clicked.connect(self.ReverseNurbs)
-        self.prop_edge_display.swappushbutton.clicked.connect(self.close_propEdge)
+        self.prop_edge_display.closepushbutton.clicked.connect(self.close_propEdge)
 
         # Prop face QPushButton
         self.prop_face_display.closepushbutton.clicked.connect(self.close_propFace)
 
         # Subdivisions QPushButton
         self.nsudv_display.nsudvpushButton.clicked.connect(self.setNumberSdv)
-        self.nsudv_display.knotrefinementpushButton.clicked.connect(self.refineNumberSdv)
+        self.nsudv_display.knotrefinementpushButton.clicked.connect(self.refineUsingKnotInsertion)
         self.nsudv_display.rescuepushButton.clicked.connect(self.BackToOriginalNurbsRefine)
         self.nsudv_display.knotconformpushButton.clicked.connect(self.conformSegs)
 
         # Mesh QPushButton
         self.mesh_display.genMeshpushButton.clicked.connect(self.generateMesh)
         self.mesh_display.delMeshpushButton.clicked.connect(self.delMesh)
-        self.mesh_display.surfUCurvespushButton.clicked.connect(self.setUCurves)
-        self.mesh_display.surfVCurvespushButton.clicked.connect(self.setVCurves)
 
         # Attributes QPushButton
         self.attribute_display.addpushButton.clicked.connect(self.addAttribute)
@@ -213,6 +211,9 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # Prop edge Checkbox
         self.prop_edge_display.ctrlPolygonCheckBox.clicked.connect(self.updateCtrlPolyView)
+
+        # Prop Face Checkbox
+        self.prop_face_display.ctrlNetCheckBox.clicked.connect(self.updateCtrlNetView)
 
         # ---------------------------------------------------------------------
         # QComboBoxes
@@ -1861,9 +1862,9 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def refineNumberSdv(self):
+    def refineUsingKnotInsertion(self):
 
-        self.current_hecontroller.refineNumberSdv()
+        self.current_hecontroller.refineUsingKnotInsertion()
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
@@ -1877,7 +1878,7 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         check, error_text = self.current_hecontroller.BackToOriginalNurbs()
         if check:
-            self.close_propEdge()
+            self.properties()
         elif not check:
             msg = QMessageBox(self)
             msg.setWindowTitle('Error')
@@ -1887,11 +1888,11 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def degreeChange(self):
+    def degreeElevation(self):
 
-        check, error_text = self.current_hecontroller.degreeChange()
+        check, error_text = self.current_hecontroller.degreeElevation()
         if check:
-            self.close_propEdge()
+            self.properties()
         elif not check:
             msg = QMessageBox(self)
             msg.setWindowTitle('Error')
@@ -1905,7 +1906,7 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         check, error_text = self.current_hecontroller.ReverseNurbs()
         if check:
-            self.close_propEdge()
+            self.properties()
         elif not check:
             msg = QMessageBox(self)
             msg.setWindowTitle('Error')
@@ -1935,7 +1936,7 @@ class AppController(QMainWindow, Ui_MainWindow):
             status = False
         check, error_text = self.current_hecontroller.updateCtrlPolyView(status)
         if check:
-            self.close_propEdge()
+            self.properties()
         elif not check:
             msg = QMessageBox(self)
             msg.setWindowTitle('Error')
@@ -1945,21 +1946,22 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def setUCurves(self):
-        check, error_text = self.current_hecontroller.setUCurves()
-        if not check:
+    def updateCtrlNetView(self):
+        if self.prop_face_display.ctrlNetCheckBox.isChecked():
+            status = True
+        else:
+            status = False
+        check, error_text = self.current_hecontroller.updateCtrlPolyView(status)
+        if check:
+            self.properties()
+        elif not check:
             msg = QMessageBox(self)
             msg.setWindowTitle('Error')
             msg.setText(error_text)
             msg.exec()
 
-    def setVCurves(self):
-        check, error_text = self.current_hecontroller.setVCurves()
-        if not check:
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Error')
-            msg.setText(error_text)
-            msg.exec()
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
 
     def AttributeManager(self):
 
@@ -2233,49 +2235,32 @@ class AppController(QMainWindow, Ui_MainWindow):
                 self.prop_face_display.show()
                 self.prop_face_display.set_face_prop(selectedEntities[0])
             else:
-                self.select_display.show()
-                self.current_canvas.prop_disp = False
                 return False, None
 
             return True, selectedEntities[0]
 
-        elif len(selectedEntities) > 1:
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Warning')
-            msg.setText('Please select only one entity')
-            msg.exec()
+        # elif len(selectedEntities) > 1:
+        #     msg = QMessageBox(self)
+        #     msg.setWindowTitle('Warning')
+        #     msg.setText('Please select only one entity')
+        #     msg.exec()
 
-        self.closeAllDisplayers()
-        self.select_display.show()
+        # self.closeAllDisplayers()
+        # self.select_display.show()
 
         return False, None
 
     def close_propVertex(self):
-        check, _ = self.properties()
-
-        if check:
-            return
-
         self.prop_vertex_display.close()
         self.select_display.show()
         self.current_canvas.prop_disp = False
 
     def close_propEdge(self):
-        check, _ = self.properties()
-
-        if check:
-            return
-
         self.prop_edge_display.close()
         self.select_display.show()
         self.current_canvas.prop_disp = False
 
     def close_propFace(self):
-        check, _ = self.properties()
-
-        if check:
-            return
-
         self.prop_face_display.close()
         self.select_display.show()
         self.current_canvas.prop_disp = False
@@ -2307,9 +2292,6 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.mesh_display.diagcomboBox.hide()
         self.mesh_display.flagLabel.hide()
         self.mesh_display.flagcomboBox.hide()
-        self.mesh_display.surfCurvesLabel.hide()
-        self.mesh_display.surfUCurvespushButton.hide()
-        self.mesh_display.surfVCurvespushButton.hide()
         
         if mesh_type == "Bilinear Transfinite":
             self.mesh_display.elemTypesLAbel.show()
@@ -2354,14 +2336,11 @@ class AppController(QMainWindow, Ui_MainWindow):
             
         elif (mesh_type == "Isogeometric" or 
               mesh_type == "Isogeometric Template"):
-            self.mesh_display.surfCurvesLabel.show()
-            self.mesh_display.surfUCurvespushButton.show()
-            self.mesh_display.surfVCurvespushButton.show()
             
             self.mesh_display.genMeshpushButton.setGeometry(
-                QtCore.QRect(50, 200, 100, 25))
+                QtCore.QRect(50, 105, 100, 25))
             self.mesh_display.delMeshpushButton.setGeometry(
-                QtCore.QRect(50, 230, 100, 25))
+                QtCore.QRect(50, 135, 100, 25))
 
     def setDiagOptions(self):
         shape_type = self.mesh_display.shapecomboBox.currentText()
