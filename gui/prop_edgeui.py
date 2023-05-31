@@ -65,10 +65,10 @@ class Ui_prop_edge(object):
         self.propertiesFrame.addTab(self.tabAtt, "Attributes")
         
         # Add buttons
-        self.degreeChange = QtWidgets.QPushButton(prop_edge)
-        self.degreeChange.setAutoDefault(True)
-        self.degreeChange.setGeometry(QtCore.QRect(45, 330, 110, 25))
-        self.degreeChange.setObjectName("degreeChange")
+        self.degreeElevation = QtWidgets.QPushButton(prop_edge)
+        self.degreeElevation.setAutoDefault(True)
+        self.degreeElevation.setGeometry(QtCore.QRect(45, 330, 110, 25))
+        self.degreeElevation.setObjectName("degreeElevation")
 
         self.rescuepushbutton = QtWidgets.QPushButton(prop_edge)
         self.rescuepushbutton.setAutoDefault(True)
@@ -79,12 +79,12 @@ class Ui_prop_edge(object):
         self.reversepushbutton = QtWidgets.QPushButton(prop_edge)
         self.reversepushbutton.setAutoDefault(True)
         self.reversepushbutton.setGeometry(QtCore.QRect(70, 360, 60, 25))
-        self.reversepushbutton.setObjectName("swappushbutton")
+        self.reversepushbutton.setObjectName("reversepushbutton")
 
-        self.swappushbutton = QtWidgets.QPushButton(prop_edge)
-        self.swappushbutton.setAutoDefault(True)
-        self.swappushbutton.setGeometry(QtCore.QRect(70, 390, 60, 25))
-        self.swappushbutton.setObjectName("swappushbutton")
+        self.closepushbutton = QtWidgets.QPushButton(prop_edge)
+        self.closepushbutton.setAutoDefault(True)
+        self.closepushbutton.setGeometry(QtCore.QRect(70, 390, 60, 25))
+        self.closepushbutton.setObjectName("closepushbutton")
 
         # Add control polygon checkbox
         self.ctrlPolygonCheckBox = QtWidgets.QCheckBox(prop_edge)
@@ -110,10 +110,10 @@ class Ui_prop_edge(object):
 
     def retranslateUi(self, prop_edge):
         _translate = QtCore.QCoreApplication.translate
-        self.degreeChange.setText(_translate("MainWindow", "Elevate Degree"))
+        self.degreeElevation.setText(_translate("MainWindow", "Elevate Degree"))
         self.rescuepushbutton.setToolTip(_translate("MainWindow", "Rescue Curve"))
         self.reversepushbutton.setText(_translate("MainWindow", "Reverse"))
-        self.swappushbutton.setText(_translate("MainWindow", "Swap"))
+        self.closepushbutton.setText(_translate("MainWindow", "Close"))
 
 
 class Prop_EdgeDisplay(QMainWindow, Ui_prop_edge):
@@ -125,12 +125,21 @@ class Prop_EdgeDisplay(QMainWindow, Ui_prop_edge):
     def resizeEvent(self, a0: QtGui.QResizeEvent):
         if self.frame is not None:
             self.resize(self.frame.size())
+            dy = self.frame.height() - self.frame.minimumHeight()
+            self.propertiesFrame.setMinimumSize(QtCore.QSize(200, 325 + dy))
+            self.scrollAreaDS.setGeometry(QtCore.QRect(0, 0, 200, 300 + dy))
+            self.scrollAreaAtt.setGeometry(QtCore.QRect(0, 0, 200, 300 + dy))
+            self.degreeElevation.setGeometry(QtCore.QRect(45, 330 + dy, 110, 25))
+            self.reversepushbutton.setGeometry(QtCore.QRect(70, 360 + dy, 60, 25))
+            self.rescuepushbutton.setGeometry(QtCore.QRect(155, 330 + dy, 25, 25))
+            self.closepushbutton.setGeometry(QtCore.QRect(70, 390 + dy, 60, 25))
+            self.ctrlPolygonCheckBox.setGeometry(QtCore.QRect(10, 377 + dy, 70, 20))
         return super().resizeEvent(a0)
 
     def set_edge_prop(self, _edge):
         self.ctrlPolygonCheckBox.setChecked(_edge.segment.CtrlPolyView)
         
-        # get control points and knot vector
+        # get nurbs curve
         nurbs = _edge.segment.getNurbs()
         Degree = nurbs.degree
         CtrlPts = nurbs.ctrlpts
