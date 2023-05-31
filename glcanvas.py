@@ -400,11 +400,11 @@ class Canvas(QtOpenGL.QGLWidget):
 
                     # Draw mesh segments
                     glLineWidth(0.5)
-                    for i in range(0, len(mesh_segments)):
+                    for j in range(0, len(mesh_segments)):
 
                         # Display segments lines
-                        Pts = mesh_segments[i].getPoints()
-                        if mesh_segments[i].isSelected():
+                        Pts = mesh_segments[j].getPoints()
+                        if mesh_segments[j].isSelected():
                             glColor3d(self.colorSelection[0],
                                       self.colorSelection[1], self.colorSelection[2])
                         else:
@@ -413,11 +413,55 @@ class Canvas(QtOpenGL.QGLWidget):
 
                         glBegin(GL_LINE_STRIP)
 
-                        for j in range(0, len(Pts)):
-                            x = Pts[j].getX()
-                            y = Pts[j].getY()
+                        for k in range(0, len(Pts)):
+                            x = Pts[k].getX()
+                            y = Pts[k].getY()
                             glVertex2f(x, y)
 
+                        glEnd()
+
+                    # Draw Control Net
+                    if patches[i].CtrlNetView:
+
+                        # Draw lines
+                        CtrlNet_Size_U = patches[i].getCtrlNet_Size_U()
+                        CtrlNet_Size_V = patches[i].getCtrlNet_Size_V()
+                        ctrlPts = patches[i].getCtrlPts()
+
+                        count = 0
+                        for u in range(CtrlNet_Size_U):
+                            glColor3d(self.colorControlPolygon[0],
+                                    self.colorControlPolygon[1], self.colorControlPolygon[2])
+                            
+                            glBegin(GL_LINE_STRIP)
+                            for v in range(CtrlNet_Size_V):
+                                glVertex2d(ctrlPts[count][0], ctrlPts[count][1])
+                                count += 1
+                            glEnd()
+
+                        count = 0 
+                        count2 = 0
+                        for v in range(CtrlNet_Size_V):
+                            glColor3d(self.colorControlPolygon[0],
+                                    self.colorControlPolygon[1], self.colorControlPolygon[2])
+                            
+                            glBegin(GL_LINE_STRIP)
+
+                            count = int(count2)
+                            for u in range(CtrlNet_Size_U):
+                                glVertex2d(ctrlPts[count][0], ctrlPts[count][1])
+                                count += CtrlNet_Size_V
+                            count2 += 1
+                            glEnd()
+
+                        # Draw Control points
+                        glColor3d(self.colorControlPolygon[0],
+                                self.colorControlPolygon[1], self.colorControlPolygon[2])
+                        
+                        glBegin(GL_POINTS)
+
+                        for ctPt in ctrlPts:
+                            glVertex2d(ctPt[0], ctPt[1])
                         glEnd()
 
         # Draw segments
@@ -1032,6 +1076,9 @@ class Canvas(QtOpenGL.QGLWidget):
                             xmin, xmax, ymin, ymax, self.shiftKeyPressed)
                 self.updatedDsp = False
                 self.update()
+
+            if self.prop_disp == True:
+                self.Apptools.properties()
 
         if self.curMouseAction == 'COLLECTION':
 
