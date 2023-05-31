@@ -91,22 +91,6 @@ class Ui_mesh(object):
         self.delMeshpushButton.setGeometry(QtCore.QRect(50, 360, 100, 25))
         self.delMeshpushButton.setObjectName("genMeshpushButton")
 
-        # Set surface directions
-        self.surfCurvesLabel = QtWidgets.QLabel(meshui)
-        self.surfCurvesLabel.setGeometry(QtCore.QRect(0, 105, 200, 20))
-        self.surfCurvesLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.surfCurvesLabel.setObjectName("surfCurvesLabel")
-
-        self.surfUCurvespushButton = QtWidgets.QPushButton(meshui)
-        self.surfUCurvespushButton.setAutoDefault(True)
-        self.surfUCurvespushButton.setGeometry(QtCore.QRect(50, 125, 100, 25))
-        self.surfUCurvespushButton.setObjectName("surfUCurvespushButton")
-
-        self.surfVCurvespushButton = QtWidgets.QPushButton(meshui)
-        self.surfVCurvespushButton.setAutoDefault(True)
-        self.surfVCurvespushButton.setGeometry(QtCore.QRect(50, 155, 100, 25))
-        self.surfVCurvespushButton.setObjectName("surfVCurvespushButton")
-
         self.retranslateUi(meshui)
         QtCore.QMetaObject.connectSlotsByName(meshui)
 
@@ -143,10 +127,6 @@ class Ui_mesh(object):
 
         self.genMeshpushButton.setText(_translate("MainWindow", "Generate Mesh"))
         self.delMeshpushButton.setText(_translate("MainWindow", "Delete Mesh"))
-
-        self.surfCurvesLabel.setText(_translate("MainWindow", "Set curves directions:"))
-        self.surfUCurvespushButton.setText(_translate("MainWindow", "Set U Curves"))
-        self.surfVCurvespushButton.setText(_translate("MainWindow", "Set V Curves"))
 
 
 class MeshDisplay(QMainWindow, Ui_mesh):
