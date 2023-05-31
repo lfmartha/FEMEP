@@ -19,6 +19,7 @@ class Patch:
         self.isDeleted = False
         self.face = None
         self.attributes = []
+        self.CtrlNetView = False
         self.nurbs = []
 
     def __del__(self):
@@ -177,6 +178,21 @@ class Patch:
                             Area -= adjface.patch.Area()
 
         return Area
+    
+    def getNurbs(self):
+        return self.nurbs
+
+    def updateCtrlNetView(self, status):
+        self.CtrlNetView = status
+
+    def getCtrlNet_Size_U(self):
+        return self.nurbs.ctrlpts_size_u
+    
+    def getCtrlNet_Size_V(self):
+        return self.nurbs.ctrlpts_size_v
+
+    def getCtrlPts(self):
+        return self.nurbs.ctrlpts
 
     def getDataToInitSurface(self):
         if self.nurbs != []:
