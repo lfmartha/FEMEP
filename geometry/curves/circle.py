@@ -73,25 +73,56 @@ class Circle(Curve):
                 self.eqPoly.append(self.circ1)
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _x, _y, _LenAndAng):
-        if not _LenAndAng:
-            pt = Pnt2D(_x, _y)
-        else:
-            len = _x
-            ang = _y * (math.pi / 180.0)
-            dX = len * math.cos(ang)
-            dY = len * math.sin(ang)
-            pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
-            
+    def isUnlimited(self):
+        return False
+
+    # ---------------------------------------------------------------------
+    def updateCollectingPntInfo(self, _x, _y, _LenAndAng):
         if self.nPts == 0:
+            refPtX = None
+            refPtY = None
+            v1 = _x
+            v2 = _y
+
+        elif self.nPts == 1:
+            refPtX = self.center.getX()
+            refPtY = self.center.getY()
+            if _LenAndAng:
+                # Compute radius
+                drX = _x - self.center.getX()
+                drY = _y - self.center.getY()
+                radius = math.sqrt(drX * drX + drY * drY)
+                v1 = radius
+
+                # Compute angle
+                ang1 = math.atan2(drY, drX)  # -PI < angle <= +PI
+                if ang1 < 0.0:
+                    ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
+                ang1 *= (180.0 / math.pi)
+                v2 = ang1
+            else:
+                v1 = _x
+                v2 = _y
+
+        return refPtX, refPtY, v1, v2
+
+    # ---------------------------------------------------------------------
+    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+        if self.nPts == 0:
+            pt = Pnt2D(_v1, _v2)
             self.center = pt
             self.nPts += 1
 
         elif self.nPts == 1:
-            closeToOther = False
-            if self.center == pt:
-                closeToOther = True
-            if closeToOther:
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
+            if Pnt2D.euclidiandistance(self.center, pt) <= Curve.COORD_TOL:
                 return
             self.circ1 = pt
             self.nPts += 1
@@ -145,6 +176,24 @@ class Circle(Curve):
                 self.eqPoly.append(self.circ1)
 
     # ---------------------------------------------------------------------
+    def isPossible(self):
+        if self.nPts < 2:
+            return False
+        return True
+
+    # ---------------------------------------------------------------------
+    def getCtrlPoints(self):
+        return [self.center, self.circ1]
+
+    # ---------------------------------------------------------------------
+    def isStraight(self, _tol):
+        return False
+
+    # ---------------------------------------------------------------------
+    def isClosed(self):
+        return True
+
+    # ---------------------------------------------------------------------
     def evalPoint(self, _t):
         if _t <= 0.0:
             return self.circ1
@@ -165,34 +214,6 @@ class Circle(Curve):
         pt = ders[0]
         tang = ders[1]
         return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
-
-    # ---------------------------------------------------------------------
-    def evalPointCurvature(self, _t):
-        pt = self.evalPoint(_t)
-        CurvVec = 0.0
-        return pt, CurvVec
-
-    # ---------------------------------------------------------------------
-    def isPossible(self):
-        if self.nPts < 2:
-            return False
-        return True
-
-    # ---------------------------------------------------------------------
-    def isUnlimited(self):
-        return False
-
-    # ---------------------------------------------------------------------
-    def getCtrlPoints(self):
-        return [self.center, self.circ1]
-
-    # ---------------------------------------------------------------------
-    def isStraight(self, _tol):
-        return False
-
-    # ---------------------------------------------------------------------
-    def isClosed(self):
-        return True
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
@@ -258,6 +279,10 @@ class Circle(Curve):
         left = CircleArc(left_center, left_circ1, left_circ2)
         right = CircleArc(right_center, right_circ1, right_circ2)
         return left, right
+
+    # ---------------------------------------------------------------------
+    def join(self, _joinCurve, _pt, _tol):
+        return False, None, 'Cannot join segments:\n A closed curve may not be joined with another curve.'
 
     # ---------------------------------------------------------------------
     def getEquivPolyline(self):
@@ -442,32 +467,22 @@ class Circle(Curve):
         return self.nurbs.ctrlpts[-1][1]
 
     # ---------------------------------------------------------------------
+    def getPntInit(self):
+        pt = Pnt2D(self.nurbs.ctrlpts[0][0], self.nurbs.ctrlpts[0][1])
+        return pt
+
+    # ---------------------------------------------------------------------
+    def getPntEnd(self):
+        pt = Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
+        return pt
+
+    # ---------------------------------------------------------------------
     def length(self):
         L = 2.0 * math.pi * self.radius
         return L
-    
+
     # ---------------------------------------------------------------------
     def getDataToInitCurve(self):
         data = {'center': [self.center.getX(), self.center.getY()],
                 'circ1': [self.circ1.getX(), self.circ1.getY()]}
         return data
-
-    # ---------------------------------------------------------------------
-    def updateLineEditValues(self, _x, _y, _LenAndAng):
-        if self.nPts == 1:
-            if _LenAndAng:
-                # Compute radius
-                drX = _x - self.center.getX()
-                drY = _y - self.center.getY()
-                radius = math.sqrt(drX * drX + drY * drY)
-
-                # Compute angle
-                ang1 = math.atan2(drY, drX)  # -PI < angle <= +PI
-                if ang1 < 0.0:
-                    ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
-                ang1 *= (180.0 / math.pi)
-                return radius, ang1
-
-            else:
-                return _x, _y
-

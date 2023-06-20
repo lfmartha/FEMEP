@@ -137,25 +137,83 @@ class CircleArc(Curve):
                         self.eqPoly.append(self.circ2)
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _x, _y, _LenAndAng):
-        if not _LenAndAng:
-            pt = Pnt2D(_x, _y)
-        else:
-            len = _x
-            ang = _y * (math.pi / 180.0)
-            dX = len * math.cos(ang)
-            dY = len * math.sin(ang)
-            pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
-            
+    def isUnlimited(self):
+        return False
+
+    # ---------------------------------------------------------------------
+    def updateCollectingPntInfo(self, _x, _y, _LenAndAng):
         if self.nPts == 0:
+            refPtX = None
+            refPtY = None
+            v1 = _x
+            v2 = _y
+
+        elif self.nPts == 1:
+            refPtX = self.center.getX()
+            refPtY = self.center.getY()
+            if _LenAndAng:
+                # Compute radius
+                drX1 = _x - self.center.getX()
+                drY1 = _y - self.center.getY()
+                radius = math.sqrt(drX1 * drX1 + drY1 * drY1)
+                v1 = radius
+
+                # Compute angle for first arc point
+                ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
+                if ang1 < 0.0:
+                    ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
+                ang1 *= (180.0 / math.pi)
+                v2 = ang1
+            else:
+                v1 = _x
+                v2 = _y
+
+        elif self.nPts == 2:
+            refPtX = self.center.getX()
+            refPtY = self.center.getY()
+            # Compute angle for second arc point
+            drX2 = _x - self.center.getX()
+            drY2 = _y - self.center.getY()
+            dist2 = math.sqrt(drX2 * drX2 + drY2 * drY2)
+
+            ang2 = math.atan2(drY2, drX2)  # -PI < angle <= +PI
+            if ang2 < 0.0:
+                ang2 += 2.0 * math.pi  # 0 <= angle < +2PI
+
+            if _LenAndAng:
+                radius = self.radius
+                v1 = radius
+                ang2 *= (180.0 / math.pi)
+                v2 = ang2
+            else:
+                # Snap second arc point to circle
+                if dist2 > 0.0:
+                    tRadius = self.radius / dist2
+                    v1 = self.center.getX() + tRadius * drX2
+                    v2 = self.center.getY() + tRadius * drY2
+                else:
+                    v1 = self.circ1.getX()
+                    v2 = self.circ1.getY()
+
+        return refPtX, refPtY, v1, v2
+
+    # ---------------------------------------------------------------------
+    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+        if self.nPts == 0:
+            pt = Pnt2D(_v1, _v2)
             self.center = pt
             self.nPts += 1
 
         elif self.nPts == 1:
-            closeToOther = False
-            if self.center == pt:
-                closeToOther = True
-            if closeToOther:
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)            
+            if Pnt2D.euclidiandistance(self.center, pt) <= Curve.COORD_TOL:
                 return
             self.circ1 = pt
             self.nPts += 1
@@ -172,12 +230,17 @@ class CircleArc(Curve):
                     self.ang1 = 2.0 * math.pi + self.ang1  # 0 <= angle < +2PI
 
         elif self.nPts == 2:
-            closeToOther = False
-            if self.center == pt:
-                closeToOther = True
-            if self.circ1 == pt:
-                closeToOther = True
-            if closeToOther:
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)            
+            if Pnt2D.euclidiandistance(self.center, pt) <= Curve.COORD_TOL:
+                return
+            if Pnt2D.euclidiandistance(self.circ1, pt) <= Curve.COORD_TOL:
                 return
             self.circ2 = pt
             self.nPts += 1
@@ -279,42 +342,10 @@ class CircleArc(Curve):
                 self.eqPoly.append(self.circ2)
 
     # ---------------------------------------------------------------------
-    def evalPoint(self, _t):
-        if _t <= 0.0:
-            return self.circ1
-        elif _t >= 1.0:
-            return self.circ2
-
-        pt = self.nurbs.evaluate_single(_t)
-        return Pnt2D(pt[0], pt[1])
-
-    # ---------------------------------------------------------------------
-    def evalPointTangent(self, _t):
-        if _t < 0.0:
-            _t = 0.0
-        elif _t > 1.0:
-            _t = 1.0
-            
-        ders = self.nurbs.derivatives(_t, order=1)
-        pt = ders[0]
-        tang = ders[1]
-        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
-
-    # ---------------------------------------------------------------------
-    def evalPointCurvature(self, _t):
-        pt = self.evalPoint(_t)
-        CurvVec = 0.0
-        return pt, CurvVec
-
-    # ---------------------------------------------------------------------
     def isPossible(self):
         if self.nPts < 3:
             return False
         return True
-
-    # ---------------------------------------------------------------------
-    def isUnlimited(self):
-        return False
 
     # ---------------------------------------------------------------------
     def getCtrlPoints(self):
@@ -336,6 +367,28 @@ class CircleArc(Curve):
     # ---------------------------------------------------------------------
     def isClosed(self):
         return False
+
+    # ---------------------------------------------------------------------
+    def evalPoint(self, _t):
+        if _t <= 0.0:
+            return self.circ1
+        elif _t >= 1.0:
+            return self.circ2
+
+        pt = self.nurbs.evaluate_single(_t)
+        return Pnt2D(pt[0], pt[1])
+
+    # ---------------------------------------------------------------------
+    def evalPointTangent(self, _t):
+        if _t < 0.0:
+            _t = 0.0
+        elif _t > 1.0:
+            _t = 1.0
+            
+        ders = self.nurbs.derivatives(_t, order=1)
+        pt = ders[0]
+        tang = ders[1]
+        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
@@ -365,7 +418,7 @@ class CircleArc(Curve):
         left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
         return left, right
 
- # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
     def split(self, _t):
         knots = self.nurbs.knotvector
         knots = list(set(knots)) # Remove duplicates
@@ -401,6 +454,55 @@ class CircleArc(Curve):
         left = CircleArc(left_center, left_circ1, left_circ2)
         right = CircleArc(right_center, right_circ1, right_circ2)
         return left, right
+                
+    # ---------------------------------------------------------------------
+    def join(self, _joinCurve, _pt, _tol):
+        if _joinCurve.getType() != 'CIRCLEARC':
+            return False, None, 'Cannot join segments:\n A CIRCLEARC curve may be joined only with another CIRCLEARC.'
+
+        curv1 = self
+        curv2 = _joinCurve
+
+        # check if the circle arcs have the same center point, according 
+        # to a given tolerance
+        tol = Pnt2D(_tol, _tol)
+        if Pnt2D.equal(curv1.center, curv2.center, tol):
+            curv_center = (curv1.center + curv2.center) / 2.0
+        else:
+            return False, None, 'Cannot join segments:\n Circle arcs must have the same center point.'
+
+        # check if the circle arcs radius are equal, according to a given
+        # tolerance
+        if abs(curv1.radius - curv2.radius) <= _tol:
+            curv_radius = (curv1.radius + curv2.radius) / 2.0
+        else:
+            return False, None, 'Cannot join segments:\n Circle arcs must have the same radius.'
+
+        # check curves initial point
+        if Pnt2D.equal(Pnt2D(curv1.nurbs.ctrlpts[0][0], curv1.nurbs.ctrlpts[0][1]), _pt, tol):
+            init_pt1 = True
+        else:
+            init_pt1 = False
+
+        if Pnt2D.equal(Pnt2D(curv2.nurbs.ctrlpts[0][0], curv2.nurbs.ctrlpts[0][1]), _pt, tol):
+            init_pt2 = True
+        else:
+            init_pt2 = False
+
+        # circle arc properties
+        if init_pt1 and not init_pt2:
+            curv_ang1 = curv2.ang1
+            curv_ang2 = curv1.ang2
+
+        elif not init_pt1 and init_pt2:
+            curv_ang1 = curv1.ang1
+            curv_ang2 = curv2.ang2
+
+        curv_circ1 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_radius, curv_center.getY()), curv_center, curv_ang1)
+        curv_circ2 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_radius, curv_center.getY()), curv_center, curv_ang2)
+
+        curv = CircleArc(curv_center, curv_circ1, curv_circ2)
+        return True, curv, None
 
     # ---------------------------------------------------------------------
     def getEquivPolyline(self):
@@ -650,6 +752,16 @@ class CircleArc(Curve):
         return self.nurbs.ctrlpts[-1][1]
 
     # ---------------------------------------------------------------------
+    def getPntInit(self):
+        pt = Pnt2D(self.nurbs.ctrlpts[0][0], self.nurbs.ctrlpts[0][1])
+        return pt
+
+    # ---------------------------------------------------------------------
+    def getPntEnd(self):
+        pt = Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
+        return pt
+
+    # ---------------------------------------------------------------------
     def length(self):
         teta = self.ang2 - self.ang1
         if teta <= 0.0:
@@ -663,98 +775,3 @@ class CircleArc(Curve):
                 'circ1': [self.circ1.getX(), self.circ1.getY()],
                 'circ2': [self.circ2.getX(), self.circ2.getY()]}
         return data
-
-    # ---------------------------------------------------------------------
-    def updateLineEditValues(self, _x, _y, _LenAndAng):
-        if self.nPts == 1:
-            if _LenAndAng:
-                # Compute radius
-                drX1 = _x - self.center.getX()
-                drY1 = _y - self.center.getY()
-                radius = math.sqrt(drX1 * drX1 + drY1 * drY1)
-
-                # Compute angle for first arc point
-                ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
-                if ang1 < 0.0:
-                    ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
-                ang1 *= (180.0 / math.pi)
-                return radius, ang1
-
-            else:
-                return _x, _y
-
-        elif self.nPts == 2:
-            # Compute angle for second arc point
-            drX2 = _x - self.center.getX()
-            drY2 = _y - self.center.getY()
-            dist2 = math.sqrt(drX2 * drX2 + drY2 * drY2)
-
-            ang2 = math.atan2(drY2, drX2)  # -PI < angle <= +PI
-            if ang2 < 0.0:
-                ang2 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-            if _LenAndAng:
-                radius = self.radius
-                ang2 *= (180.0 / math.pi)
-                return radius, ang2
-
-            else:
-                # Snap second arc point to circle
-                if dist2 > 0.0:
-                    tRadius = self.radius / dist2
-                    x2 = self.center.getX() + tRadius * drX2
-                    y2 = self.center.getY() + tRadius * drY2
-                    return x2, y2
-                else:
-                    return self.circ1.getX(), self.circ1.getY()
-                
-    # ---------------------------------------------------------------------
-    @staticmethod
-    def joinTwoCurves(_curv1, _curv2, _pt, _tol):
-        error_text = ""
-
-        # check if the circle arcs have the same center point, according 
-        # to a given tolerance
-        tol = Pnt2D(_tol, _tol)
-        if Pnt2D.equal(_curv1.center, _curv2.center, tol):
-            curv_center = (_curv1.center + _curv2.center) * 1 / 2.0
-
-        else:
-            error_text += "Circle arcs must have the same center point. "
-
-        # check if the circle arcs radius are equal, according to a given
-        # tolerance
-        if abs(_curv1.radius - _curv2.radius) <= _tol:
-            curv_radius = (_curv1.radius + _curv2.radius) / 2.0
-
-        else:
-            error_text += "Circle arcs must have the same radius."
-
-        if error_text != "":
-            return None, error_text
-
-        # check curves initial point
-        if Pnt2D.equal(Pnt2D(_curv1.nurbs.ctrlpts[0][0], _curv1.nurbs.ctrlpts[0][1]), _pt, tol):
-            init_pt1 = True
-        else:
-            init_pt1 = False
-
-        if Pnt2D.equal(Pnt2D(_curv2.nurbs.ctrlpts[0][0], _curv2.nurbs.ctrlpts[0][1]), _pt, tol):
-            init_pt2 = True
-        else:
-            init_pt2 = False
-
-        # circle arc properties
-        if init_pt1 and not init_pt2:
-            curv_ang1 = _curv2.ang1
-            curv_ang2 = _curv1.ang2
-
-        elif not init_pt1 and init_pt2:
-            curv_ang1 = _curv1.ang1
-            curv_ang2 = _curv2.ang2
-
-        curv_circ1 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_radius, curv_center.getY()), curv_center, curv_ang1)
-        curv_circ2 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_radius, curv_center.getY()), curv_center, curv_ang2)
-
-        curv = CircleArc(curv_center, curv_circ1, curv_circ2)
-        return curv, None

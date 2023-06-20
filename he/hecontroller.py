@@ -1010,13 +1010,12 @@ class HeController:
         loop2 = _edge1.he2.loop
 
         if self.checkClosedSegment(loop1) or self.checkClosedSegment(loop2):
-            error_text = "Can not join two closed segments"
-            return False, error_text
+            return False, 'Cannot join segments:\n This operation would create a closed segment.'
 
-        ###### JOIN CURVES ######
+        ###### JOIN SEGMENTS ######
         seg1 = _edge1.segment
         seg2 = _edge2.segment
-        segment, error_text = Segment.joinTwoCurves(seg1, seg2, _vertex.point, _tol)
+        segment, error_text = Segment.joinTwoSegments(seg1, seg2, _vertex.point, _tol)
 
         if segment == None:
             return False, error_text
@@ -2074,7 +2073,7 @@ class HeController:
     def makeMesh(self, _lines, _repeatedPts):
 
         # initialize the data structure
-        self.makeMeshVertexFace(_lines[0].getInitPt())
+        self.makeMeshVertexFace(_lines[0].getPntInit())
         # self.makeMeshVertexFace(_lines[0].curve.pt0)
 
         tol = Point(CompGeom.ABSTOL, CompGeom.ABSTOL)
@@ -2082,8 +2081,8 @@ class HeController:
         for line in _lines:
             make_segment = True
 
-            init_point = line.getInitPt()
-            end_point = line.getEndPt()
+            init_point = line.getPntInit()
+            end_point = line.getPntEnd()
 
             # init_vertex = line.curve.pt0.vertex
             # end_vertex = line.curve.pt1.vertex

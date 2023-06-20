@@ -1,13 +1,8 @@
 from compgeom.pnt2d import Pnt2D
 from compgeom.compgeom import CompGeom
 from geometry.curves.curve import Curve
-from geometry.curves.line import Line
 from geometry.point import Point
-from geomdl import fitting
-from geomdl import convert
 from geomdl import operations
-from geomdl import NURBS
-import numpy as np
 import math
 
 
@@ -19,6 +14,7 @@ class GenericNurbs(Curve):
         self.pt0 = None
         self.pt1 = None
         self.eqPoly = []
+
         if self.nurbs is not None:
             L = self.lengthInerpPts()
             self.eqPoly = Curve.genEquivPolyline(self, self.eqPoly, 0.001 * L)
@@ -26,90 +22,6 @@ class GenericNurbs(Curve):
             self.eqPoly.append(ptEnd)
             self.pt0 = Point(self.nurbs.ctrlpts[0][0], self.nurbs.ctrlpts[0][1])
             self.pt1 = Point(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
-
-    # ---------------------------------------------------------------------
-    def splitRaw(self, _t):
-        round = False
-        for knot in self.nurbs.knotvector:
-            if _t >= (knot - 1000*Curve.PARAM_TOL) and _t <= (knot + 1000*Curve.PARAM_TOL):
-                _t2 = knot
-                round = True
-
-        if not round:
-            if _t <= Curve.PARAM_TOL:
-                left = None
-                right = self
-                return left, right
-            if (1.0 - _t) <= Curve.PARAM_TOL:
-                left = self
-                right = None
-                return left, right
-        else:
-            if _t2 <= Curve.PARAM_TOL:
-                left = None
-                right = self
-                return left, right
-            if (1.0 - _t2) <= Curve.PARAM_TOL:
-                left = self
-                right = None
-                return left, right
-
-        # Create two curve objects resulting from splitting
-        left = GenericNurbs()
-        right = GenericNurbs()
-
-        # Create the corresponding NURBS curves resulting from splitting
-        # if _t > 0.5 and _t <= (0.5 + Curve.PARAM_TOL):
-        #     _t = 0.5
-        # elif _t < 0.5 and _t >= (0.5 - Curve.PARAM_TOL):
-        #     _t = 0.5
-        #r = int(1.0 / Curve.PARAM_TOL)
-        
-        # decimals = int(math.log(1.0 / Curve.PARAM_TOL, 10))
-        # _t = round(_t, decimals)
-
-        if not round:
-            try:
-                left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
-            except:
-                pass
-        else:
-            left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t2)
-
-        # try:
-        #     left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
-        # except:
-        #     try:
-        #         left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t - Curve.PARAM_TOL)
-        #     except:
-        #         left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t + Curve.PARAM_TOL)
-
-        return left, right
-
-    # ---------------------------------------------------------------------
-    def split(self, _t):
-        left, right = self.splitRaw(_t)
-        if (left == None) or (right == None):
-            return left, right
-
-        # Generate equivalent polylines for each resulting curve
-        lenOrig = self.length()
-        tol = lenOrig * 0.001
-        left.eqPoly = []
-        left.eqPoly = Curve.genEquivPolyline(left, left.eqPoly, tol)
-        ptLeftEnd = Pnt2D(left.nurbs.ctrlpts[-1][0], left.nurbs.ctrlpts[-1][1])
-        left.eqPoly.append(ptLeftEnd)
-        left.pt0 = Point(left.nurbs.ctrlpts[0][0], left.nurbs.ctrlpts[0][1])
-        left.pt1 = Point(left.nurbs.ctrlpts[-1][0], left.nurbs.ctrlpts[-1][1])
-
-        right.eqPoly = []
-        right.eqPoly = Curve.genEquivPolyline(right, right.eqPoly, tol)
-        ptRightEnd = Pnt2D(right.nurbs.ctrlpts[-1][0], right.nurbs.ctrlpts[-1][1])
-        right.eqPoly.append(ptRightEnd)
-        right.pt0 = Point(right.nurbs.ctrlpts[0][0], right.nurbs.ctrlpts[0][1])
-        right.pt1 = Point(right.nurbs.ctrlpts[-1][0], right.nurbs.ctrlpts[-1][1])
-
-        return left, right
 
     # ---------------------------------------------------------------------
     def isStraight(self, _tol):
@@ -121,6 +33,56 @@ class GenericNurbs(Curve):
                 return False
         return True
 
+    # ---------------------------------------------------------------------
+    def evalPoint(self, _t):
+        if _t <= 0.0:
+            return Pnt2D(self.nurbs.ctrlpts[0][0], self.nurbs.ctrlpts[0][1])
+        elif _t >= 1.0:
+            return Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
+
+        pt = self.nurbs.evaluate_single(_t)
+        return Pnt2D(pt[0], pt[1])
+
+    # ---------------------------------------------------------------------
+    def evalPointTangent(self, _t):
+        if _t < 0.0:
+            _t = 0.0
+        elif _t > 1.0:
+            _t = 1.0
+
+        ders = self.nurbs.derivatives(_t, order=1)
+        pt = ders[0]
+        tang = ders[1]
+        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])    
+
+    # ---------------------------------------------------------------------
+    def splitRaw(self, _t):
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+    
+        for knot in knots:
+            if _t >= (knot - 1000*Curve.PARAM_TOL) and _t <= (knot + 1000*Curve.PARAM_TOL):
+                _t = knot
+
+        if _t <= Curve.PARAM_TOL:
+            left = None
+            right = self
+            return left, right
+        
+        if (1.0 - _t) <= Curve.PARAM_TOL:
+            left = self
+            right = None
+            return left, right
+
+        # Create two curve objects resulting from splitting
+        left = GenericNurbs()
+        right = GenericNurbs()
+
+        # Create the corresponding NURBS curves resulting from splitting
+        left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
+        return left, right
+    
     # ---------------------------------------------------------------------
     def getEquivPolyline(self, _tol):
         # If current curve does not have yet an equivalent polyline,
@@ -158,36 +120,6 @@ class GenericNurbs(Curve):
         return status, clstPt, dmin, t, tang
 
     # ---------------------------------------------------------------------
-    # Evaluate a point for a given parametric value.
-    def evalPoint(self, _t):
-        if _t > 1.0:
-            _t = 1.0
-        elif _t <= 0.0:
-            _t = 0.0
-
-        pt = self.nurbs.evaluate_single(_t)
-        x = pt[0]
-        y = pt[1]
-
-        return Pnt2D(x, y)
-
-    # ---------------------------------------------------------------------
-    def evalPointTangent(self, _t):
-        if _t > 1.0:
-            _t = 1.0
-        elif _t <= 0.0:
-            _t = 0.0
-
-        ders = self.nurbs.derivatives(_t, order=1)
-        pt = ders[0]
-        x = pt[0]
-        y = pt[1]
-        tang = ders[1]
-        dx = tang[0]
-        dy = tang[1]
-        return Pnt2D(x, y), Pnt2D(dx, dy)        
-
-    # ---------------------------------------------------------------------
     def getXinit(self):
         return self.nurbs.ctrlpts[0][0]
 
@@ -204,11 +136,11 @@ class GenericNurbs(Curve):
         return self.nurbs.ctrlpts[-1][1]
     
     # ---------------------------------------------------------------------
-    def getInitPt(self):
+    def getPntInit(self):
         return self.pt0
     
     # ---------------------------------------------------------------------
-    def getEndPt(self):
+    def getPntEnd(self):
         return self.pt1
 
     # ---------------------------------------------------------------------

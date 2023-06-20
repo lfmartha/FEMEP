@@ -219,13 +219,13 @@ class Segment():
         return pt
     
     # ---------------------------------------------------------------------
-    def getInitPt(self):
-        pt = self.curve.getInitPt()
+    def getPntInit(self):
+        pt = self.curve.getPntInit()
         return pt
     
     # ---------------------------------------------------------------------
-    def getEndPt(self):
-        pt = self.curve.getEndPt()
+    def getPntEnd(self):
+        pt = self.curve.getPntEnd()
         return pt
 
     # ---------------------------------------------------------------------
@@ -540,33 +540,24 @@ class Segment():
 
     # ---------------------------------------------------------------------
     @staticmethod
-    def joinTwoCurves(_seg1, _seg2, _pt, _tol):
-        # check curve types
-        if _seg1.curve.type != _seg2.curve.type:
-            # in case the curves are polyline and line, joining is possible
-            if ((_seg1.curve.type == 'POLYLINE' and _seg2.curve.type == 'LINE') or
-                (_seg1.curve.type == 'LINE' and _seg2.curve.type == 'POLYLINE')):
-                pass
-            else:
-                error_text = "These types of curves can not be joined."
-                return None, error_text
-        
-        if _seg1.curve.type == 'POLYLINE' or _seg1.curve.type == 'LINE':
-            curv, error_text = Polyline.joinTwoCurves(_seg1.curve, _seg2.curve, _pt, _tol)
-        elif _seg1.curve.type == 'CUBICSPLINE':
-            curv, error_text = CubicSpline.joinTwoCurves(_seg1.curve, _seg2.curve, _pt, _tol)
-        elif _seg1.curve.type == 'CIRCLEARC':
-            curv, error_text = CircleArc.joinTwoCurves(_seg1.curve, _seg2.curve, _pt, _tol)
-        elif _seg1.curve.type == 'ELLIPSEARC':
-            curv, error_text = EllipseArc.joinTwoCurves(_seg1.curve, _seg2.curve, _pt, _tol)
+    def joinTwoSegments(_seg1, _seg2, _pt, _tol):
+ 
+        # Check whether the curves of the two segments may be joined, verifying
+        # whether the types of curves are compatible for joining and performing
+        # geometric verifications. The new curve resulting from the joining
+        # operation is returned.
+        status, curv, error_text = _seg1.curve.join(_seg2.curve, _pt, _tol)
+        if not status:
+            return None, error_text
 
-        if curv is not None:
-            segPoly = curv.getEquivPolyline()
-            seg = Segment(segPoly, curv)
-        else:
-            seg = None
-        return seg, error_text
+        # If the two curves can be joined, create a new segments with the
+        # joined curve.
+        segPoly = curv.getEquivPolyline()
+        seg = Segment(segPoly, curv)
 
+        return seg, None
+
+    # ---------------------------------------------------------------------
     @staticmethod
     def conformSegs(_seg_list):
         for seg in _seg_list:

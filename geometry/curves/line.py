@@ -4,6 +4,7 @@ from geometry.curves.curve import Curve
 from geomdl import NURBS
 from geomdl import operations
 from geomdl import knotvector
+import math
 
 
 class Line(Curve):
@@ -34,16 +35,60 @@ class Line(Curve):
                     self.nurbs.ctrlpts = crvPts
                     self.nurbs.knotvector = knotvector
                     self.nurbs.sample_size = 10
+    
+    # ---------------------------------------------------------------------
+    def isUnlimited(self):
+        return False
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _x, _y, _LenAndAng):
-        pt = Pnt2D(_x, _y)
-
+    def updateCollectingPntInfo(self, _x, _y, _LenAndAng):
         if self.nPts == 0:
+            refPtX = None
+            refPtY = None
+            v1 = _x
+            v2 = _y
+
+        elif self.nPts == 1:
+            refPtX = self.pt0.getX()
+            refPtY = self.pt0.getY()
+            if _LenAndAng:
+                # Compute radius
+                drX = _x - refPtX
+                drY = _y - refPtY
+                radius = math.sqrt(drX * drX + drY * drY)
+                v1 = radius
+
+                # Compute angle
+                ang = math.atan2(drY, drX)  # -PI < angle <= +PI
+                if ang < 0.0:
+                    ang += 2.0 * math.pi  # 0 <= angle < +2PI
+                ang *= (180.0 / math.pi)
+                v2 = ang
+            else:
+                v1 = _x
+                v2 = _y
+
+        return refPtX, refPtY, v1, v2
+
+    # ---------------------------------------------------------------------
+    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+        if self.nPts == 0:
+            pt = Pnt2D(_v1, _v2)
             self.pt0 = pt
             self.nPts += 1
 
         elif self.nPts == 1:
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.pt0.getX() + dX, self.pt0.getY() + dY)
+            if Pnt2D.euclidiandistance(self.pt0, pt) <= Curve.COORD_TOL:
+                return
+
             self.pt1 = pt
             self.nPts += 1
 
@@ -60,6 +105,24 @@ class Line(Curve):
                 self.nurbs.ctrlpts = crvPts
                 self.nurbs.knotvector = knotvector
                 self.nurbs.sample_size = 10
+
+    # ---------------------------------------------------------------------
+    def isPossible(self):
+        if self.nPts < 2:
+            return False
+        return True
+    
+    # ---------------------------------------------------------------------
+    def getCtrlPoints(self):
+        return [self.pt0, self.pt1]
+
+    # ---------------------------------------------------------------------
+    def isStraight(self, _tol):
+        return True
+
+    # ---------------------------------------------------------------------
+    def isClosed(self):
+        return False
 
     # ---------------------------------------------------------------------
     def evalPoint(self, _t):
@@ -82,34 +145,6 @@ class Line(Curve):
         pt = self.evalPoint(_t)
         tangVec = self.pt1 - self.pt0
         return pt, tangVec
-
-    # ---------------------------------------------------------------------
-    def evalPointCurvature(self, _t):
-        pt = self.evalPoint(_t)
-        CurvVec = 0.0
-        return pt, CurvVec
-
-    # ---------------------------------------------------------------------
-    def isPossible(self):
-        if self.nPts < 2:
-            return False
-        return True
-    
-    # ---------------------------------------------------------------------
-    def isUnlimited(self):
-        return False
-    
-    # ---------------------------------------------------------------------
-    def getCtrlPoints(self):
-        return [self.pt0, self.pt1]
-
-    # ---------------------------------------------------------------------
-    def isStraight(self, _tol):
-        return True
-
-    # ---------------------------------------------------------------------
-    def isClosed(self):
-        return False
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
@@ -175,6 +210,51 @@ class Line(Curve):
         return left, right
 
     # ---------------------------------------------------------------------
+    def join(self, _joinCurve, _pt, _tol):
+        if _joinCurve.getType() == 'POLYLINE':
+            status, curv, error_text = _joinCurve.join(self, _pt, _tol)
+            return status, curv, error_text
+        elif _joinCurve.getType() != 'LINE':
+            return False, None, 'Cannot join segments:\n A LINE curve may be joined only with a LINE or a POLYLINE.'
+
+        # Order the points of the two curves. The first curve is always
+        # the self.
+        # It is assumed that the given point _pt is the common point of
+        # the curves to be joined.
+        selfPtInit = self.getPntInit()
+        selfPtEnd = self.getPntEnd()
+        otherPtInit = _joinCurve.getPntInit()
+        otherPtEnd = _joinCurve.getPntEnd()
+        if ((Pnt2D.euclidiandistance(selfPtEnd, _pt) < _tol) and
+            (Pnt2D.euclidiandistance(otherPtEnd, _pt) < _tol)):
+            ptInit = selfPtInit
+            ptMid = selfPtEnd
+            ptEnd = otherPtInit
+        elif ((Pnt2D.euclidiandistance(selfPtInit, _pt) < _tol) and
+              (Pnt2D.euclidiandistance(otherPtInit, _pt) < _tol)):
+            ptInit = selfPtEnd
+            ptMid = selfPtInit
+            ptEnd = otherPtEnd
+        elif ((Pnt2D.euclidiandistance(selfPtInit, _pt) < _tol) and
+              (Pnt2D.euclidiandistance(otherPtEnd, _pt) < _tol)):
+            ptInit = selfPtEnd
+            ptMid = selfPtInit
+            ptEnd = otherPtInit
+        else: # default: self is left and other is right
+            ptInit = selfPtInit
+            ptMid = selfPtEnd
+            ptEnd = otherPtEnd
+
+        # Check to see whether the three points form a straight line.
+        # In which case, create a LINE curve. Otherwise, do not allow joinding.
+        if CompGeom.pickLine(ptInit, ptEnd, ptMid, _tol):
+            curv = Line(ptInit, ptEnd)
+        else:
+            return False, None, 'Cannot join segments:\n LINE curves must be collinear.'
+
+        return True, curv, None
+
+    # ---------------------------------------------------------------------
     def getEquivPolyline(self):
         equivPoly = [self.pt0, self.pt1]
         return equivPoly
@@ -228,20 +308,22 @@ class Line(Curve):
     # ---------------------------------------------------------------------
     def getYend(self):
         return self.nurbs.ctrlpts[-1][1]
-    
+
     # ---------------------------------------------------------------------
-    def getInitPt(self):
+    def getPntInit(self):
         return self.pt0
-    
+        return pt
+
     # ---------------------------------------------------------------------
-    def getEndPt(self):
+    def getPntEnd(self):
         return self.pt1
+        return pt
 
     # ---------------------------------------------------------------------
     def length(self):
         L = Pnt2D.euclidiandistance(self.pt0, self.pt1)
         return L
-    
+
     # ---------------------------------------------------------------------
     def getDataToInitCurve(self):
         data = {'pt0': [self.pt0.getX(), self.pt0.getY()],

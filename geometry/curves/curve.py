@@ -19,36 +19,43 @@ class Curve():
         return self.type
 
     # ---------------------------------------------------------------------
+    # Returns a boolean value (True or False) stating whether the curve
+    # can have a unlimited number of control points.
+    def isUnlimited(self):
+        return False
+
+    # ---------------------------------------------------------------------
     # Returns the current number of curve control points collected so far.
     def getNumberOfCtrlPoints(self):
         return self.nPts
 
     # ---------------------------------------------------------------------
-    # Inserts a new curve control point with the given coordinates.
-    def addCtrlPoint(self, _x, _y, _LenAndAng):
+    # Returns coordinates of a reference point (already collected) and
+    # updated info for the next control point being collected (given by
+    # its coordinates).
+    # In case the parameter _LenAndAng is true, the updated info
+    # corresponds to the length and the angle that the given point makes
+    # with the reference point (if there is any).
+    # Otherwise, it returns updated coordinates of the point being
+    # collected.
+    def updateCollectingPntInfo(self, _x, _y, _LenAndAng):
         pass
 
     # ---------------------------------------------------------------------
-    # Evaluates a curve point at the given parametric value.
-    def evalPoint(self, _t):
-        pass
-
-    # ---------------------------------------------------------------------
-    # Evaluates a curve point at the given parametric value.
-    # Returns the evaluated point and the tangent vector at this point.
-    def evalPointTangent(self, _t):
+    # Inserts a new curve control point.
+    # In case the parameter _LenAndAng is true, the given parameters
+    # correspond to length and angle values, and the inserted point
+    # coordinates are computed based on the length and angle with
+    # respect to the previously inserted point (if there is any).
+    # Otherwise, the given parameters correspond to the given curve
+    # control point coordinates.
+    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
         pass
 
     # ---------------------------------------------------------------------
     # Returns a boolean value (True or False) stating whether the control
     # points collected so far can form a valid curve.
     def isPossible(self):
-        return False
-
-    # ---------------------------------------------------------------------
-    # Returns a boolean value (True or False) stating whether the curve
-    # can have a unlimited number of control points.
-    def isUnlimited(self):
         return False
 
     # ---------------------------------------------------------------------
@@ -69,7 +76,7 @@ class Curve():
     # ---------------------------------------------------------------------
     # Changes the coordinates of a curve control point for reshaping,
     # identified by its index.
-    def setCtrlPoint(self, _id, _x, _y):
+    def setCtrlPoint(self, _id, _x, _y, _tol):
         pass
 
     # ---------------------------------------------------------------------
@@ -86,14 +93,25 @@ class Curve():
         pass
 
     # ---------------------------------------------------------------------
+    # Evaluates a curve point at the given parametric value.
+    def evalPoint(self, _t):
+        pass
+
+    # ---------------------------------------------------------------------
+    # Evaluates a curve point at the given parametric value.
+    # Returns the evaluated point and the tangent vector at this point.
+    def evalPointTangent(self, _t):
+        pass
+
+    # ---------------------------------------------------------------------
     # This method is used by the class method genEquivPolyline (see below)
     # to generate an equivalent polyline of a parametric curve.
     # It returns two new curves of the same type resulting from splitting
     # the current curve at a point given by its parametric value.
     # The difference between this method and the split method below is
     # that in here only the raw geometric properties of the curves
-    # resulting from split are created. In the case of a parametric
-    # curve no equivalente polyline is generated.
+    # resulting from split are created. Essentially, the difference is
+    # that in this method no equivalente polyline is generated.
     def splitRaw(self, _t):
         pass
 
@@ -101,6 +119,22 @@ class Curve():
     # Returns two new curves of the same type resulting from splitting
     # the current curve at a point given by its parametric value.
     def split(self, _t):
+        pass
+
+    # ---------------------------------------------------------------------
+    # This method creates a new curve resulting from joining the current
+    # curve with a given curve. The common point between the two curves
+    # and a tolerance for checking point proximity are also provided.
+    # The two original curves will remain intact.
+    # It checks whether the two curves may be joined, verifying whether
+    # the types of curves are compatible for joining and performing
+    # geometric verifications. The new curve resulting from the joining
+    # operation is returned.
+    # It also returns a boolean status for the joining verification. In
+    # case of a "False" status, a "None" curve is returned and an error
+    # message explaining the problem is also returned. In case of a
+    # "True" status, a "None" error message is returned.
+    def join(self, _joinCurve, _pt, _tol):
         pass
 
     # ---------------------------------------------------------------------
@@ -161,6 +195,28 @@ class Curve():
     # ---------------------------------------------------------------------
     # Returns the y coordinate of the curve end point.
     def getYend(self):
+        pass
+
+    # ---------------------------------------------------------------------
+    # Returns the curve initial point.
+    def getPntInit(self):
+        pass
+    
+    # ---------------------------------------------------------------------
+    # Returns the curve end point.
+    def getPntEnd(self):
+        pass
+
+    # ---------------------------------------------------------------------
+    # Returns the length of the curve, which could be computed based
+    # on an equivalent polyline.
+    def length(self):
+        pass
+
+    # ---------------------------------------------------------------------
+    def getDataToInitCurve(self):
+    # Returns a created dictionary with data to initialize a copy of
+    # the curve
         pass
 
     # ---------------------------------------------------------------------
@@ -259,23 +315,7 @@ class Curve():
             deltaX = clstPt.getX() - _x
             deltaY = clstPt.getY() - _y
             deltaPar = invJac[0][0] * deltaX + invJac[1][0] * deltaY
-
-            # Adicionado
-            # if (np.abs(deltaX) >= Curve.COORD_TOL or np.abs(deltaY) >= Curve.COORD_TOL) and (np.abs(deltaPar) <= Curve.PARAM_TOL):
-            #     deltaPar = invJac[0][0] * deltaX - invJac[1][0] * deltaY
-            # Adicionado
-
-            # Modificado
             tNew = tPar - direction * deltaPar
-            # Modificado
-
-            # Adicionado
-            # clstPt, tang = crv.evalPointTangent(tNew)
-            # deltaX2 = clstPt.getX() - _x
-            # deltaY2 = clstPt.getY() - _y
-            # if np.abs(deltaX2) > np.abs(deltaX) or np.abs(deltaY2) > np.abs(deltaY):
-            #     tNew = tPar + direction * deltaPar
-            # Adicionado
 
             # Check to see if new parametric value is close to minimum
             # or maximum parametric values. In this case snap the value
@@ -295,11 +335,9 @@ class Curve():
             while (tNew < 0.0) or (tNew > 1.0):
                 fac *= 0.5
                 if fac < Curve.MIN_STEP_REDUCT:
-                # Modificado
                     direction *= -1.0
                     fac = 1.0
                 tNew = tPar - fac * direction * deltaPar
-                # Modificado
 
             # Increment number of iterations and check to see if it exceeds
             # the maximum allowed.  In that case return a false status.
@@ -309,10 +347,7 @@ class Curve():
 
             # Check for convergence.
             if np.abs(tNew - tPar) <= Curve.PARAM_TOL:
-                # if np.abs(deltaX) <= Curve.COORD_TOL and np.abs(deltaY) <= Curve.COORD_TOL:
-                #     direction *= -1.0
-                # else: 
-                    break
+                break
 
         # The returned point coordinates is set as the last point
         # on the curve. Also returns the last parametric value and

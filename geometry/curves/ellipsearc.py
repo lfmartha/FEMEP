@@ -49,7 +49,7 @@ class EllipseArc(Curve):
                         axis1_vec = self.ellip1 - self.center
                         ellip2_vec = self.ellip2 - self.center
                         projeInAxis1 = Pnt2D.dotprod(ellip2_vec, axis1_vec) / Pnt2D.size(axis1_vec)
-                        self.axis2 = math.sqrt(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1)
+                        self.axis2 = math.sqrt(abs(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1))
                         self.ellip2 = Pnt2D.rotate(Pnt2D(self.center.getX(), self.center.getY() + self.axis2), self.center, self.ang)
                         if self.axis2 > 0.0:
                             self.nPts += 1
@@ -198,25 +198,138 @@ class EllipseArc(Curve):
                                             self.eqPoly.append(self.arc2)
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _x, _y, _LenAndAng):
+    def isUnlimited(self):
+        return False
+
+    # ---------------------------------------------------------------------
+    def updateCollectingPntInfo(self, _x, _y, _LenAndAng):
+        if self.nPts == 0:
+            refPtX = None
+            refPtY = None
+            v1 = _x
+            v2 = _y
+
+        elif self.nPts == 1:
+            refPtX = self.center.getX()
+            refPtY = self.center.getY()
+            if _LenAndAng:
+                # Compute first axis
+                drX1 = _x - self.center.getX()
+                drY1 = _y - self.center.getY()
+                len_axis1 = math.sqrt(drX1 * drX1 + drY1 * drY1)
+                v1 = len_axis1
+
+                # Compute angle for the first axis
+                ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
+                if ang1 < 0.0:
+                    ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
+                ang1 *= (180.0 / math.pi)
+                v2 = ang1
+            else:
+                v1 = _x
+                v2 = _y
+
+        elif self.nPts == 2:
+            refPtX = self.center.getX()
+            refPtY = self.center.getY()
+            # Compute second axis
+            axis1_vec = self.ellip1 - self.center
+            ellip2_vec = Pnt2D(_x, _y) - self.center
+            projeInAxis1 = Pnt2D.dotprod(ellip2_vec, axis1_vec) / Pnt2D.size(axis1_vec)
+            if _LenAndAng:
+                len_axis2 = math.sqrt(abs(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1))
+                v1 = len_axis2
+                ang2 = self.ang * (180.0 / math.pi) + 90.0
+                if ang2 > 360.0:
+                    ang2 -= 360.0  # 0 <= angle < +2PI
+                v2 = ang2
+            else:
+                ellip2 = Pnt2D.rotate(Pnt2D(self.center.getX(), self.center.getY() + self.axis2), self.center, self.ang)
+                v1 = ellip2.getX()
+                v2 = ellip2.getY()
+
+        elif self.nPts == 3:
+            refPtX = self.center.getX()
+            refPtY = self.center.getY()
+            # Compute angle for the first arc point
+            drX1 = _x - self.center.getX()
+            drY1 = _y - self.center.getY()
+
+            ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
+            if ang1 < 0.0:
+                ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
+
+            teta1 = ang1 - self.ang
+            if teta1 < 0:
+                teta1 += 2.0 * math.pi  # 0 <= angle < +2PI
+
+            if _LenAndAng:
+                # Compute length for the first arc point
+                len1 = self.axis1 * self.axis2 / math.sqrt(self.axis1 ** 2 * math.sin(teta1) ** 2 + self.axis2 ** 2 * math.cos(teta1) ** 2)
+                v1 = len1
+                ang1 *= (180.0 / math.pi)
+                v2 = ang1
+            else:  
+                # Snap first arc point to ellipse
+                eta1 = self.theoreticalAngle(teta1)
+                v1 = self.center.getX() + self.axis1 * math.cos(eta1) * math.cos(self.ang) - self.axis2 * math.sin(eta1) * math.sin(self.ang)
+                v2 = self.center.getY() + self.axis1 * math.cos(eta1) * math.sin(self.ang) + self.axis2 * math.sin(eta1) * math.cos(self.ang)
+
+        elif self.nPts == 4:
+            refPtX = self.center.getX()
+            refPtY = self.center.getY()
+            # Compute angle for the second arc point
+            drX2 = _x - self.center.getX()
+            drY2 = _y - self.center.getY()
+
+            ang2 = math.atan2(drY2, drX2)  # -PI < angle <= +PI
+            if ang2 < 0.0:
+                ang2 += 2.0 * math.pi  # 0 <= angle < +2PI
+
+            teta2 = ang2 - self.ang
+            if teta2 < 0:
+                teta2 += 2.0 * math.pi  # 0 <= angle < +2PI
+
+            if _LenAndAng:
+                # Compute length for the second arc point
+                len2 = self.axis1 * self.axis2 / math.sqrt(self.axis1 ** 2 * math.sin(teta2) ** 2 + self.axis2 ** 2 * math.cos(teta2) ** 2)
+                v1 = len2
+                ang2 *= (180.0 / math.pi)
+                v2 = ang2
+            else:  
+                # Snap second arc point to ellipse
+                eta2 = self.theoreticalAngle(teta2)
+                v1 = self.center.getX() + self.axis1 * math.cos(eta2) * math.cos(self.ang) - self.axis2 * math.sin(eta2) * math.sin(self.ang)
+                v2 = self.center.getY() + self.axis1 * math.cos(eta2) * math.sin(self.ang) + self.axis2 * math.sin(eta2) * math.cos(self.ang)
+
+        return refPtX, refPtY, v1, v2
+
+    # ---------------------------------------------------------------------
+    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
         if not _LenAndAng:
-            pt = Pnt2D(_x, _y)
+            pt = Pnt2D(_v1, _v2)
         else:
-            len = _x
-            ang = _y * (math.pi / 180.0)
-            dX = len * math.cos(ang)
-            dY = len * math.sin(ang)
+            dist = _v1
+            ang = _v2 * (math.pi / 180.0)
+            dX = dist * math.cos(ang)
+            dY = dist * math.sin(ang)
             pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
 
         if self.nPts == 0:
+            pt = Pnt2D(_v1, _v2)
             self.center = pt
             self.nPts += 1
 
         elif self.nPts == 1:
-            closeToOther = False
-            if self.center == pt:
-                closeToOther = True
-            if closeToOther:
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
+            if Pnt2D.euclidiandistance(self.center, pt) <= Curve.COORD_TOL:
                 return
             self.ellip1 = pt
 
@@ -233,12 +346,17 @@ class EllipseArc(Curve):
                 self.nPts += 1
 
         elif self.nPts == 2:
-            closeToOther = False
-            if self.center == pt:
-                closeToOther = True
-            if self.ellip1 == pt:
-                closeToOther = True
-            if closeToOther:
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
+            if Pnt2D.euclidiandistance(self.center, pt) <= Curve.COORD_TOL:
+                return
+            if Pnt2D.euclidiandistance(self.ellip1, pt) <= Curve.COORD_TOL:
                 return
             self.ellip2 = pt
 
@@ -246,16 +364,21 @@ class EllipseArc(Curve):
             axis1_vec = self.ellip1 - self.center
             ellip2_vec = self.ellip2 - self.center
             projeInAxis1 = Pnt2D.dotprod(ellip2_vec, axis1_vec) / Pnt2D.size(axis1_vec)
-            self.axis2 = math.sqrt(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1)
+            self.axis2 = math.sqrt(abs(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1))
             self.ellip2 = Pnt2D.rotate(Pnt2D(self.center.getX(), self.center.getY() + self.axis2), self.center, self.ang)
             if self.axis2 > 0.0:
                 self.nPts += 1
 
         elif self.nPts == 3:
-            closeToOther = False
-            if self.center == pt:
-                closeToOther = True
-            if closeToOther:
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
+            if Pnt2D.euclidiandistance(self.center, pt) <= Curve.COORD_TOL:
                 return
             self.arc1 = pt
 
@@ -283,12 +406,17 @@ class EllipseArc(Curve):
                 self.nPts += 1
 
         elif self.nPts == 4:
-            closeToOther = False
-            if self.center == pt:
-                closeToOther = True
-            if self.arc1 == pt:
-                closeToOther = True
-            if closeToOther:
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
+            if Pnt2D.euclidiandistance(self.center, pt) <= Curve.COORD_TOL:
+                return
+            if Pnt2D.euclidiandistance(self.arc1, pt) <= Curve.COORD_TOL:
                 return
             self.arc2 = pt
 
@@ -411,42 +539,10 @@ class EllipseArc(Curve):
                 self.eqPoly.append(self.arc2)
 
     # ---------------------------------------------------------------------
-    def evalPoint(self, _t):
-        if _t <= 0.0:
-            return self.arc1
-        elif _t >= 1.0:
-            return self.arc2
-
-        pt = self.nurbs.evaluate_single(_t)
-        return Pnt2D(pt[0], pt[1])
-
-    # ---------------------------------------------------------------------
-    def evalPointTangent(self, _t):
-        if _t < 0.0:
-            _t = 0.0
-        elif _t > 1.0:
-            _t = 1.0
-            
-        ders = self.nurbs.derivatives(_t, order=1)
-        pt = ders[0]
-        tang = ders[1]
-        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
-
-    # ---------------------------------------------------------------------
-    def evalPointCurvature(self, _t):
-        pt = self.evalPoint(_t)
-        CurvVec = 0.0
-        return pt, CurvVec
-
-    # ---------------------------------------------------------------------
     def isPossible(self):
         if self.nPts < 5:
             return False
         return True
-
-    # ---------------------------------------------------------------------
-    def isUnlimited(self):
-        return False
 
     # ---------------------------------------------------------------------
     def getCtrlPoints(self):
@@ -472,6 +568,28 @@ class EllipseArc(Curve):
     # ---------------------------------------------------------------------
     def isClosed(self):
         return False
+
+    # ---------------------------------------------------------------------
+    def evalPoint(self, _t):
+        if _t <= 0.0:
+            return self.arc1
+        elif _t >= 1.0:
+            return self.arc2
+
+        pt = self.nurbs.evaluate_single(_t)
+        return Pnt2D(pt[0], pt[1])
+
+    # ---------------------------------------------------------------------
+    def evalPointTangent(self, _t):
+        if _t < 0.0:
+            _t = 0.0
+        elif _t > 1.0:
+            _t = 1.0
+            
+        ders = self.nurbs.derivatives(_t, order=1)
+        pt = ders[0]
+        tang = ders[1]
+        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
@@ -501,7 +619,7 @@ class EllipseArc(Curve):
         left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
         return left, right
 
- # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
     def split(self, _t):
         knots = self.nurbs.knotvector
         knots = list(set(knots)) # Remove duplicates
@@ -541,6 +659,75 @@ class EllipseArc(Curve):
         left = EllipseArc(left_center, left_ellip1, left_ellip2, left_arc1, left_arc2)
         right = EllipseArc(right_center, right_ellip1, right_ellip2, right_arc1, right_arc2)
         return left, right
+                
+    # ---------------------------------------------------------------------
+    def join(self, _joinCurve, _pt, _tol):
+        if _joinCurve.getType() != 'ELLIPSEARC':
+            return False, None, 'Cannot join segments:\n An ELLIPSEARC curve may be joined only with another ELLIPSEARC.'
+
+        curv1 = self
+        curv2 = _joinCurve
+
+        # check if the ellipse arcs have the same center point, according  
+        # to a given tolerance
+        tol = Pnt2D(_tol, _tol)
+        if Pnt2D.equal(curv1.center, curv2.center, tol):
+            curv_center = (curv1.center + curv2.center) / 2.0
+        else:
+            return False, None, 'Cannot join segments:\n Ellipse arcs must have the same center point.'
+
+        # check if the ellipse arcs axis are equal, according to a given
+        # tolerance
+        if abs(curv1.axis1 - curv2.axis1) <= _tol:
+            curv_axis1 = (curv1.axis1 + curv2.axis1) / 2.0
+            if abs(curv1.axis2 - curv2.axis2) <= _tol:
+                curv_axis2 = (curv1.axis2 + curv2.axis2) / 2.0
+            else:
+                return False, None, 'Cannot join segments:\n Ellipse arcs must have the same secondary axis.'
+        else:
+            return False, None, 'Cannot join segments:\n Ellipse arcs must have the same principal axis.'
+
+        # check if the ellipse arcs have the same inclination of main 
+        # ellipse
+        dx = _tol
+        dy = (curv1.axis1 + curv1.axis2 + curv2.axis1 + curv2.axis2) / 4.0
+        ang_tol = math.atan2(dx, dy)  # -PI < angle <= +PI
+        if ang_tol < 0.0:
+            ang_tol += 2.0 * math.pi  # 0 <= angle < +2PI
+        
+        if (abs(curv1.ang - curv2.ang) <= ang_tol or
+            abs(curv2.ang - curv1.ang) <= ang_tol):
+            curv_ang = (curv1.ang + curv2.ang) / 2.0
+        else:
+            return False, None, 'Cannot join segments:\n Ellipse arcs must have the same inclination.'
+        
+        # check curves initial point
+        if Pnt2D.equal(Pnt2D(curv1.nurbs.ctrlpts[0][0], curv1.nurbs.ctrlpts[0][1]), _pt, tol):
+            init_pt1 = True
+        else:
+            init_pt1 = False
+
+        if Pnt2D.equal(Pnt2D(curv2.nurbs.ctrlpts[0][0], curv2.nurbs.ctrlpts[0][1]), _pt, tol):
+            init_pt2 = True
+        else:
+            init_pt2 = False
+
+        # ellipse arc properties
+        if init_pt1 and not init_pt2:
+            curv_ang1 = curv2.ang1
+            curv_ang2 = curv1.ang2
+
+        elif not init_pt1 and init_pt2:
+            curv_ang1 = curv1.ang1
+            curv_ang2 = curv2.ang2
+
+        curv_ellip1 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis1, curv_center.getY()), curv_center, curv_ang)
+        curv_ellip2 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis2, curv_center.getY()), curv_center, curv_ang + math.pi / 2.0)
+        curv_arc1 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis1, curv_center.getY()), curv_center, curv_ang1)
+        curv_arc2 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis2, curv_center.getY()), curv_center, curv_ang2)
+
+        curv = EllipseArc(curv_center, curv_ellip1, curv_ellip2, curv_arc1, curv_arc2)
+        return True, curv, None
 
     # ---------------------------------------------------------------------
     def getEquivPolyline(self):
@@ -887,6 +1074,16 @@ class EllipseArc(Curve):
         return self.nurbs.ctrlpts[-1][1]
 
     # ---------------------------------------------------------------------
+    def getPntInit(self):
+        pt = Pnt2D(self.nurbs.ctrlpts[0][0], self.nurbs.ctrlpts[0][1])
+        return pt
+
+    # ---------------------------------------------------------------------
+    def getPntEnd(self):
+        pt = Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
+        return pt
+
+    # ---------------------------------------------------------------------
     def length(self):
         L = operations.length_curve(self.nurbs)
         return L
@@ -905,8 +1102,8 @@ class EllipseArc(Curve):
         if teta1 < 0:
             teta1 += 2.0 * math.pi  # 0 <= angle < +2PI
 
-        len = self.axis1 * self.axis2 / math.sqrt(self.axis1 ** 2 * math.sin(teta1) ** 2 + self.axis2 ** 2 * math.cos(teta1) ** 2)
-        return len
+        dist = self.axis1 * self.axis2 / math.sqrt(self.axis1 ** 2 * math.sin(teta1) ** 2 + self.axis2 ** 2 * math.cos(teta1) ** 2)
+        return dist
     
     # ---------------------------------------------------------------------
     def getDataToInitCurve(self):
@@ -916,166 +1113,3 @@ class EllipseArc(Curve):
                 'arc1': [self.arc1.getX(), self.arc1.getY()],
                 'arc2': [self.arc2.getX(), self.arc2.getY()]}
         return data
-
-    # ---------------------------------------------------------------------
-    def updateLineEditValues(self, _x, _y, _LenAndAng):
-        if self.nPts == 1:
-            if _LenAndAng:
-                # Compute first axis
-                drX1 = _x - self.center.getX()
-                drY1 = _y - self.center.getY()
-                len_axis1 = math.sqrt(drX1 * drX1 + drY1 * drY1)
-
-                # Compute angle for the first axis
-                ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
-                if ang1 < 0.0:
-                    ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
-                ang1 *= (180.0 / math.pi)
-                return len_axis1, ang1
-
-            else:
-                return _x, _y
-
-        elif self.nPts == 2:
-            # Compute second axis
-            axis1_vec = self.ellip1 - self.center
-            ellip2_vec = Pnt2D(_x, _y) - self.center
-            projeInAxis1 = Pnt2D.dotprod(ellip2_vec, axis1_vec) / Pnt2D.size(axis1_vec)
-            if _LenAndAng:
-                len_axis2 = math.sqrt(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1)
-                ang2 = self.ang * (180.0 / math.pi) + 90.0
-                if ang2 > 360.0:
-                    ang2 -= 360.0  # 0 <= angle < +2PI
-                return len_axis2, ang2
-
-            else:
-                ellip2 = Pnt2D.rotate(Pnt2D(self.center.getX(), self.center.getY() + self.axis2), self.center, self.ang)
-                return ellip2.getX(), ellip2.getY()
-
-        elif self.nPts == 3:
-            # Compute angle for the first arc point
-            drX1 = _x - self.center.getX()
-            drY1 = _y - self.center.getY()
-
-            ang1 = math.atan2(drY1, drX1)  # -PI < angle <= +PI
-            if ang1 < 0.0:
-                ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-            teta1 = ang1 - self.ang
-            if teta1 < 0:
-                teta1 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-            if _LenAndAng:
-                # Compute length for the first arc point
-                len1 = self.axis1 * self.axis2 / math.sqrt(self.axis1 ** 2 * math.sin(teta1) ** 2 + self.axis2 ** 2 * math.cos(teta1) ** 2)
-
-                ang1 *= (180.0 / math.pi)
-                return len1, ang1
-
-            else:  
-                # Snap first arc point to ellipse
-                eta1 = self.theoreticalAngle(teta1)
-                x1 = self.center.getX() + self.axis1 * math.cos(eta1) * math.cos(self.ang) - self.axis2 * math.sin(eta1) * math.sin(self.ang)
-                y1 = self.center.getY() + self.axis1 * math.cos(eta1) * math.sin(self.ang) + self.axis2 * math.sin(eta1) * math.cos(self.ang)
-                return x1, y1
-
-        elif self.nPts == 4:
-            # Compute angle for the second arc point
-            drX2 = _x - self.center.getX()
-            drY2 = _y - self.center.getY()
-
-            ang2 = math.atan2(drY2, drX2)  # -PI < angle <= +PI
-            if ang2 < 0.0:
-                ang2 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-            teta2 = ang2 - self.ang
-            if teta2 < 0:
-                teta2 += 2.0 * math.pi  # 0 <= angle < +2PI
-
-            if _LenAndAng:
-                # Compute length for the second arc point
-                len2 = self.axis1 * self.axis2 / math.sqrt(self.axis1 ** 2 * math.sin(teta2) ** 2 + self.axis2 ** 2 * math.cos(teta2) ** 2)
-
-                ang2 *= (180.0 / math.pi)
-                return len2, ang2
-
-            else:  
-                # Snap second arc point to ellipse
-                eta2 = self.theoreticalAngle(teta2)
-                x2 = self.center.getX() + self.axis1 * math.cos(eta2) * math.cos(self.ang) - self.axis2 * math.sin(eta2) * math.sin(self.ang)
-                y2 = self.center.getY() + self.axis1 * math.cos(eta2) * math.sin(self.ang) + self.axis2 * math.sin(eta2) * math.cos(self.ang)
-                return x2, y2
-
-    # ---------------------------------------------------------------------
-    @staticmethod
-    def joinTwoCurves(_curv1, _curv2, _pt, _tol):
-        error_text = ""
-
-        # check if the ellipse arcs have the same center point, according  
-        # to a given tolerance
-        tol = Pnt2D(_tol, _tol)
-        if Pnt2D.equal(_curv1.center, _curv2.center, tol):
-            curv_center = (_curv1.center + _curv2.center) * 1 / 2.0
-
-        else:
-            error_text += "Ellipse arcs must have the same center point. "
-
-        # check if the ellipse arcs axis are equal, according to a given
-        # tolerance
-        if abs(_curv1.axis1 - _curv2.axis1) <= _tol:
-            curv_axis1 = (_curv1.axis1 + _curv2.axis1) / 2.0
-
-            if abs(_curv1.axis2 - _curv2.axis2) <= _tol:
-                curv_axis2 = (_curv1.axis2 + _curv2.axis2) / 2.0
-
-            else:
-                error_text += "Ellipse arcs must have the same axes length. "
-
-        else:
-            error_text += "Ellipse arcs must have the same axes length. "
-
-        # check if the ellipse arcs have the same inclination of main 
-        # ellipse
-        dx = _tol
-        dy = (_curv1.axis1 + _curv1.axis2 + _curv2.axis1 + _curv2.axis2) / 4.0
-        ang_tol = math.atan2(dx, dy)  # -PI < angle <= +PI
-        if ang_tol < 0.0:
-            ang_tol += 2.0 * math.pi  # 0 <= angle < +2PI
-        
-        if (abs(_curv1.ang - _curv2.ang) <= ang_tol or
-            abs(_curv2.ang - _curv1.ang) <= ang_tol):
-            curv_ang = (_curv1.ang + _curv2.ang) / 2.0
-
-        else:
-            error_text += "Ellipse arcs must have the same inclination. "
-
-        if error_text != "":
-            return None, error_text
-        
-        # check curves initial point
-        if Pnt2D.equal(Pnt2D(_curv1.nurbs.ctrlpts[0][0], _curv1.nurbs.ctrlpts[0][1]), _pt, tol):
-            init_pt1 = True
-        else:
-            init_pt1 = False
-
-        if Pnt2D.equal(Pnt2D(_curv2.nurbs.ctrlpts[0][0], _curv2.nurbs.ctrlpts[0][1]), _pt, tol):
-            init_pt2 = True
-        else:
-            init_pt2 = False
-
-        # ellipse arc properties
-        if init_pt1 and not init_pt2:
-            curv_ang1 = _curv2.ang1
-            curv_ang2 = _curv1.ang2
-
-        elif not init_pt1 and init_pt2:
-            curv_ang1 = _curv1.ang1
-            curv_ang2 = _curv2.ang2
-
-        curv_ellip1 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis1, curv_center.getY()), curv_center, curv_ang)
-        curv_ellip2 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis2, curv_center.getY()), curv_center, curv_ang + math.pi / 2.0)
-        curv_arc1 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis1, curv_center.getY()), curv_center, curv_ang1)
-        curv_arc2 = Pnt2D.rotate(Pnt2D(curv_center.getX() + curv_axis2, curv_center.getY()), curv_center, curv_ang2)
-
-        curv = EllipseArc(curv_center, curv_ellip1, curv_ellip2, curv_arc1, curv_arc2)
-        return curv, None

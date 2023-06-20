@@ -36,20 +36,58 @@ class CubicSpline(Curve):
             self.eqPoly.append(ptEnd)
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _x, _y, _LenAndAng):
-        pt = Pnt2D(_x, _y)
+    def isUnlimited(self):
+        return True
 
+    # ---------------------------------------------------------------------
+    def updateCollectingPntInfo(self, _x, _y, _LenAndAng):
         if self.nPts == 0:
+            refPtX = None
+            refPtY = None
+            v1 = _x
+            v2 = _y
+
+        else:
+            refPtX = self.pts[-1].getX()
+            refPtY = self.pts[-1].getY()
+            if _LenAndAng:
+                # Compute radius
+                drX = _x - refPtX
+                drY = _y - refPtY
+                radius = math.sqrt(drX * drX + drY * drY)
+                v1 = radius
+
+                # Compute angle
+                ang = math.atan2(drY, drX)  # -PI < angle <= +PI
+                if ang < 0.0:
+                    ang += 2.0 * math.pi  # 0 <= angle < +2PI
+                ang *= (180.0 / math.pi)
+                v2 = ang
+            else:
+                v1 = _x
+                v2 = _y
+
+        return refPtX, refPtY, v1, v2
+
+    # ---------------------------------------------------------------------
+    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+        if self.nPts == 0:
+            pt = Pnt2D(_v1, _v2)
             self.pts = [pt]
             self.nPts += 1
 
         else:
-            closeToOther = False
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.pts[-1].getX() + dX, self.pts[-1].getY() + dY)
             for i in range(0, self.nPts):
-                if self.pts[i] == pt:
-                    closeToOther = True
-            if closeToOther:
-                return
+                if Pnt2D.euclidiandistance(self.pts[i], pt) <= Curve.COORD_TOL:
+                    return
             self.pts.append(pt)
             self.nPts += 1
 
@@ -77,41 +115,9 @@ class CubicSpline(Curve):
             self.eqPoly.append(self.pts[-1])
 
     # ---------------------------------------------------------------------
-    def evalPoint(self, _t):
-        if _t <= 0.0:
-            return Pnt2D(self.nurbs.ctrlpts[0][0], self.nurbs.ctrlpts[0][1])
-        elif _t >= 1.0:
-            return Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
-
-        pt = self.nurbs.evaluate_single(_t)
-        return Pnt2D(pt[0], pt[1])
-
-    # ---------------------------------------------------------------------
-    def evalPointTangent(self, _t):
-        if _t < 0.0:
-            _t = 0.0
-        elif _t > 1.0:
-            _t = 1.0
-
-        ders = self.nurbs.derivatives(_t, order=1)
-        pt = ders[0]
-        tang = ders[1]
-        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
-
-    # ---------------------------------------------------------------------
-    def evalPointCurvature(self, _t):
-        pt = self.evalPoint(_t)
-        CurvVec = 0.0
-        return pt, CurvVec
-
-    # ---------------------------------------------------------------------
     def isPossible(self):
         if self.nPts < 2:
             return False
-        return True
-
-    # ---------------------------------------------------------------------
-    def isUnlimited(self):
         return True
 
     # ---------------------------------------------------------------------
@@ -137,6 +143,28 @@ class CubicSpline(Curve):
         if (xInit == xEnd) and (yInit == yEnd):
             return True
         return False
+
+    # ---------------------------------------------------------------------
+    def evalPoint(self, _t):
+        if _t <= 0.0:
+            return Pnt2D(self.nurbs.ctrlpts[0][0], self.nurbs.ctrlpts[0][1])
+        elif _t >= 1.0:
+            return Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
+
+        pt = self.nurbs.evaluate_single(_t)
+        return Pnt2D(pt[0], pt[1])
+
+    # ---------------------------------------------------------------------
+    def evalPointTangent(self, _t):
+        if _t < 0.0:
+            _t = 0.0
+        elif _t > 1.0:
+            _t = 1.0
+
+        ders = self.nurbs.derivatives(_t, order=1)
+        pt = ders[0]
+        tang = ders[1]
+        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
@@ -183,6 +211,140 @@ class CubicSpline(Curve):
         ptRightEnd = Pnt2D(right.nurbs.ctrlpts[-1][0], right.nurbs.ctrlpts[-1][1])
         right.eqPoly.append(ptRightEnd)
         return left, right
+
+    # ---------------------------------------------------------------------
+    def join(self, _joinCurve, _pt, _tol):
+        if _joinCurve.getType() != 'CUBICSPLINE':
+            return False, None, 'Cannot join segments:\n A CUBICSPLINE curve may be joined only with another CUBICSPLINE.'
+
+        curv1 = self
+        curv2 = _joinCurve
+
+        if curv1.nurbs.degree == curv2.nurbs.degree:
+            degree = curv1.nurbs.degree
+        else:
+            error_text = "Both CUBICSPLINE curves must have the same degree."
+            return False, None, error_text
+
+        curv1_ctrlpts = curv1.nurbs.ctrlpts
+        curv2_ctrlpts = curv2.nurbs.ctrlpts
+        curv1_knotvector = curv1.nurbs.knotvector
+        curv2_knotvector = curv2.nurbs.knotvector
+        tol = Pnt2D(_tol, _tol)
+
+        # check curves initial point
+        if Pnt2D.equal(Pnt2D(curv1_ctrlpts[0][0], curv1_ctrlpts[0][1]), _pt, tol):
+            init_pt1 = True
+        else:
+            init_pt1 = False
+
+        if Pnt2D.equal(Pnt2D(curv2_ctrlpts[0][0], curv2_ctrlpts[0][1]), _pt, tol):
+            init_pt2 = True
+        else:
+            init_pt2 = False
+
+        # cubicspline properties
+        curv_ctrlpts = []
+        curv_knotvector = []
+        if init_pt1 and init_pt2:
+            # Control Points
+            curv1_ctrlpts.reverse()
+            curv1_ctrlpts.pop()
+            curv_ctrlpts.extend(curv1_ctrlpts)
+            curv_ctrlpts.extend(curv2_ctrlpts)
+
+            # Knot vector
+            curv1_knotvector.reverse()
+            for i in range(len(curv1_knotvector)):
+                curv1_knotvector[i] = 1.0 - curv1_knotvector[i]
+            curv1_knotvector.pop()
+
+            for i in range(degree + 1):
+                curv2_knotvector.pop(0)
+
+            for i in range(len(curv2_knotvector)):
+                curv2_knotvector[i] = curv2_knotvector[i] + 1.0
+            
+            curv_knotvector.extend(curv1_knotvector)
+            curv_knotvector.extend(curv2_knotvector)
+
+        elif not init_pt1 and not init_pt2:
+            # Control Points
+            curv1_ctrlpts.pop()
+            curv2_ctrlpts.reverse()
+            curv_ctrlpts.extend(curv1_ctrlpts)
+            curv_ctrlpts.extend(curv2_ctrlpts)
+
+            # Knot vector
+            curv1_knotvector.pop()
+
+            curv2_knotvector.reverse()
+            for i in range(len(curv2_knotvector)):
+                curv2_knotvector[i] = 1.0 - curv2_knotvector[i]
+
+            for i in range(degree + 1):
+                curv2_knotvector.pop(0)
+
+            for i in range(len(curv2_knotvector)):
+                curv2_knotvector[i] = curv2_knotvector[i] + 1.0
+            
+            curv_knotvector.extend(curv1_knotvector)
+            curv_knotvector.extend(curv2_knotvector)
+
+        elif init_pt1 and not init_pt2:
+            # Control Points
+            curv2_ctrlpts.pop()
+            curv_ctrlpts.extend(curv2_ctrlpts)
+            curv_ctrlpts.extend(curv1_ctrlpts)
+
+            # Knot vector
+            curv2_knotvector.pop()
+
+            for i in range(degree + 1):
+                curv1_knotvector.pop(0)
+
+            for i in range(len(curv1_knotvector)):
+                curv1_knotvector[i] = curv1_knotvector[i] + 1.0
+            
+            curv_knotvector.extend(curv2_knotvector)
+            curv_knotvector.extend(curv1_knotvector)
+
+        elif not init_pt1 and init_pt2:
+            # Control Points
+            curv1_ctrlpts.pop()
+            curv_ctrlpts.extend(curv1_ctrlpts)
+            curv_ctrlpts.extend(curv2_ctrlpts)
+
+            # Knot vector
+            curv1_knotvector.pop()
+
+            for i in range(degree + 1):
+                curv2_knotvector.pop(0)
+
+            for i in range(len(curv2_knotvector)):
+                curv2_knotvector[i] = curv2_knotvector[i] + 1.0
+            
+            curv_knotvector.extend(curv1_knotvector)
+            curv_knotvector.extend(curv2_knotvector)
+
+        
+        for i in range(len(curv_knotvector)):
+            curv_knotvector[i] = curv_knotvector[i] / 2.0
+
+        curv = CubicSpline()
+        curv.nurbs = NURBS.Curve()
+        curv.nurbs.degree = degree
+        curv.nurbs.ctrlpts = curv_ctrlpts
+        curv.nurbs.knotvector = curv_knotvector
+        curv.nurbs.sample_size = 10
+        
+        L1 = curv1.length()
+        L2 = curv2.length()
+        L = (L1 + L2) / 2.0
+        curv.eqPoly = Curve.genEquivPolyline(curv, curv.eqPoly, 0.001 * L)
+        curv.eqPoly.append(Pnt2D(curv.nurbs.ctrlpts[-1][0], curv.nurbs.ctrlpts[-1][1]))
+
+        return True, curv, None
 
     # ---------------------------------------------------------------------
     def getEquivPolyline(self):
@@ -350,6 +512,16 @@ class CubicSpline(Curve):
         return self.nurbs.ctrlpts[-1][1]
 
     # ---------------------------------------------------------------------
+    def getPntInit(self):
+        pt = Pnt2D(self.nurbs.ctrlpts[0][0], self.nurbs.ctrlpts[0][1])
+        return pt
+
+    # ---------------------------------------------------------------------
+    def getPntEnd(self):
+        pt = Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
+        return pt
+
+    # ---------------------------------------------------------------------
     def lengthInerpPts(self):
         L = 0.0
         for i in range(0, len(self.nurbs.ctrlpts) - 1):
@@ -376,137 +548,3 @@ class CubicSpline(Curve):
                 'weights': self.nurbs.weights,
                 'knotvector': self.nurbs.knotvector}
         return data
-    
-    # ---------------------------------------------------------------------
-    def updateLineEditValues(self, _NumctrlPts, _y, _LenAndAng):
-        x = self.pts[_NumctrlPts - 1].getX()
-        y = self.pts[_NumctrlPts - 1].getY()
-        return x, y
-
-    # ---------------------------------------------------------------------
-    @staticmethod
-    def joinTwoCurves(_curv1, _curv2, _pt, _tol):
-        if _curv1.nurbs.degree == _curv2.nurbs.degree:
-            degree = _curv1.nurbs.degree
-        else:
-            error_text = "Both curves must have the same degree"
-            return None, error_text
-
-        curv1_ctrlpts = _curv1.nurbs.ctrlpts
-        curv2_ctrlpts = _curv2.nurbs.ctrlpts
-        curv1_knotvector = _curv1.nurbs.knotvector
-        curv2_knotvector = _curv2.nurbs.knotvector
-        tol = Pnt2D(_tol, _tol)
-
-        # check curves initial point
-        if Pnt2D.equal(Pnt2D(curv1_ctrlpts[0][0], curv1_ctrlpts[0][1]), _pt, tol):
-            init_pt1 = True
-        else:
-            init_pt1 = False
-
-        if Pnt2D.equal(Pnt2D(curv2_ctrlpts[0][0], curv2_ctrlpts[0][1]), _pt, tol):
-            init_pt2 = True
-        else:
-            init_pt2 = False
-
-        # cubicspline properties
-        curv_ctrlpts = []
-        curv_knotvector = []
-        if init_pt1 and init_pt2:
-            # Control Points
-            curv1_ctrlpts.reverse()
-            curv1_ctrlpts.pop()
-            curv_ctrlpts.extend(curv1_ctrlpts)
-            curv_ctrlpts.extend(curv2_ctrlpts)
-
-            # Knot vector
-            curv1_knotvector.reverse()
-            for i in range(len(curv1_knotvector)):
-                curv1_knotvector[i] = 1.0 - curv1_knotvector[i]
-            curv1_knotvector.pop()
-
-            for i in range(degree + 1):
-                curv2_knotvector.pop(0)
-
-            for i in range(len(curv2_knotvector)):
-                curv2_knotvector[i] = curv2_knotvector[i] + 1.0
-            
-            curv_knotvector.extend(curv1_knotvector)
-            curv_knotvector.extend(curv2_knotvector)
-
-        elif not init_pt1 and not init_pt2:
-            # Control Points
-            curv1_ctrlpts.pop()
-            curv2_ctrlpts.reverse()
-            curv_ctrlpts.extend(curv1_ctrlpts)
-            curv_ctrlpts.extend(curv2_ctrlpts)
-
-            # Knot vector
-            curv1_knotvector.pop()
-
-            curv2_knotvector.reverse()
-            for i in range(len(curv2_knotvector)):
-                curv2_knotvector[i] = 1.0 - curv2_knotvector[i]
-
-            for i in range(degree + 1):
-                curv2_knotvector.pop(0)
-
-            for i in range(len(curv2_knotvector)):
-                curv2_knotvector[i] = curv2_knotvector[i] + 1.0
-            
-            curv_knotvector.extend(curv1_knotvector)
-            curv_knotvector.extend(curv2_knotvector)
-
-        elif init_pt1 and not init_pt2:
-            # Control Points
-            curv2_ctrlpts.pop()
-            curv_ctrlpts.extend(curv2_ctrlpts)
-            curv_ctrlpts.extend(curv1_ctrlpts)
-
-            # Knot vector
-            curv2_knotvector.pop()
-
-            for i in range(degree + 1):
-                curv1_knotvector.pop(0)
-
-            for i in range(len(curv1_knotvector)):
-                curv1_knotvector[i] = curv1_knotvector[i] + 1.0
-            
-            curv_knotvector.extend(curv2_knotvector)
-            curv_knotvector.extend(curv1_knotvector)
-
-        elif not init_pt1 and init_pt2:
-            # Control Points
-            curv1_ctrlpts.pop()
-            curv_ctrlpts.extend(curv1_ctrlpts)
-            curv_ctrlpts.extend(curv2_ctrlpts)
-
-            # Knot vector
-            curv1_knotvector.pop()
-
-            for i in range(degree + 1):
-                curv2_knotvector.pop(0)
-
-            for i in range(len(curv2_knotvector)):
-                curv2_knotvector[i] = curv2_knotvector[i] + 1.0
-            
-            curv_knotvector.extend(curv1_knotvector)
-            curv_knotvector.extend(curv2_knotvector)
-
-        
-        for i in range(len(curv_knotvector)):
-            curv_knotvector[i] = curv_knotvector[i] / 2.0
-
-        curv = CubicSpline()
-        curv.nurbs = NURBS.Curve()
-        curv.nurbs.degree = degree
-        curv.nurbs.ctrlpts = curv_ctrlpts
-        curv.nurbs.knotvector = curv_knotvector
-        curv.nurbs.sample_size = 10
-        
-        L1 = _curv1.length()
-        L2 = _curv2.length()
-        L = (L1 + L2) / 2.0
-        curv.eqPoly = Curve.genEquivPolyline(curv, curv.eqPoly, 0.001 * L)
-        curv.eqPoly.append(Pnt2D(curv.nurbs.ctrlpts[-1][0], curv.nurbs.ctrlpts[-1][1]))
-        return curv, None

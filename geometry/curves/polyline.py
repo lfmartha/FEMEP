@@ -38,20 +38,58 @@ class Polyline(Curve):
                 self.nurbs.sample_size = 10
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _x, _y, _LenAndAng):
-        pt = Pnt2D(_x,_y)
+    def isUnlimited(self):
+        return True
 
+    # ---------------------------------------------------------------------
+    def updateCollectingPntInfo(self, _x, _y, _LenAndAng):
         if self.nPts == 0:
+            refPtX = None
+            refPtY = None
+            v1 = _x
+            v2 = _y
+
+        else:
+            refPtX = self.pts[-1].getX()
+            refPtY = self.pts[-1].getY()
+            if _LenAndAng:
+                # Compute radius
+                drX = _x - refPtX
+                drY = _y - refPtY
+                radius = math.sqrt(drX * drX + drY * drY)
+                v1 = radius
+
+                # Compute angle
+                ang = math.atan2(drY, drX)  # -PI < angle <= +PI
+                if ang < 0.0:
+                    ang += 2.0 * math.pi  # 0 <= angle < +2PI
+                ang *= (180.0 / math.pi)
+                v2 = ang
+            else:
+                v1 = _x
+                v2 = _y
+
+        return refPtX, refPtY, v1, v2
+
+    # ---------------------------------------------------------------------
+    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+        if self.nPts == 0:
+            pt = Pnt2D(_v1, _v2)
             self.pts = [pt]
             self.nPts += 1
 
         else:
-            closeToOther = False
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.pts[-1].getX() + dX, self.pts[-1].getY() + dY)
             for i in range(0, self.nPts):
-                if self.pts[i] == pt:
-                    closeToOther = True
-            if closeToOther:
-                return
+                if Pnt2D.euclidiandistance(self.pts[i], pt) <= Curve.COORD_TOL:
+                    return
             self.pts.append(pt)
             self.nPts += 1
 
@@ -72,30 +110,32 @@ class Polyline(Curve):
             self.nurbs.sample_size = 10
 
     # ---------------------------------------------------------------------
-    def evalPoint(self, _t):
-        if _t <= 0.0:
-            return self.pts[0]
-        elif _t >= 1.0:
-            return self.pts[-1]
+    def isPossible(self):
+        if self.nPts < 2:
+            return False
+        return True
 
-        pt = self.nurbs.evaluate_single(_t)
-        return Pnt2D(pt[0], pt[1])
-    
     # ---------------------------------------------------------------------
-    def evalPointSeg(self, _t):
-        if _t <= 0.0:
-            return self.pts[0]
-        elif _t >= 1.0:
-            return self.pts[-1]
-        
-        prev_id, loc_t = self.findPointLocationSeg(_t)
+    def getCtrlPoints(self):
+        return self.pts
 
-        x = self.pts[prev_id].getX() + loc_t * \
-            (self.pts[prev_id + 1].getX() - self.pts[prev_id].getX())
-        y = self.pts[prev_id].getY() + loc_t * \
-            (self.pts[prev_id + 1].getY() - self.pts[prev_id].getY())
-        return Pnt2D(x,y)
-    
+    # ---------------------------------------------------------------------
+    def isStraight(self, _tol):
+        for i in range(1, len(self.pts) - 1):
+            if not CompGeom.pickLine(self.pts[0], self.pts[-1], self.pts[i], _tol):
+                return False
+        return True
+
+    # ---------------------------------------------------------------------
+    def isClosed(self):
+        xInit = self.getXinit()
+        yInit = self.getYinit()
+        xEnd = self.getXend()
+        yEnd = self.getYend()
+        if (xInit == xEnd) and (yInit == yEnd):
+            return True
+        return False
+
     # ---------------------------------------------------------------------
     def findPointLocation(self, _t):
         if _t <= 0.0:
@@ -117,7 +157,7 @@ class Polyline(Curve):
                 loc_t = _t - knots[prev_id]
                 break
         return prev_id, loc_t
-    
+
     # ---------------------------------------------------------------------
     def findPointLocationSeg(self, _t):
         if _t <= 0.0:
@@ -151,7 +191,32 @@ class Polyline(Curve):
         y = self.pts[prev_id].getY() + loc_t * \
             (self.pts[next_id].getY() - self.pts[prev_id].getY())
         return prev_id, loc_t
+
+    # ---------------------------------------------------------------------
+    def evalPoint(self, _t):
+        if _t <= 0.0:
+            return self.pts[0]
+        elif _t >= 1.0:
+            return self.pts[-1]
+
+        pt = self.nurbs.evaluate_single(_t)
+        return Pnt2D(pt[0], pt[1])
     
+    # ---------------------------------------------------------------------
+    def evalPointSeg(self, _t):
+        if _t <= 0.0:
+            return self.pts[0]
+        elif _t >= 1.0:
+            return self.pts[-1]
+        
+        prev_id, loc_t = self.findPointLocationSeg(_t)
+
+        x = self.pts[prev_id].getX() + loc_t * \
+            (self.pts[prev_id + 1].getX() - self.pts[prev_id].getX())
+        y = self.pts[prev_id].getY() + loc_t * \
+            (self.pts[prev_id + 1].getY() - self.pts[prev_id].getY())
+        return Pnt2D(x,y)
+
     # ---------------------------------------------------------------------
     def evalPointTangent(self, _t):
         if _t < 0.0:
@@ -163,43 +228,6 @@ class Polyline(Curve):
         pt = ders[0]
         tang = ders[1]
         return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
-    
-    # ---------------------------------------------------------------------
-    def evalPointCurvature(self, _t):
-        pt = self.evalPoint(_t)
-        CurvVec = 0.0
-        return pt, CurvVec
-
-    # ---------------------------------------------------------------------
-    def isPossible(self):
-        if self.nPts < 2:
-            return False
-        return True
-
-    # ---------------------------------------------------------------------
-    def isUnlimited(self):
-        return True
-
-    # ---------------------------------------------------------------------
-    def getCtrlPoints(self):
-        return self.pts
-
-    # ---------------------------------------------------------------------
-    def isStraight(self, _tol):
-        for i in range(1, len(self.pts) - 1):
-            if not CompGeom.pickLine(self.pts[0], self.pts[-1], self.pts[i], _tol):
-                return False
-        return True
-
-    # ---------------------------------------------------------------------
-    def isClosed(self):
-        xInit = self.getXinit()
-        yInit = self.getYinit()
-        xEnd = self.getXend()
-        yEnd = self.getYend()
-        if (xInit == xEnd) and (yInit == yEnd):
-            return True
-        return False
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
@@ -279,15 +307,73 @@ class Polyline(Curve):
         return left, right
 
     # ---------------------------------------------------------------------
+    def join(self, _joinCurve, _pt, _tol):
+        if (_joinCurve.getType() != 'LINE') and (_joinCurve.getType() != 'POLYLINE'):
+            return False, None, 'Cannot join segments:\n A POLYLINE curve may be joined only with a LINE or a POLYLINE.'
+
+        curv1 = self
+        if _joinCurve.type == "LINE":
+            curv2 = Polyline([_joinCurve.pt0, _joinCurve.pt1])
+        else:
+            curv2 = _joinCurve
+
+        tol = Pnt2D(_tol, _tol)
+
+        # check curves initial point
+        if Pnt2D.equal(curv1.pts[0], _pt, tol):
+            init_pt1 = True
+        else:
+            init_pt1 = False
+
+        if Pnt2D.equal(curv2.pts[0], _pt, tol):
+            init_pt2 = True
+        else:
+            init_pt2 = False
+
+        # polyline points
+        curv1_pts = curv1.getEquivPolyline()
+        curv2_pts = curv2.getEquivPolyline()
+
+        joinned_pts = []
+        if init_pt1 and init_pt2:
+            curv1_pts.reverse()
+            curv1_pts.pop()
+            joinned_pts.extend(curv1_pts)
+            joinned_pts.extend(curv2_pts)
+
+        elif not init_pt1 and not init_pt2:
+            curv1_pts.pop()
+            joinned_pts.extend(curv1_pts)
+            curv2_pts.reverse()
+            joinned_pts.extend(curv2_pts)
+
+        elif init_pt1 and not init_pt2:
+            joinned_pts.extend(curv2_pts)
+            joinned_pts.pop()
+            joinned_pts.extend(curv1_pts)
+
+        elif not init_pt1 and init_pt2:
+            joinned_pts.extend(curv1_pts)
+            joinned_pts.pop()
+            joinned_pts.extend(curv2_pts)
+
+        curv = Polyline(joinned_pts)
+        return True, curv, None
+
+    # ---------------------------------------------------------------------
     def getEquivPolyline(self):
-        return self.pts
+        equivPoly = []
+        if self.nPts < 2:
+            return equivPoly
+        for i in range(0, self.nPts):
+            equivPoly.append(self.pts[i])
+        return equivPoly
 
     # ---------------------------------------------------------------------
     def getEquivPolylineCollecting(self, _pt):
         tempPts = []
         for i in range(0, self.nPts):
             tempPts.append(self.pts[i])
-
         tempPts.append(_pt)
         return tempPts
 
@@ -328,6 +414,21 @@ class Polyline(Curve):
 
         clstPt = Pnt2D(xOn, yOn)
         return status, clstPt, dmin, seg, arcLen
+
+    # ---------------------------------------------------------------------
+    def updateParametricValue(self, _t):
+        if _t >= 1.0:
+            return 1.0
+        elif _t <= 0.0:
+            return 0.0
+
+        knots = self.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+
+        prev_id, loc_t = self.findPointLocationSeg(_t)
+        t = knots[prev_id] + loc_t * (knots[prev_id + 1] - knots[prev_id])
+        return t
 
     # ---------------------------------------------------------------------
     def closestPoint(self, _x, _y):
@@ -410,14 +511,16 @@ class Polyline(Curve):
     # ---------------------------------------------------------------------
     def getYend(self):
         return self.pts[-1].getY()
-    
+
     # ---------------------------------------------------------------------
-    def getInitPt(self):
-        return self.pts[0]
-    
+    def getPntInit(self):
+        pt = Pnt2D(self.pts[0].getX(), self.pts[0].getY())
+        return pt
+
     # ---------------------------------------------------------------------
-    def getEndPt(self):
-        return self.pts[-1]
+    def getPntEnd(self):
+        pt = Pnt2D(self.pts[-1].getX(), self.pts[-1].getY())
+        return pt
 
     # ---------------------------------------------------------------------
     def length(self):
@@ -428,21 +531,6 @@ class Polyline(Curve):
                            (self.pts[i + 1].getY() - self.pts[i].getY()) *
                            (self.pts[i + 1].getY() - self.pts[i].getY()))
         return L
-    
-    # ---------------------------------------------------------------------
-    def updateParametricValue(self, _t):
-        if _t >= 1.0:
-            return 1.0
-        elif _t <= 0.0:
-            return 0.0
-
-        knots = self.nurbs.knotvector
-        knots = list(set(knots)) # Remove duplicates
-        knots.sort()
-
-        prev_id, loc_t = self.findPointLocationSeg(_t)
-        t = knots[prev_id] + loc_t * (knots[prev_id + 1] - knots[prev_id])
-        return t
         
     # ---------------------------------------------------------------------
     def getDataToInitCurve(self):
@@ -451,60 +539,3 @@ class Polyline(Curve):
             pts.append([self.pts[i].getX(), self.pts[i].getY()])
         data = {'pts': pts}
         return data
-    
-    # ---------------------------------------------------------------------
-    def updateLineEditValues(self, _NumctrlPts, _y, _LenAndAng):
-        x = self.pts[_NumctrlPts - 1].getX()
-        y = self.pts[_NumctrlPts - 1].getY()
-        return x, y
-    
-    # ---------------------------------------------------------------------
-    @staticmethod
-    def joinTwoCurves(_curv1, _curv2, _pt, _tol):
-        if _curv1.type == "LINE":
-            _curv1 = Polyline([_curv1.pt0, _curv1.pt1])
-        if _curv2.type == "LINE":
-            _curv2 = Polyline([_curv2.pt0, _curv2.pt1])
-
-        tol = Pnt2D(_tol, _tol)
-
-        # check curves initial point
-        if Pnt2D.equal(_curv1.pts[0], _pt, tol):
-            init_pt1 = True
-        else:
-            init_pt1 = False
-
-        if Pnt2D.equal(_curv2.pts[0], _pt, tol):
-            init_pt2 = True
-        else:
-            init_pt2 = False
-
-        # polyline points
-        curv1_pts = _curv1.getEquivPolyline()
-        curv2_pts = _curv2.getEquivPolyline()
-
-        joinned_pts = []
-        if init_pt1 and init_pt2:
-            curv1_pts.reverse()
-            curv1_pts.pop()
-            joinned_pts.extend(curv1_pts)
-            joinned_pts.extend(curv2_pts)
-
-        elif not init_pt1 and not init_pt2:
-            curv1_pts.pop()
-            joinned_pts.extend(curv1_pts)
-            curv2_pts.reverse()
-            joinned_pts.extend(curv2_pts)
-
-        elif init_pt1 and not init_pt2:
-            joinned_pts.extend(curv2_pts)
-            joinned_pts.pop()
-            joinned_pts.extend(curv1_pts)
-
-        elif not init_pt1 and init_pt2:
-            joinned_pts.extend(curv1_pts)
-            joinned_pts.pop()
-            joinned_pts.extend(curv2_pts)
-
-        curv = Polyline(joinned_pts)
-        return curv, None

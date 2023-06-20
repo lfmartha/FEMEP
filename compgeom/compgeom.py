@@ -73,13 +73,15 @@ class CompGeom:
     # snapped to one of the segment end points.
     @staticmethod
     def getClosestPointSegment(_p1, _p2, _p):
-        # **** COMPLETE HERE: COMPGEOM_01 ****
+        # **** CHECK THIS: LFM - 02jun2023 ****
         if _p1 == _p2:
             dist = Pnt2D.euclidiandistance(_p2, _p)
             pC = _p2
             t = 1.0
             return dist, pC, t
+        # **** CHECK THIS: LFM - 02jun2023 ****
         
+        # **** COMPLETE HERE: COMPGEOM_01 ****
         v12 = _p2 - _p1
         v1p = _p - _p1
 
@@ -202,7 +204,7 @@ class CompGeom:
     # Checks for two line segments intersection:
     # Checks whether segment 'p1'-'p2' intercepts segment 'p3'-'p4'.
     # Returns an integer intersection type value.
-    # In case there is intersection, outputs the result in 'pi' parameter
+    # In case there is intersection, outputs the result in 'ptInters' parameter
     # and returns parametric values ('t12' and 't34' between 0 and 1) along
     # the two segments.
     # Ref.:
@@ -266,22 +268,22 @@ class CompGeom:
         if sign123 == 'ZERO' or sign124 == 'ZERO':
             if sign123 == 'ZERO':
                 t34 = 0.0
-                pi = _p3
+                ptInters = _p3
             elif sign124 == 'ZERO':
                 t34 = 1.0
-                pi = _p4
+                ptInters = _p4
             if sign341 == 'ZERO':
                 t12 = 0.0
-                pi = _p1
+                ptInters = _p1
             elif sign342 == 'ZERO':
                 t12 = 1.0
-                pi = _p2
+                ptInters = _p2
             else:
                 area341 = CompGeom.valArea2d(_p3, _p4, _p1)
                 area342 = CompGeom.valArea2d(_p3, _p4, _p2)
                 t12 = area341 / (area341 - area342)
 
-            return 'TOUCH', pi, t12, t34
+            return 'TOUCH', ptInters, t12, t34
         # **** COMPLETE HERE: COMPGEOM_05 ****
 
         # Check for one point of first segment touching second segment
@@ -292,22 +294,22 @@ class CompGeom:
         if sign341 == 'ZERO' or sign342 == 'ZERO':
             if sign341 == 'ZERO':
                 t12 = 0.0
-                pi = _p1
+                ptInters = _p1
             elif sign342 == 'ZERO':
                 t12 = 1.0
-                pi = _p2
+                ptInters = _p2
             if sign123 == 'ZERO':
                 t34 = 0.0
-                pi = _p3
+                ptInters = _p3
             elif sign124 == 'ZERO':
                 t34 = 1.0
-                pi = _p4
+                ptInters = _p4
             else:
                 area123 = CompGeom.valArea2d(_p1, _p2, _p3)
                 area124 = CompGeom.valArea2d(_p1, _p2, _p4)
                 t34 = area123 / (area123 - area124)
 
-            return 'TOUCH', pi, t12, t34
+            return 'TOUCH', ptInters, t12, t34
         # **** COMPLETE HERE: COMPGEOM_06 ****
 
         # When get to this point, there is an intersection point of the
@@ -361,14 +363,14 @@ class CompGeom:
         paramA = []
         paramB = []
 
-        status, pi, t12, t34 = CompGeom.computeSegmentSegmentIntersection(
+        status, ptInters, t12, t34 = CompGeom.computeSegmentSegmentIntersection(
             _p1, _p2, _p3, _p4)
 
         if status == 'DO_NOT_INTERSECT':
             return False, pts, paramA, paramB
 
         elif status == 'DO_INTERSECT':
-            pts.append(pi)
+            pts.append(ptInters)
             paramA.append(t12)
             paramB.append(t34)
             return True, pts, paramA, paramB
@@ -630,7 +632,7 @@ class CompGeom:
             # one segments touches the other, in the middle or extremity!
             # checks if the curves are not consecutive segments
             # checks if the polygons touch at the extremities
-            pts.append(pi)
+            pts.append(ptInters)
             paramA.append(t12)
             paramB.append(t34)
             return True, pts, paramA, paramB
@@ -641,25 +643,31 @@ class CompGeom:
     @staticmethod
     def splitSelfIntersected(_poly):
 
-        # verifies for each pair of possible segments if they intersect, and
-        # stores for both segments the parametric coordinate where intersection occurs
+        # Verifies for each pair of possible segments whether they intersect, and
+        # stores for both segments the parametric coordinate where intersection occurs.
+        # "intersecParams" is a list of records of self intersect points in which each
+        # item stores, in this order, the parametric value of the intersection point,
+        # the intersection point (its coordinates), and an overlap flag that indicates
+        # that the next segment in _poly overlaps with a previous segment.
         iStatus = False
         segA_TotalLength = 0.0
         segB_TotalLength = 0.0
         intersecParams = []
         params = []
         pts = []
-        for i in range(0, len(_poly)-1):
+        overlap = []
+
+        for i in range(0, len(_poly) - 1):
             segA_PartialLength = Pnt2D.euclidiandistance(
                 _poly[i], _poly[i + 1])
             segB_TotalLength = segA_TotalLength + segA_PartialLength
             segB_PartialLength = 0.0
 
-            for j in range(i+1, len(_poly)-1):
+            for j in range(i + 1, len(_poly) - 1):
                 segB_PartialLength = Pnt2D.euclidiandistance(
                     _poly[j], _poly[j + 1])
-                status, pi, t12, t34 = CompGeom.computeSegmentSegmentIntersection(_poly[i], _poly[i + 1],
-                                                                                  _poly[j], _poly[j + 1])
+                status, ptInters, t12, t34 = CompGeom.computeSegmentSegmentIntersection(
+                                                _poly[i], _poly[i + 1], _poly[j], _poly[j + 1])
 
                 if status == 'DO_NOT_INTERSECT':
                     # do nothing, continue the checking!
@@ -667,9 +675,9 @@ class CompGeom:
                 elif status == 'DO_INTERSECT':
                     # the straight segments intersect in the middle!
                     intersecParams.append([
-                        segA_TotalLength + t12*segA_PartialLength, pi])
+                        segA_TotalLength + t12 * segA_PartialLength, ptInters, False])
                     intersecParams.append([
-                        segB_TotalLength + t34*segB_PartialLength, pi])
+                        segB_TotalLength + t34 * segB_PartialLength, ptInters, False])
                     iStatus = True
                 elif status == 'COLLINEAR':
                     # the straight segments are collinear !
@@ -692,13 +700,11 @@ class CompGeom:
                          (pos3_12 == 'AFTER_SEG' and pos4_12 == 'END_SEG')):
 
                         # Segments simply touch at one end without overlapping
-                        if i == 0 and j == len(_poly)-2:
+                        if i == 0 and j == len(_poly) - 2:
                             segA_InterAtParam = segA_TotalLength
                             segB_InterAtParam = segB_TotalLength + segB_PartialLength
-                            intersecParams.append(
-                                [segA_InterAtParam, _poly[i]])
-                            intersecParams.append(
-                                [segB_InterAtParam, _poly[j + 1]])
+                            intersecParams.append([segA_InterAtParam, _poly[i], False])
+                            intersecParams.append([segB_InterAtParam, _poly[j + 1], False])
                             iStatus = True
 
                     elif pos3_12 == 'START_SEG' and pos4_12 == 'END_SEG':
@@ -707,48 +713,46 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append(
-                            [segA_InterAtParam, _poly[i + 1]])
-                        intersecParams.append(
-                            [segB_InterAtParam, _poly[i + 1]])
+                        intersecParams.append([segA_InterAtParam, _poly[i + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'END_SEG' and pos4_12 == 'START_SEG':
                         segA_InterAtParam = segA_TotalLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], False])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j]])
-                        intersecParams.append([segB_InterAtParam, _poly[j]])
+                        intersecParams.append([segA_InterAtParam, _poly[j], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j], True])
                         iStatus = True
 
                     elif pos3_12 == 'BEFORE_SEG' and pos4_12 == 'INSIDE_SEG':
                         segA_InterAtParam = segA_TotalLength
-                        segB_InterAtParam = segB_TotalLength + t1_34*segB_PartialLength
+                        segB_InterAtParam = segB_TotalLength + t1_34 * segB_PartialLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], True])
 
-                        segA_InterAtParam = segA_TotalLength + t4_12*segA_PartialLength
+                        segA_InterAtParam = segA_TotalLength + t4_12 * segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[j+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[j + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'INSIDE_SEG' and pos4_12 == 'BEFORE_SEG':
@@ -756,15 +760,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength + t1_34 * segB_PartialLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], False])
 
                         segA_InterAtParam = segA_TotalLength + t3_12 * segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j]])
-                        intersecParams.append([segB_InterAtParam, _poly[j]])
+                        intersecParams.append([segA_InterAtParam, _poly[j], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j], True])
                         iStatus = True
 
                     elif pos3_12 == 'BEFORE_SEG' and pos4_12 == 'END_SEG':
@@ -772,15 +776,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength + t1_34 * segB_PartialLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[i+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[i + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'END_SEG' and pos4_12 == 'BEFORE_SEG':
@@ -788,15 +792,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength + t1_34 * segB_PartialLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], False])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j]])
-                        intersecParams.append([segB_InterAtParam, _poly[j]])
+                        intersecParams.append([segA_InterAtParam, _poly[j], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j], True])
                         iStatus = True
 
                     elif pos3_12 == 'START_SEG' and pos4_12 == 'INSIDE_SEG':
@@ -804,15 +808,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], True])
 
                         segA_InterAtParam = segA_TotalLength + t4_12 * segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[j+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[j + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'INSIDE_SEG' and pos4_12 == 'START_SEG':
@@ -820,15 +824,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], False])
 
                         segA_InterAtParam = segA_TotalLength + t3_12 * segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j]])
-                        intersecParams.append([segB_InterAtParam, _poly[j]])
+                        intersecParams.append([segA_InterAtParam, _poly[j], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j], True])
                         iStatus = True
 
                     elif pos3_12 == 'INSIDE_SEG' and pos4_12 == 'INSIDE_SEG':
@@ -837,38 +841,30 @@ class CompGeom:
                             segB_InterAtParam = segB_TotalLength
 
                             # Store fisrt pair of intersection parameters
-                            intersecParams.append(
-                                [segA_InterAtParam, _poly[j]])
-                            intersecParams.append(
-                                [segB_InterAtParam, _poly[j]])
+                            intersecParams.append([segA_InterAtParam, _poly[j], False])
+                            intersecParams.append([segB_InterAtParam, _poly[j], True])
 
                             segA_InterAtParam = segA_TotalLength + t4_12 * segA_PartialLength
                             segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                             # Store second pair of intersection parameters
-                            intersecParams.append(
-                                [segA_InterAtParam, _poly[j+1]])
-                            intersecParams.append(
-                                [segB_InterAtParam, _poly[j+1]])
+                            intersecParams.append([segA_InterAtParam, _poly[j + 1], False])
+                            intersecParams.append([segB_InterAtParam, _poly[j + 1], False])
 
                         else:
                             segA_InterAtParam = segA_TotalLength + t4_12 * segA_PartialLength
                             segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                             # Store fisrt pair of intersection parameters
-                            intersecParams.append(
-                                [segA_InterAtParam, _poly[j+1]])
-                            intersecParams.append(
-                                [segB_InterAtParam, _poly[j+1]])
+                            intersecParams.append([segA_InterAtParam, _poly[j + 1], False])
+                            intersecParams.append([segB_InterAtParam, _poly[j + 1], False])
 
                             segA_InterAtParam = segA_TotalLength + t3_12 * segA_PartialLength
                             segB_InterAtParam = segB_TotalLength
 
                             # Store second pair of intersection parameters
-                            intersecParams.append(
-                                [segA_InterAtParam, _poly[j]])
-                            intersecParams.append(
-                                [segB_InterAtParam, _poly[j]])
+                            intersecParams.append([segA_InterAtParam, _poly[j], False])
+                            intersecParams.append([segB_InterAtParam, _poly[j], True])
 
                         iStatus = True
 
@@ -877,15 +873,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength + t1_34 * segB_PartialLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[i+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[i + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'AFTER_SEG' and pos4_12 == 'BEFORE_SEG':
@@ -893,15 +889,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength + t1_34 * segB_PartialLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], False])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[i+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[i + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i + 1], True])
                         iStatus = True
 
                     elif pos3_12 == 'INSIDE_SEG' and pos4_12 == 'END_SEG':
@@ -909,15 +905,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j]])
-                        intersecParams.append([segB_InterAtParam, _poly[j]])
+                        intersecParams.append([segA_InterAtParam, _poly[j], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[i+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[i + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'END_SEG' and pos4_12 == 'INSIDE_SEG':
@@ -925,15 +921,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[j+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[j + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j + 1], False])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j]])
-                        intersecParams.append([segB_InterAtParam, _poly[j]])
+                        intersecParams.append([segA_InterAtParam, _poly[j], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j], True])
                         iStatus = True
 
                     elif pos3_12 == 'START_SEG' and pos4_12 == 'AFTER_SEG':
@@ -941,15 +937,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[i+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[i + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'AFTER_SEG' and pos4_12 == 'START_SEG':
@@ -957,15 +953,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i]])
-                        intersecParams.append([segB_InterAtParam, _poly[i]])
+                        intersecParams.append([segA_InterAtParam, _poly[i], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i], False])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[i+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[i + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i + 1], True])
                         iStatus = True
 
                     elif pos3_12 == 'INSIDE_SEG' and pos4_12 == 'AFTER_SEG':
@@ -973,15 +969,15 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j]])
-                        intersecParams.append([segB_InterAtParam, _poly[j]])
+                        intersecParams.append([segA_InterAtParam, _poly[j], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[i+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[i + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'AFTER_SEG' and pos4_12 == 'INSIDE_SEG':
@@ -989,72 +985,90 @@ class CompGeom:
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store fisrt pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[j+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[j+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[j + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[j + 1], False])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
-                        intersecParams.append([segA_InterAtParam, _poly[i+1]])
-                        intersecParams.append([segB_InterAtParam, _poly[i+1]])
+                        intersecParams.append([segA_InterAtParam, _poly[i + 1], False])
+                        intersecParams.append([segB_InterAtParam, _poly[i + 1], True])
                         iStatus = True
                 elif status == 'TOUCH':
                     # one segments touches the other
 
                     # avoid consecutive segments
-                    if j != (i+1):
+                    if j != (i + 1):
                         intersecParams.append(
-                            [segA_TotalLength + t12*segA_PartialLength, pi])
+                            [segA_TotalLength + t12 * segA_PartialLength, ptInters, False])
                         intersecParams.append(
-                            [segB_TotalLength + t34*segB_PartialLength, pi])
+                            [segB_TotalLength + t34 * segB_PartialLength, ptInters, False])
                         iStatus = True
 
                 segB_TotalLength += segB_PartialLength
 
             segA_TotalLength += segA_PartialLength
 
-        # removes duplicate elements
-        unique_intersecParams = []
-        for item in intersecParams:
-            if item not in unique_intersecParams:
-                unique_intersecParams.append(item)
+        if iStatus:
+            # Sorts the "intersecParams" list in parametric order.
+            intersecParams.sort()
 
-        unique_intersecParams.sort()
+            # Removes repeated consecutive parametric values.
+            # In case of repeated two consecutive values, force
+            # the true overlap flag to prevail in the list of
+            # unrepeated parametric records.
+            unrepeated_intersecParams = []
+            prev = intersecParams[0]
+            unrepeated_intersecParams.append(prev)
+            for i in range(1, len(intersecParams)):
+                curr = intersecParams[i]
+                if abs(curr[0] - prev[0]) > CompGeom.ABSTOL:
+                    unrepeated_intersecParams.append(curr)
+                else:
+                    overlapCurr = curr[2]
+                    if overlapCurr:
+                        unrepeated_intersecParams[-1][2] = True
+                prev = curr
 
-        # Calculate the parameters based on its partial length
-        for it in unique_intersecParams:
-            params.append(it[0]/segA_TotalLength)
-            pts.append(it[1])
+            # Calculate the parameters based on its partial length
+            for it in unrepeated_intersecParams:
+                params.append(it[0]/segA_TotalLength)
+                pts.append(it[1])
+                overlap.append(it[2])
 
-        return iStatus, pts, params
+        return iStatus, pts, params, overlap
 
     # ---------------------------------------------------------------------
     @staticmethod
-    def computePolyPolyIntersection(_poly1, _poly2):
+    def computePolyPolyIntersection(_polyA, _polyB):
 
-        # verifies for each pair of possible segments if they intersect, and
-        # stores for both segments the parametric coordinate where intersection occurs
+        # Verifies for each pair of possible segments whether they intersect, and
+        # stores for both segments the parametric coordinate where intersection occurs.
+        # "intersecParams" is a list of records of intersect points in which each item
+        # stores, in this order, the parametric value in _polyA, the parametric
+        # value in _polyB, the intersection point (its coordinates), and an overlap
+        # flag that indicates that the next segment in _polyA overlaps with _polyB.
         segA_TotalLength = 0.0
         iStatus = False
         intersecParams = []
         paramA = []
         paramB = []
         pts = []
-        overlap = []
+        overlapA = []
 
-        for i in range(0, len(_poly1)-1):
+        for i in range(0, len(_polyA)-1):
             segA_PartialLength = Pnt2D.euclidiandistance(
-                _poly1[i], _poly1[i + 1])
+                _polyA[i], _polyA[i + 1])
             segB_PartialLength = 0.0
             segB_TotalLength = 0.0
 
-            for j in range(0, len(_poly2)-1):
+            for j in range(0, len(_polyB)-1):
 
                 segB_PartialLength = Pnt2D.euclidiandistance(
-                    _poly2[j], _poly2[j + 1])
-                status, pi, t12, t34 = CompGeom.computeSegmentSegmentIntersection(
-                    _poly1[i], _poly1[i+1], _poly2[j], _poly2[j + 1])
+                    _polyB[j], _polyB[j + 1])
+                status, ptInters, t12, t34 = CompGeom.computeSegmentSegmentIntersection(
+                    _polyA[i], _polyA[i + 1], _polyB[j], _polyB[j + 1])
 
                 if status == 'DO_NOT_INTERSECT':
                     # do nothing, continue the checking
@@ -1064,18 +1078,18 @@ class CompGeom:
                     segA_InterAtParam = segA_TotalLength + t12 * segA_PartialLength
                     segB_InterAtParam = segB_TotalLength + t34 * segB_PartialLength
                     intersecParams.append(
-                        [segA_InterAtParam, segB_InterAtParam, pi, False])
+                        [segA_InterAtParam, segB_InterAtParam, ptInters, False])
                     iStatus = True
 
                 elif status == 'COLLINEAR':
                     pos3_12, t3_12 = CompGeom.getPtPosWrtSegment(
-                        _poly1[i], _poly1[i + 1], _poly2[j])
+                        _polyA[i], _polyA[i + 1], _polyB[j])
                     pos4_12, t4_12 = CompGeom.getPtPosWrtSegment(
-                        _poly1[i], _poly1[i + 1], _poly2[j + 1])
+                        _polyA[i], _polyA[i + 1], _polyB[j + 1])
                     pos1_34, t1_34 = CompGeom.getPtPosWrtSegment(
-                        _poly2[j], _poly2[j + 1], _poly1[i])
+                        _polyB[j], _polyB[j + 1], _polyA[i])
                     pos2_34, t2_34 = CompGeom.getPtPosWrtSegment(
-                        _poly2[j], _poly2[j + 1], _poly1[i + 1])
+                        _polyB[j], _polyB[j + 1], _polyA[i + 1])
 
                     if ((pos3_12 == 'BEFORE_SEG' and pos4_12 == 'BEFORE_SEG') or
                         (pos3_12 == 'AFTER_SEG' and pos4_12 == 'AFTER_SEG')):
@@ -1086,28 +1100,28 @@ class CompGeom:
                         segA_InterAtParam = segA_TotalLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], False])
                         iStatus = True
 
                     elif pos3_12 == 'START_SEG' and pos4_12 == 'BEFORE_SEG':
                         segA_InterAtParam = segA_TotalLength
                         segB_InterAtParam = segB_TotalLength
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], False])
                         iStatus = True
 
                     elif pos3_12 == 'END_SEG' and pos4_12 == 'AFTER_SEG':
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i+1], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'AFTER_SEG' and pos4_12 == 'END_SEG':
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'START_SEG' and pos4_12 == 'END_SEG':
@@ -1116,14 +1130,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'END_SEG' and pos4_12 == 'START_SEG':
@@ -1132,14 +1146,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'BEFORE_SEG' and pos4_12 == 'INSIDE_SEG':
@@ -1149,14 +1163,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + t4_12 * segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly2[j + 1], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyB[j + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'INSIDE_SEG' and pos4_12 == 'BEFORE_SEG':
@@ -1166,14 +1180,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + t3_12 * segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly2[j], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyB[j], False])
                         iStatus = True
 
                     elif pos3_12 == 'BEFORE_SEG' and pos4_12 == 'END_SEG':
@@ -1183,14 +1197,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'END_SEG' and pos4_12 == 'BEFORE_SEG':
@@ -1200,14 +1214,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'START_SEG' and pos4_12 == 'INSIDE_SEG':
@@ -1217,14 +1231,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + t4_12 * segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly2[j + 1], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyB[j + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'INSIDE_SEG' and pos4_12 == 'START_SEG':
@@ -1234,14 +1248,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + t3_12 * segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly2[j], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyB[j], False])
                         iStatus = True
 
                     elif pos3_12 == 'INSIDE_SEG' and pos4_12 == 'INSIDE_SEG':
@@ -1253,14 +1267,14 @@ class CompGeom:
 
                             # Store fisrt pair of intersection parameters
                             intersecParams.append(
-                                [segA_InterAtParam, segB_InterAtParam, _poly2[j], True])
+                                [segA_InterAtParam, segB_InterAtParam, _polyB[j], True])
 
                             segA_InterAtParam = segA_TotalLength + t4_12 * segA_PartialLength
                             segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                             # Store second pair of intersection parameters
                             intersecParams.append(
-                                [segA_InterAtParam, segB_InterAtParam, _poly2[j + 1], True])
+                                [segA_InterAtParam, segB_InterAtParam, _polyB[j + 1], False])
 
                         else:
 
@@ -1269,14 +1283,14 @@ class CompGeom:
 
                             # Store fisrt pair of intersection parameters
                             intersecParams.append(
-                                [segA_InterAtParam, segB_InterAtParam, _poly2[j + 1], True])
+                                [segA_InterAtParam, segB_InterAtParam, _polyB[j + 1], True])
 
                             segA_InterAtParam = segA_TotalLength + t3_12 * segA_PartialLength
                             segB_InterAtParam = segB_TotalLength
 
                             # Store second pair of intersection parameters
                             intersecParams.append(
-                                [segA_InterAtParam, segB_InterAtParam, _poly2[j], True])
+                                [segA_InterAtParam, segB_InterAtParam, _polyB[j], False])
 
                         iStatus = True
 
@@ -1287,14 +1301,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'AFTER_SEG' and pos4_12 == 'BEFORE_SEG':
@@ -1304,14 +1318,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'INSIDE_SEG' and pos4_12 == 'END_SEG':
@@ -1321,14 +1335,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly2[j], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyB[j], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'END_SEG' and pos4_12 == 'INSIDE_SEG':
@@ -1338,14 +1352,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly2[j + 1], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyB[j + 1], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'START_SEG' and pos4_12 == 'AFTER_SEG':
@@ -1355,14 +1369,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'AFTER_SEG' and pos4_12 == 'START_SEG':
@@ -1372,14 +1386,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'INSIDE_SEG' and pos4_12 == 'AFTER_SEG':
@@ -1389,14 +1403,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly2[j], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyB[j], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], False])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                     elif pos3_12 == 'AFTER_SEG' and pos4_12 == 'INSIDE_SEG':
@@ -1406,14 +1420,14 @@ class CompGeom:
 
                         # Store fisrt pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly2[j + 1], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyB[j + 1], True])
 
                         segA_InterAtParam = segA_TotalLength + segA_PartialLength
                         segB_InterAtParam = segB_TotalLength + t2_34 * segB_PartialLength
 
                         # Store second pair of intersection parameters
                         intersecParams.append(
-                            [segA_InterAtParam, segB_InterAtParam, _poly1[i + 1], True])
+                            [segA_InterAtParam, segB_InterAtParam, _polyA[i + 1], False])
                         iStatus = True
 
                 elif status == 'TOUCH':
@@ -1425,7 +1439,7 @@ class CompGeom:
                     segA_InterAtParam = segA_TotalLength + t12 * segA_PartialLength
                     segB_InterAtParam = segB_TotalLength + t34 * segB_PartialLength
                     intersecParams.append(
-                        [segA_InterAtParam, segB_InterAtParam, pi, False])
+                        [segA_InterAtParam, segB_InterAtParam, ptInters, False])
                     iStatus = True
 
                 segB_TotalLength += segB_PartialLength
@@ -1433,33 +1447,35 @@ class CompGeom:
             segA_TotalLength += segA_PartialLength
 
         if iStatus:
-            # removes repeated consecutive parametric values
+            # Sorts the pairs of params by the _polyA parametric order.
+            intersecParams.sort()
+
+            # Removes repeated consecutive parametric values.
+            # In case of repeated two consecutive values, force
+            # the true overlap flag to prevail in the list of
+            # unrepeated parametric records.
             unrepeated_intersecParams = []
             prev = intersecParams[0]
             unrepeated_intersecParams.append(prev)
             for i in range(1, len(intersecParams)):
                 curr = intersecParams[i]
                 if((abs(curr[0] - prev[0]) > CompGeom.ABSTOL) and
-                (abs(curr[1] - prev[1]) > CompGeom.ABSTOL)):
+                   (abs(curr[1] - prev[1]) > CompGeom.ABSTOL)):
                     unrepeated_intersecParams.append(curr)
+                else:
+                    overlapCurr = curr[3]
+                    if overlapCurr:
+                        unrepeated_intersecParams[-1][3] = True
                 prev = curr
 
-            # removes duplicate elements
-            unique_intersecParams = []
-            for item in unrepeated_intersecParams:
-                if item not in unique_intersecParams:
-                    unique_intersecParams.append(item)
-
-            # sorts the pairs of params by the _poly1 parametric order
-            unique_intersecParams.sort()
-
-            for it in unique_intersecParams:
+            # for it in unique_intersecParams:
+            for it in unrepeated_intersecParams:
                 paramA.append(it[0]/segA_TotalLength)
                 paramB.append(it[1]/segB_TotalLength)
                 pts.append(it[2])
-                overlap.append(it[3])
+                overlapA.append(it[3])
 
-        return iStatus, pts, paramA, paramB, overlap
+        return iStatus, pts, paramA, paramB, overlapA
 
     # ---------------------------------------------------------------------
     # This function returns a flag indicating whether the vertices
@@ -1510,7 +1526,7 @@ class CompGeom:
 
         for i in range(0, n):
             p1 = _poly[i]  # first point of current line segment
-            p2 = _poly[(i+1) % n]  # second point of current line segment
+            p2 = _poly[(i + 1) % n]  # second point of current line segment
 
         # **** COMPLETE HERE: COMPGEOM_08 ****
             if (p1.getY() == p2.getY()):  # discard horizontal line

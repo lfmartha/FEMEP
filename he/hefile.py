@@ -967,16 +967,11 @@ class HeFile():
 
             # type of analysis
             file.write("%HEADER.ANALYSIS\n")
-            file.write("'plane_stress'\n")
-            file.write("\n")
-
-            # analysis method
-            file.write("%HEADER.ANALYSIS.METHOD\n")
             if isIsogeometric:
-                file.write("'ISOGEOMETRIC'\n")
+                file.write("'plane_stress ISOGEOMETRIC'\n")
                 file.write("\n")
             else:
-                file.write("'ISOPARAMETRIC'\n")
+                file.write("'plane_stress ISOPARAMETRIC'\n")
                 file.write("\n")
 
             # number of nodes

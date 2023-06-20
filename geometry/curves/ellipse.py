@@ -42,7 +42,7 @@ class Ellipse(Curve):
                         axis1_vec = self.ellip1 - self.center
                         ellip2_vec = self.ellip2 - self.center
                         projeInAxis1 = Pnt2D.dotprod(ellip2_vec, axis1_vec) / Pnt2D.size(axis1_vec)
-                        self.axis2 = math.sqrt(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1)
+                        self.axis2 = math.sqrt(abs(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1))
                         self.ellip2 = Pnt2D.rotate(Pnt2D(self.center.getX(), self.center.getY() + self.axis2), self.center, self.ang1)
                         if self.axis2 > 0.0:
                             self.nPts += 1
@@ -85,25 +85,75 @@ class Ellipse(Curve):
                         self.eqPoly.append(self.ellip1)
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _x, _y, _LenAndAng):
-        if not _LenAndAng:
-            pt = Pnt2D(_x, _y)
-        else:
-            len = _x
-            ang = _y * (math.pi / 180.0)
-            dX = len * math.cos(ang)
-            dY = len * math.sin(ang)
-            pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
+    def isUnlimited(self):
+        return False
 
+    # ---------------------------------------------------------------------
+    def updateCollectingPntInfo(self, _x, _y, _LenAndAng):
         if self.nPts == 0:
+            refPtX = None
+            refPtY = None
+            v1 = _x
+            v2 = _y
+
+        elif self.nPts == 1:
+            refPtX = self.center.getX()
+            refPtY = self.center.getY()
+            if _LenAndAng:
+                # Compute first axis
+                drX = _x - self.center.getX()
+                drY = _y - self.center.getY()
+                len_axis1 = math.sqrt(drX * drX + drY * drY)
+                v1 = len_axis1
+
+                # Compute angle for the first axis
+                ang1 = math.atan2(drY, drX)  # -PI < angle <= +PI
+                if ang1 < 0.0:
+                    ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
+                ang1 *= (180.0 / math.pi)
+                v2 = ang1
+            else:
+                v1 = _x
+                v2 = _y
+
+        elif self.nPts == 2:
+            refPtX = self.center.getX()
+            refPtY = self.center.getY()
+            # Compute second axis
+            axis1_vec = self.ellip1 - self.center
+            ellip2_vec = Pnt2D(_x, _y) - self.center
+            projeInAxis1 = Pnt2D.dotprod(ellip2_vec, axis1_vec) / Pnt2D.size(axis1_vec)
+            if _LenAndAng:
+                len_axis2 = math.sqrt(abs(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1))
+                v1 = len_axis2
+                ang2 = self.ang1 * (180.0 / math.pi) + 90.0
+                if ang2 > 360.0:
+                    ang2 -= 360.0  # 0 <= angle < +2PI
+                v2 = ang2
+            else:
+                ellip2 = Pnt2D.rotate(Pnt2D(self.center.getX(), self.center.getY() + self.axis2), self.center, self.ang1)
+                v1 = ellip2.getX()
+                v2 = ellip2.getY()
+
+        return refPtX, refPtY, v1, v2
+
+    # ---------------------------------------------------------------------
+    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+        if self.nPts == 0:
+            pt = Pnt2D(_v1, _v2)
             self.center = pt
             self.nPts += 1
 
         elif self.nPts == 1:
-            closeToOther = False
-            if self.center == pt:
-                closeToOther = True
-            if closeToOther:
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
+            if Pnt2D.euclidiandistance(self.center, pt) <= Curve.COORD_TOL:
                 return
             self.ellip1 = pt
 
@@ -120,12 +170,17 @@ class Ellipse(Curve):
                 self.nPts += 1
 
         elif self.nPts == 2:
-            closeToOther = False
-            if self.center == pt:
-                closeToOther = True
-            if self.ellip1 == pt:
-                closeToOther = True
-            if closeToOther:
+            if not _LenAndAng:
+                pt = Pnt2D(_v1, _v2)
+            else:
+                dist = _v1
+                ang = _v2 * (math.pi / 180.0)
+                dX = dist * math.cos(ang)
+                dY = dist * math.sin(ang)
+                pt = Pnt2D(self.center.getX() + dX, self.center.getY() + dY)
+            if Pnt2D.euclidiandistance(self.center, pt) <= Curve.COORD_TOL:
+                return
+            if Pnt2D.euclidiandistance(self.ellip1, pt) <= Curve.COORD_TOL:
                 return
             self.ellip2 = pt
 
@@ -133,7 +188,7 @@ class Ellipse(Curve):
             axis1_vec = self.ellip1 - self.center
             ellip2_vec = self.ellip2 - self.center
             projeInAxis1 = Pnt2D.dotprod(ellip2_vec, axis1_vec) / Pnt2D.size(axis1_vec)
-            self.axis2 = math.sqrt(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1)
+            self.axis2 = math.sqrt(abs(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1))
             self.ellip2 = Pnt2D.rotate(Pnt2D(self.center.getX(), self.center.getY() + self.axis2), self.center, self.ang1)
             if self.axis2 > 0.0:
                 self.nPts += 1
@@ -176,6 +231,29 @@ class Ellipse(Curve):
             self.eqPoly.append(self.ellip1)
 
     # ---------------------------------------------------------------------
+    def isPossible(self):
+        if self.nPts < 3:
+            return False
+        return True
+
+    # ---------------------------------------------------------------------
+    def getCtrlPoints(self):
+        if self.nPts == 1:
+            return [self.center, self.ellip1]
+        elif self.nPts == 2:
+            return [self.center, self.ellip1, self.ellip2]
+        elif self.nPts == 3:
+            return [self.center, self.ellip1, self.ellip2]
+
+    # ---------------------------------------------------------------------
+    def isStraight(self, _tol):
+        return False
+
+    # ---------------------------------------------------------------------
+    def isClosed(self):
+        return True
+
+    # ---------------------------------------------------------------------
     def evalPoint(self, _t):
         if _t <= 0.0:
             return self.ellip1
@@ -196,39 +274,6 @@ class Ellipse(Curve):
         pt = ders[0]
         tang = ders[1]
         return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
-
-    # ---------------------------------------------------------------------
-    def evalPointCurvature(self, _t):
-        pt = self.evalPoint(_t)
-        CurvVec = 0.0
-        return pt, CurvVec
-
-    # ---------------------------------------------------------------------
-    def isPossible(self):
-        if self.nPts < 3:
-            return False
-        return True
-
-    # ---------------------------------------------------------------------
-    def isUnlimited(self):
-        return False
-
-    # ---------------------------------------------------------------------
-    def getCtrlPoints(self):
-        if self.nPts == 1:
-            return [self.center, self.ellip1]
-        elif self.nPts == 2:
-            return [self.center, self.ellip1, self.ellip2]
-        elif self.nPts == 3:
-            return [self.center, self.ellip1, self.ellip2]
-
-    # ---------------------------------------------------------------------
-    def isStraight(self, _tol):
-        return False
-
-    # ---------------------------------------------------------------------
-    def isClosed(self):
-        return True
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):
@@ -258,7 +303,7 @@ class Ellipse(Curve):
         left.nurbs, right.nurbs = operations.split_curve(self.nurbs, _t)
         return left, right
 
- # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
     def split(self, _t):
         knots = self.nurbs.knotvector
         knots = list(set(knots)) # Remove duplicates
@@ -298,6 +343,10 @@ class Ellipse(Curve):
         left = EllipseArc(left_center, left_ellip1, left_ellip2, left_arc1, left_arc2)
         right = EllipseArc(right_center, right_ellip1, right_ellip2, right_arc1, right_arc2)
         return left, right
+
+    # ---------------------------------------------------------------------
+    def join(self, _joinCurve, _pt, _tol):
+        return False, None, 'Cannot join segments:\n A closed curve may not be joined with another curve.'
 
     # ---------------------------------------------------------------------
     def getEquivPolyline(self):
@@ -495,6 +544,16 @@ class Ellipse(Curve):
         return self.nurbs.ctrlpts[-1][1]
 
     # ---------------------------------------------------------------------
+    def getPntInit(self):
+        pt = Pnt2D(self.nurbs.ctrlpts[0][0], self.nurbs.ctrlpts[0][1])
+        return pt
+
+    # ---------------------------------------------------------------------
+    def getPntEnd(self):
+        pt = Pnt2D(self.nurbs.ctrlpts[-1][0], self.nurbs.ctrlpts[-1][1])
+        return pt
+
+    # ---------------------------------------------------------------------
     def length(self):
         L = operations.length_curve(self.nurbs)
         return L
@@ -505,41 +564,3 @@ class Ellipse(Curve):
                 'ellip1': [self.ellip1.getX(), self.ellip1.getY()],
                 'ellip2': [self.ellip2.getX(), self.ellip2.getY()]}
         return data
-
-    # ---------------------------------------------------------------------
-    def updateLineEditValues(self, _x, _y, _LenAndAng):
-        if self.nPts == 1:
-            if _LenAndAng:
-                # Compute first axis
-                drX = _x - self.center.getX()
-                drY = _y - self.center.getY()
-                len_axis1 = math.sqrt(drX * drX + drY * drY)
-
-                # Compute angle for the first axis
-                ang1 = math.atan2(drY, drX)  # -PI < angle <= +PI
-                if ang1 < 0.0:
-                    ang1 += 2.0 * math.pi  # 0 <= angle < +2PI
-                ang1 *= (180.0 / math.pi)
-                return len_axis1, ang1
-
-            else:
-                return _x, _y
-
-        elif self.nPts == 2:
-            # Compute second axis
-            axis1_vec = self.ellip1 - self.center
-            ellip2_vec = Pnt2D(_x, _y) - self.center
-            projeInAxis1 = Pnt2D.dotprod(ellip2_vec, axis1_vec) / Pnt2D.size(axis1_vec)
-            if _LenAndAng:
-                len_axis2 = math.sqrt(Pnt2D.sizesquare(ellip2_vec) - projeInAxis1 * projeInAxis1)
-                ang2 = self.ang1 * (180.0 / math.pi) + 90.0
-                if ang2 > 360.0:
-                    ang2 -= 360.0  # 0 <= angle < +2PI
-                return len_axis2, ang2
-
-            else:
-                ellip2 = Pnt2D.rotate(Pnt2D(self.center.getX(), self.center.getY() + self.axis2), self.center, self.ang1)
-                return ellip2.getX(), ellip2.getY()
-
-
-

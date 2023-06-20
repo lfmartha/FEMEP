@@ -12,8 +12,8 @@ import math
 class GeoCollector:
     def __init__(self):
         self.geo = None
-        self.prevPt = Point(0.0, 0.0)
-        self.tempPt = Point(0.0, 0.0)
+        self.prevPt = None
+        self.tempPt = None
         self.geoType = None  # POINT, LINE, POLYLINE...
 
     def __del__(self):
@@ -47,6 +47,7 @@ class GeoCollector:
 
     def endGeoCollection(self):
         self.geo = None
+        self.tempPt = None
 
     def isActive(self):
         if self.geo is not None:
@@ -73,26 +74,48 @@ class GeoCollector:
 
     def insertPoint(self, _x, _y, _LenAndAng, _tol):
         if self.isCollecting():
-            if (abs(_x - self.prevPt.getX()) <= _tol and
+            if self.prevPt is not None:
+                if (abs(_x - self.prevPt.getX()) <= _tol and
                     abs(_y - self.prevPt.getY()) <= _tol):
-                return 0
+                    return 0
 
         self.geo.addCtrlPoint(_x, _y, _LenAndAng)
-        self.prevPt.setCoords(_x, _y)
+        if self.prevPt is None:
+            self.prevPt = Point(_x, _y)
+        else:
+            self.prevPt.setCoords(_x, _y)
+        self.tempPt = None
         return 1
 
     def addTempPoint(self, _x, _y):
-        self.tempPt.setCoords(_x, _y)
+        if self.tempPt is None:
+            self.tempPt = Point(_x, _y)
+        else:
+            self.tempPt.setCoords(_x, _y)
         return 1
 
     def getCollectedGeo(self):
         return self.geo
 
     def getDrawPoints(self):
+        if self.geo is None:
+            return []
+        if self.tempPt is None:
+            return []
         return self.geo.getEquivPolylineCollecting(self.tempPt)
 
     def getPoints(self):
-        return self.geo.getCtrlPoints()
+        if self.geo is None:
+            ctrlPts = []
+        else:
+            ctrlPts = self.geo.getCtrlPoints()
+        if ctrlPts == []:
+            pts = []
+        else:
+            pts = ctrlPts.copy()
+        if self.tempPt is not None:
+            pts.append(self.tempPt)
+        return pts
 
     def getBoundBox(self):
         if self.geo is None:
@@ -153,7 +176,7 @@ class GeoCollector:
 
         return NumCtrlPts
 
-    def updateLineEditValues(self, _x, _y, _LenAndAng):
-        v1, v2 = self.geo.updateLineEditValues(_x, _y, _LenAndAng)
+    def updateCollectingPntInfo(self, _x, _y, _LenAndAng):
+        refPtX, refPtY, v1, v2 = self.geo.updateCollectingPntInfo(_x, _y, _LenAndAng)
 
-        return v1, v2
+        return refPtX, refPtY, v1, v2

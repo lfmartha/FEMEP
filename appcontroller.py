@@ -779,6 +779,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
+            canvas.collector.addTempPoint(x, y)
         
         canvas.updatedDsp = False
         canvas.update()
@@ -854,6 +855,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
+            canvas.collector.addTempPoint(x, y)
         
         canvas.updatedDsp = False
         canvas.update()
@@ -885,6 +887,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                         abs(canvas.top-canvas.bottom))
         pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, False, pick_tol)
+        canvas.collector.addTempPoint(x, y)
 
         canvas.updatedDsp = False
         canvas.update()
@@ -960,6 +963,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
+            canvas.collector.addTempPoint(x, y)
         
         canvas.updatedDsp = False
         canvas.update()
@@ -991,6 +995,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                         abs(canvas.top-canvas.bottom))
         pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, False, pick_tol)
+        canvas.collector.addTempPoint(x, y)
 
         canvas.updatedDsp = False
         canvas.update()
@@ -1066,6 +1071,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
+            canvas.collector.addTempPoint(x, y)
         
         canvas.updatedDsp = False
         canvas.update()
@@ -1148,6 +1154,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
+            canvas.collector.addTempPoint(x, y)
         
         canvas.updatedDsp = False
         canvas.update()
@@ -1186,6 +1193,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                         abs(canvas.top-canvas.bottom))
         pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+        canvas.collector.addTempPoint(x, y)
 
         canvas.updatedDsp = False
         canvas.update()
@@ -1276,6 +1284,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
+            canvas.collector.addTempPoint(x, y)
         
         canvas.updatedDsp = False
         canvas.update()
@@ -1314,6 +1323,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                         abs(canvas.top-canvas.bottom))
         pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+        canvas.collector.addTempPoint(x, y)
 
         canvas.updatedDsp = False
         canvas.update()
@@ -1404,6 +1414,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         if not canvas.collector.isActive():
             canvas.collector.startGeoCollection()
             canvas.collector.insertPoint(x, y, False, pick_tol)
+            canvas.collector.addTempPoint(x, y)
         
         canvas.updatedDsp = False
         canvas.update()
@@ -1442,6 +1453,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                         abs(canvas.top-canvas.bottom))
         pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+        canvas.collector.addTempPoint(x, y)
 
         canvas.updatedDsp = False
         canvas.update()
@@ -1488,6 +1500,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                         abs(canvas.top-canvas.bottom))
         pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+        canvas.collector.addTempPoint(x, y)
 
         canvas.updatedDsp = False
         canvas.update()
@@ -1540,6 +1553,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                         abs(canvas.top-canvas.bottom))
         pick_tol = max_size * canvas.pickTolFac
         canvas.collector.insertPoint(x, y, LenAndAng, pick_tol)
+        canvas.collector.addTempPoint(x, y)
 
         canvas.updatedDsp = False
         canvas.update()
@@ -2847,9 +2861,9 @@ class AppController(QMainWindow, Ui_MainWindow):
                 self.polyline_display.EndPointYlineEdit.setText(str(round(yW, 3)))
 
             else:
-                v1, v2 = canvas.collector.updateLineEditValues(NumCtrlPt, 0.0, False)
-                self.polyline_display.InitialPointXlineEdit.setText(str(round(v1, 3)))
-                self.polyline_display.InitialPointYlineEdit.setText(str(round(v2, 3)))
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, False)
+                self.polyline_display.InitialPointXlineEdit.setText(str(round(refX, 3)))
+                self.polyline_display.InitialPointYlineEdit.setText(str(round(refY, 3)))
                 self.polyline_display.EndPointXlineEdit.setText(str(round(xW, 3)))
                 self.polyline_display.EndPointYlineEdit.setText(str(round(yW, 3)))
 
@@ -2863,9 +2877,9 @@ class AppController(QMainWindow, Ui_MainWindow):
                 self.cubicspline_display.EndPointYlineEdit.setText(str(round(yW, 3)))
 
             else:
-                v1, v2 = canvas.collector.updateLineEditValues(NumCtrlPt, 0.0, False)
-                self.cubicspline_display.InitialPointXlineEdit.setText(str(round(v1, 3)))
-                self.cubicspline_display.InitialPointYlineEdit.setText(str(round(v2, 3)))
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, False)
+                self.cubicspline_display.InitialPointXlineEdit.setText(str(round(refX, 3)))
+                self.cubicspline_display.InitialPointYlineEdit.setText(str(round(refY, 3)))
                 self.cubicspline_display.EndPointXlineEdit.setText(str(round(xW, 3)))
                 self.cubicspline_display.EndPointYlineEdit.setText(str(round(yW, 3)))
 
@@ -2880,7 +2894,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                     LenAndAng = False
                 elif Radius_option == "Radius and Angle":
                     LenAndAng = True
-                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, LenAndAng)
                 self.circle_display.RadiusXlineEdit.setText(str(round(v1, 3)))
                 self.circle_display.RadiusYlineEdit.setText(str(round(v2, 3)))
 
@@ -2895,7 +2909,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                     LenAndAng = False
                 elif FirstArcPoint_option == "Radius and Angle":
                     LenAndAng = True
-                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, LenAndAng)
                 self.circlearc_display.FirstArcPointXlineEdit.setText(str(round(v1, 3)))
                 self.circlearc_display.FirstArcPointYlineEdit.setText(str(round(v2, 3)))
 
@@ -2905,7 +2919,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                     LenAndAng = False
                 elif SecondArcPoint_option == "Radius and Angle":
                     LenAndAng = True
-                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, LenAndAng)
                 self.circlearc_display.SecondArcPointXlineEdit.setText(str(round(v1, 3)))
                 self.circlearc_display.SecondArcPointYlineEdit.setText(str(round(v2, 3)))
 
@@ -2920,7 +2934,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                     LenAndAng = False
                 elif FirstAxis_option == "Length and Angle":
                     LenAndAng = True
-                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, LenAndAng)
                 self.ellipse_display.FirstAxisXlineEdit.setText(str(round(v1, 3)))
                 self.ellipse_display.FirstAxisYlineEdit.setText(str(round(v2, 3)))
 
@@ -2930,7 +2944,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                     LenAndAng = False
                 elif SecondAxis_option == "Length and Angle":
                     LenAndAng = True
-                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, LenAndAng)
                 self.ellipse_display.SecondAxisXlineEdit.setText(str(round(v1, 3)))
                 self.ellipse_display.SecondAxisYlineEdit.setText(str(round(v2, 3)))
 
@@ -2945,7 +2959,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                     LenAndAng = False
                 elif FirstAxis_option == "Length and Angle":
                     LenAndAng = True
-                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, LenAndAng)
                 self.ellipsearc_display.FirstAxisXlineEdit.setText(str(round(v1, 3)))
                 self.ellipsearc_display.FirstAxisYlineEdit.setText(str(round(v2, 3)))
 
@@ -2955,7 +2969,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                     LenAndAng = False
                 elif SecondAxis_option == "Length and Angle":
                     LenAndAng = True
-                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, LenAndAng)
                 self.ellipsearc_display.SecondAxisXlineEdit.setText(str(round(v1, 3)))
                 self.ellipsearc_display.SecondAxisYlineEdit.setText(str(round(v2, 3)))
 
@@ -2965,7 +2979,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                     LenAndAng = False
                 elif FirstArcPoint_option == "Length and Angle":
                     LenAndAng = True
-                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, LenAndAng)
                 self.ellipsearc_display.FirstArcPointXlineEdit.setText(str(round(v1, 3)))
                 self.ellipsearc_display.FirstArcPointYlineEdit.setText(str(round(v2, 3)))
 
@@ -2975,7 +2989,7 @@ class AppController(QMainWindow, Ui_MainWindow):
                     LenAndAng = False
                 elif SecondArcPoint_option == "Length and Angle":
                     LenAndAng = True
-                v1, v2 = canvas.collector.updateLineEditValues(xW, yW, LenAndAng)
+                refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, LenAndAng)
                 self.ellipsearc_display.SecondArcPointXlineEdit.setText(str(round(v1, 3)))
                 self.ellipsearc_display.SecondArcPointYlineEdit.setText(str(round(v2, 3)))
 
