@@ -100,24 +100,21 @@ class HeController:
         self.undoredo.begin()
         segmentPts = _curve.getEquivPolyline()
         segment = Segment(segmentPts, _curve)
-        self.addSegment(segment, _tol)
-        self.undoredo.end()
-        self.update()
+        # self.addSegment(segment, _tol)
 
-    def addSegment(self, _segment, _tol):
-        init_pt = Point(_segment.polyline[0].getX(), _segment.polyline[0].getY())
-        end_pt = Point(_segment.polyline[-1].getX(), _segment.polyline[-1].getY())
+        init_pt = Point(segment.polyline[0].getX(), segment.polyline[0].getY())
+        end_pt = Point(segment.polyline[-1].getX(), segment.polyline[-1].getY())
         is_closed = (Pnt2D.euclidiandistance(init_pt, end_pt) <= _tol)
 
         if self.hemodel.isEmpty():
             if is_closed:
                 # in this case insert the initial point and then the closed segment
                 shell = self.makeVertexFace(init_pt)
-                self.makeEdge(_segment, init_pt, init_pt)
+                self.makeEdge(segment, init_pt, init_pt)
             else:
                 shell = self.makeVertexFace(init_pt)
                 self.makeVertexInsideFace(end_pt, shell.face)
-                self.makeEdge(_segment, init_pt, end_pt)
+                self.makeEdge(segment, init_pt, end_pt)
 
         else:
             if is_closed:
@@ -126,14 +123,17 @@ class HeController:
 
             # intersect incoming edge with existing model
             incoming_edge_split_map, existent_edges_split_map = self.intersectModel(
-                _segment, _tol)
+                segment, _tol)
 
             # split the existing edges
             self.splitExistingEdges(existent_edges_split_map)
 
             # insert incoming segments
             self.insertIncomingSegments(
-                _segment, incoming_edge_split_map, _tol)
+                segment, incoming_edge_split_map, _tol)
+            
+        self.undoredo.end()
+        self.update()
 
     def update(self):
 
@@ -1695,7 +1695,7 @@ class HeController:
         self.isChanged = True
         return True
 
-    def setNumberSdv(self, _number, _ratio):
+    def setNumberSdv(self, _number, _ratio, _isIsogeometric):
         nsudv_dict = {
             "type": "Number of Subdivisions",
             "symbol": "Nsbdvs",
@@ -1703,9 +1703,10 @@ class HeController:
             "properties": {
                 "Value": _number,
                 "Ratio": _ratio,
+                "isIsogeometric": _isIsogeometric,
                 "Color": [0, 0, 0]
             },
-            "properties_type": ["int", "float", "color"],
+            "properties_type": ["int", "float", "bool", "color"],
             "applyOnVertex": False,
             "applyOnEdge": True,
             "applyOnFace": False
@@ -1738,56 +1739,8 @@ class HeController:
         self.undoredo.end()
         self.isChanged = True
 
-    def refineUsingKnotInsertion(self):
-        self.undoredo.begin()
-        segments = self.hemodel.getSegments()
-
-        for seg in segments:
-            if seg.isSelected():
-                seg.refineUsingKnotInsertion()
-
-        self.undoredo.end()
-        self.isChanged = True
-
-    def BackToOriginalNurbsRefine(self):
-        self.undoredo.begin()
-        segments = self.hemodel.getSegments()
-
-        for seg in segments:
-            if seg.isSelected():
-                seg.BackToOriginalNurbsRefine()
-
-        self.undoredo.end()
-        self.isChanged = True
-
-    def BackToOriginalNurbs(self):
-        self.undoredo.begin()
-
-        segments = self.hemodel.getSegments()
-
-        seg_list = []
-        for seg in segments:
-            if seg.isSelected():
-                seg_list.append(seg)
-
-        if len(seg_list) > 1:
-            error_text = "Please select just one curve"
-            return False, error_text
-        elif len(seg_list) == 0:
-            error_text = "Please select a curve"
-            return False, error_text
-        
-        for seg in segments:
-            if seg.isSelected():
-                seg.BackToOriginalNurbs()
-
-        self.undoredo.end()
-        self.isChanged = True
-        return True, None
-
     def degreeElevation(self):
         self.undoredo.begin()
-
         segments = self.hemodel.getSegments()
 
         seg_list = []
@@ -1795,11 +1748,8 @@ class HeController:
             if seg.isSelected():
                 seg_list.append(seg)
 
-        if len(seg_list) > 1:
-            error_text = "Please select just one curve"
-            return False, error_text
-        elif len(seg_list) == 0:
-            error_text = "Please select a curve"
+        if len(seg_list) == 0:
+            error_text = "Please select at least one curve"
             return False, error_text
         
         for seg in segments:
@@ -1810,9 +1760,8 @@ class HeController:
         self.isChanged = True
         return True, None
     
-    def ReverseNurbs(self):
+    def knotInsertion(self):
         self.undoredo.begin()
-
         segments = self.hemodel.getSegments()
 
         seg_list = []
@@ -1820,24 +1769,20 @@ class HeController:
             if seg.isSelected():
                 seg_list.append(seg)
 
-        if len(seg_list) > 1:
-            error_text = "Please select just one curve"
-            return False, error_text
-        elif len(seg_list) == 0:
-            error_text = "Please select a curve"
+        if len(seg_list) == 0:
+            error_text = "Please select at least one curve"
             return False, error_text
         
         for seg in segments:
             if seg.isSelected():
-                seg.ReverseNurbs(False)
+                seg.knotInsertion()
 
         self.undoredo.end()
         self.isChanged = True
         return True, None
-
-    def conformSegs(self):
+    
+    def conformNurbsCurves(self):
         self.undoredo.begin()
-
         segments = self.hemodel.getSegments()
 
         seg_list = []
@@ -1849,11 +1794,74 @@ class HeController:
             error_text = "Please select two or more curves"
             return False, error_text
         
-        check, error_text = Segment.conformSegs(seg_list)
+        check, error_text = Segment.conformNurbsCurves(seg_list)
 
         self.undoredo.end()
         self.isChanged = True
         return check, error_text
+
+    def rescueNurbsCurve(self):
+        self.undoredo.begin()
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) == 0:
+            error_text = "Please select at least one curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.rescueNurbsCurve()
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+    
+    def reverseNurbsCurve(self):
+        self.undoredo.begin()
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) == 0:
+            error_text = "Please select at least one curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.reverseNurbsCurve(False)
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+
+    def updateDirectionView(self, status):
+        self.undoredo.begin()
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) == 0:
+            error_text = "Please select at least one curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.updateDirectionView(status)
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
     
     def updateCtrlPolyView(self, status):
         self.undoredo.begin()
@@ -1882,31 +1890,116 @@ class HeController:
             error_text = "Please select an entity"
             return False, error_text
 
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+    
+    def knotInsertionSurf(self):
+        self.undoredo.begin()
+        faces = self.hemodel.selectedFaces()
 
-        # segments = self.hemodel.getSegments()
+        seg_list = []
+        for face in faces:
+            if face.patch.isSelected() and face.patch.nurbs != []:
+                segments = face.patch.segments
+                seg_list.extend(segments)
 
-        # seg_list = []
-        # for seg in segments:
-        #     if seg.isSelected():
-        #         seg_list.append(seg)
+        if len(faces) == 0:
+            error_text = "Please select at least one NURBS surface"
+            return False, error_text
 
-        # if len(seg_list) > 1:
-        #     error_text = "Please select just one entity"
-        #     return False, error_text
-        # elif len(seg_list) == 0:
-        #     error_text = "Please select a entity"
-        #     return False, error_text
-        
-        # for seg in segments:
-        #     if seg.isSelected():
-        #         seg.updateCtrlPolyView(status)
+        for seg in seg_list:
+            seg.knotInsertion()
+
+        # for patch in patch_list:
+        #     patch.knotInsertionSurf()
+
+        #self.generateMesh("Isogeometric", "Quadrilateral", "Linear", "Right", "Optimal")
+
+        for face in faces:
+            nsudv_dict = {
+                "type": "Number of Subdivisions",
+                "symbol": "Nsbdvs",
+                "name": "Nsbdvs",
+                "properties": {
+                    "Value": None,
+                    "Ratio": None,
+                    "isIsogeometric": True,
+                    "Color": [0, 0, 0]
+                },
+                "properties_type": ["int", "float", "bool", "color"],
+                "applyOnVertex": False,
+                "applyOnEdge": True,
+                "applyOnFace": False
+            }
+
+            segments = face.patch.segments
+            for seg in segments:
+                setNumber = SetNumberSdv(seg, nsudv_dict)
+                setNumber.execute()
+                self.undoredo.insertOperation(setNumber)
+
+                setAtt = SetAttribute(seg, nsudv_dict)
+                setAtt.execute()
+                self.undoredo.insertOperation(setAtt)
+
+                # update mesh
+                face1 = seg.edge.he1.loop.face
+                face2 = seg.edge.he2.loop.face
+
+                if face1.patch.mesh is not None:
+                    self.delMesh(face1)
+
+                if face2.patch.mesh is not None:
+                    self.delMesh(face2)
+
+            if not face.patch.isDeleted:
+                nurbsSurf = face.patch.knotInsertionSurf()
+                check, lines, coords, conn, nno, nel, iso_dict = MeshGeneration.isogeometricMesh(nurbsSurf)
+
+            if check:
+                model = HeModel()
+                hecontroller = HeController(model)
+                mesh = Mesh(model, hecontroller)
+
+                mesh_dict = {
+                    "type": "Mesh",
+                    "symbol": "Mesh",
+                    "name": "Isogeometric",
+                    "coords": coords,
+                    "conn": conn,
+                    "IsoGe": iso_dict,
+                    "properties": {
+                        "Element type": "Isogeometric",
+                        "Number of nodes": nno,
+                        "Number of elements": nel
+                    },
+                    "properties_type": ["string", "int", "int"],
+                    "applyOnVertex": False,
+                    "applyOnEdge": False,
+                    "applyOnFace": True
+                }
+                mesh.mesh_dict = mesh_dict
+
+                repeatedPts = []
+                hecontroller.makeMesh(lines, repeatedPts)
+
+                if face.patch.mesh is not None:
+                    self.delMesh(face)
+
+                setMesh = SetMesh(face.patch, mesh)
+                setMesh.execute()
+                self.undoredo.insertOperation(setMesh)
+
+                setAtt = SetAttribute(face.patch, mesh_dict)
+                setAtt.execute()
+                self.undoredo.insertOperation(setAtt)
 
         self.undoredo.end()
         self.isChanged = True
         return True, None
 
     def generateMesh(self, _mesh_type, _shape_type,  _elem_type, _diag_type, _bc_flag):
-
         if _shape_type == "Triangular":
             if _elem_type == "Linear":
                 elem_type = 3
@@ -1922,8 +2015,12 @@ class HeController:
                 elem_type = 8
                 elem = "Q8"
 
-        if _mesh_type == "Isogeometric" or _mesh_type == "Isogeometric Template":
+        if _mesh_type == "Isogeometric":
             elem = "Isogeometric"
+            elem_type = None
+        elif _mesh_type == "Isogeometric Template":
+            elem = "Isogeometric Template"
+            elem_type = "TSpline"
 
         if _mesh_type == "Triangular Boundary Contraction":
             mesh_name = "Triangular Boundary C."
@@ -1932,7 +2029,39 @@ class HeController:
 
         self.undoredo.begin()
         selectedFaces = self.hemodel.selectedFaces()
+
         for face in selectedFaces:
+            # If Isogeometric set subdivison dict
+            if elem == "Isogeometric" or elem == "Isogeometric Template":
+                number = None
+                ratio = None
+                isIsogeometric = True
+
+                nsudv_dict = {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": number,
+                        "Ratio": ratio,
+                        "isIsogeometric": isIsogeometric,
+                        "Color": [0, 0, 0]
+                    },
+                    "properties_type": ["int", "float", "bool", "color"],
+                    "applyOnVertex": False,
+                    "applyOnEdge": True,
+                    "applyOnFace": False
+                }
+
+                segments = face.patch.segments
+                for seg in segments:
+                    setNumber = SetNumberSdv(seg, nsudv_dict)
+                    setNumber.execute()
+                    self.undoredo.insertOperation(setNumber)
+
+                    setAtt = SetAttribute(seg, nsudv_dict)
+                    setAtt.execute()
+                    self.undoredo.insertOperation(setAtt)
 
             # verification of adjacent and internal meshes
             adjacentFaces = face.adjacentFaces()
@@ -1953,7 +2082,6 @@ class HeController:
                     face, _mesh_type, elem_type, _diag_type, _bc_flag)
 
                 if check:
-
                     model = HeModel()
                     hecontroller = HeController(model)
                     mesh = Mesh(model, hecontroller)

@@ -71,7 +71,7 @@ class Line(Curve):
         return refPtX, refPtY, v1, v2
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+    def buildCurve(self, _v1, _v2, _LenAndAng):
         if self.nPts == 0:
             pt = Pnt2D(_v1, _v2)
             self.pt0 = pt
@@ -142,9 +142,10 @@ class Line(Curve):
         elif _t <= 0.0:
             _t = 0.0
             
-        pt = self.evalPoint(_t)
-        tangVec = self.pt1 - self.pt0
-        return pt, tangVec
+        ders = self.nurbs.derivatives(_t, order=1)
+        pt = ders[0]
+        tang = ders[1]
+        return Pnt2D(pt[0], pt[1]), Pnt2D(tang[0], tang[1])
 
     # ---------------------------------------------------------------------
     def splitRaw(self, _t):

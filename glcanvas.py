@@ -63,6 +63,7 @@ class Canvas(QtOpenGL.QGLWidget):
         self.colorGrid = [0.00, 0.00, 0.00]  # black
         self.colorSdvPoint = [0.00, 0.00, 0.50]  # dark blue
         self.colorPatcheSelection = [1.00, 0.75, 0.75]  # light red
+        # self.colorPatch = [0.75, 0.75, 0.75]
         self.colorPatch = [0.50, 0.75, 0.50]  # medium green
         self.colorHole = [1.00, 1.00, 1.00]  # White
         self.colorHoleSelection = [0.75, 0.75, 0.75]  # light gray
@@ -138,17 +139,6 @@ class Canvas(QtOpenGL.QGLWidget):
                 msg.exec()
             self.updatedDsp = False
             self.update()
-
-    # def conformSegs(self):
-    #     if not ((self.view is None) and (self.view.isEmpty())):
-    #         check, error_text = self.hecontroller.conformSegs()
-    #         if not check:
-    #             msg = QMessageBox(self.Apptools)
-    #             msg.setWindowTitle('Error')
-    #             msg.setText(error_text)
-    #             msg.exec()
-    #         self.updatedDsp = False
-    #         self.update()
 
     def Undo(self):
         if not ((self.view is None) and (self.view.isEmpty())):
@@ -420,6 +410,14 @@ class Canvas(QtOpenGL.QGLWidget):
 
                         glEnd()
 
+                        ###
+                        # glPointSize(10.0)
+                        # for ptsapagar in Pts:
+                        #     glBegin(GL_POINTS)
+                        #     glVertex2d(ptsapagar.getX(), ptsapagar.getY())
+                        #     glEnd()
+                        ###
+
                     # Draw Control Net
                     if patches[i].CtrlNetView:
 
@@ -457,6 +455,7 @@ class Canvas(QtOpenGL.QGLWidget):
                         # Draw Control points
                         glColor3d(self.colorControlPolygon[0],
                                 self.colorControlPolygon[1], self.colorControlPolygon[2])
+                        glPointSize(5.0)
                         
                         glBegin(GL_POINTS)
 
@@ -483,6 +482,23 @@ class Canvas(QtOpenGL.QGLWidget):
             for j in range(0, len(Pts)):
                 glVertex2d(Pts[j].getX(), Pts[j].getY())
             glEnd()
+
+            # Display segment direction
+            if segments[i].directionView:
+                att = {
+                    'symbol': 'Arrow',
+                    'type': 'Direction',
+                    'properties': {
+                        'Color': [0, 0, 0]
+                    },
+                    'properties_type': ["color"]
+                }
+                symbol = AttribSymbols.getSymbol(att, scale, _seg=segments[i])
+                if symbol['time'] == 'before':
+                    self.drawSymbol(symbol)
+                else:
+                    symbols.append(symbol)
+                pass
 
             # Display control polygon
             if segments[i].CtrlPolyView:
@@ -545,14 +561,18 @@ class Canvas(QtOpenGL.QGLWidget):
             if segments[i].CtrlPolyView:
                 ctrlPts = segments[i].getCtrlPts()
                 
-                glColor3d(self.colorControlPolygon[0],
-                        self.colorControlPolygon[1], self.colorControlPolygon[2])
+                # glColor3d(self.colorControlPolygon[0],
+                #         self.colorControlPolygon[1], self.colorControlPolygon[2])
 
-                glBegin(GL_POINTS)
+                #glBegin(GL_POINTS)
 
                 for j in range(0, len(ctrlPts)):
+                    glColor3d(self.colorControlPolygon[0],
+                            self.colorControlPolygon[1], self.colorControlPolygon[2])
+                    glBegin(GL_POINTS)
                     glVertex2d(ctrlPts[j][0], ctrlPts[j][1])
-                glEnd()
+                    glEnd()
+                #glEnd()
 
         # draws remaining symbols
         for symbol in symbols:

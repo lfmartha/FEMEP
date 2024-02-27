@@ -1,0 +1,780 @@
+{
+    "type": "SHELL",
+    "vertices": [
+        {
+            "type": "VERTEX",
+            "ID": 1,
+            "prev_ID": null,
+            "next_ID": 2,
+            "he_ID": 7,
+            "point": [
+                0.0,
+                0.0
+            ],
+            "attributes": {
+                "att_names": []
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 2,
+            "prev_ID": 1,
+            "next_ID": 3,
+            "he_ID": 3,
+            "point": [
+                6.0,
+                0.0
+            ],
+            "attributes": {
+                "att_names": []
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 3,
+            "prev_ID": 2,
+            "next_ID": 4,
+            "he_ID": 2,
+            "point": [
+                6.0,
+                6.0
+            ],
+            "attributes": {
+                "att_names": []
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 4,
+            "prev_ID": 3,
+            "next_ID": null,
+            "he_ID": 6,
+            "point": [
+                0.0,
+                6.0
+            ],
+            "attributes": {
+                "att_names": []
+            }
+        }
+    ],
+    "edges": [
+        {
+            "type": "EDGE",
+            "ID": 1,
+            "prev_ID": null,
+            "next_ID": 2,
+            "he1_ID": 7,
+            "he2_ID": 3,
+            "segment_type": "CUBICSPLINE",
+            "data": {
+                "degree": 2,
+                "ctrlpts": [
+                    [
+                        0.0,
+                        0.0
+                    ],
+                    [
+                        1.5,
+                        0.5
+                    ],
+                    [
+                        3.0,
+                        0.0
+                    ],
+                    [
+                        4.5,
+                        0.5
+                    ],
+                    [
+                        6.0,
+                        0.0
+                    ]
+                ],
+                "weights": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "knotvector": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.333333,
+                    0.666667,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 0.0,
+                        "isIsogeometric": true,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": []
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 2,
+            "prev_ID": 1,
+            "next_ID": 3,
+            "he1_ID": 8,
+            "he2_ID": 2,
+            "segment_type": "CUBICSPLINE",
+            "data": {
+                "degree": 2,
+                "ctrlpts": [
+                    [
+                        6.0,
+                        0.0
+                    ],
+                    [
+                        5.5,
+                        2.0
+                    ],
+                    [
+                        6.5,
+                        4.0
+                    ],
+                    [
+                        6.0,
+                        6.0
+                    ]
+                ],
+                "weights": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "knotvector": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 0.0,
+                        "isIsogeometric": true,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": []
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 3,
+            "prev_ID": 2,
+            "next_ID": 4,
+            "he1_ID": 4,
+            "he2_ID": 6,
+            "segment_type": "CUBICSPLINE",
+            "data": {
+                "degree": 2,
+                "ctrlpts": [
+                    [
+                        0.0,
+                        0.0
+                    ],
+                    [
+                        0.5,
+                        2.0
+                    ],
+                    [
+                        -0.5,
+                        4.0
+                    ],
+                    [
+                        0.0,
+                        6.0
+                    ]
+                ],
+                "weights": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "knotvector": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 0.0,
+                        "isIsogeometric": true,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": []
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 4,
+            "prev_ID": 3,
+            "next_ID": null,
+            "he1_ID": 1,
+            "he2_ID": 5,
+            "segment_type": "CUBICSPLINE",
+            "data": {
+                "degree": 2,
+                "ctrlpts": [
+                    [
+                        0.0,
+                        6.0
+                    ],
+                    [
+                        1.5,
+                        5.5
+                    ],
+                    [
+                        3.0,
+                        6.0
+                    ],
+                    [
+                        4.5,
+                        5.5
+                    ],
+                    [
+                        6.0,
+                        6.0
+                    ]
+                ],
+                "weights": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "knotvector": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.333333,
+                    0.666667,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 0.0,
+                        "isIsogeometric": true,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": []
+            }
+        }
+    ],
+    "faces": [
+        {
+            "type": "FACE",
+            "ID": 0,
+            "prev_ID": null,
+            "next_ID": 1,
+            "loop": {
+                "type": "LOOP",
+                "ID": 1,
+                "prev_ID": null,
+                "next_ID": 2,
+                "face_ID": 0,
+                "he_loop": null,
+                "isClosed": false
+            },
+            "intLoops": [
+                {
+                    "type": "LOOP",
+                    "ID": 2,
+                    "prev_ID": 1,
+                    "next_ID": null,
+                    "face_ID": 0,
+                    "he_loop": [
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 1,
+                            "prev_ID": 4,
+                            "next_ID": 2,
+                            "vertex_ID": 4,
+                            "edge_ID": 4,
+                            "loop_ID": 2
+                        },
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 2,
+                            "prev_ID": 1,
+                            "next_ID": 3,
+                            "vertex_ID": 3,
+                            "edge_ID": 2,
+                            "loop_ID": 2
+                        },
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 3,
+                            "prev_ID": 2,
+                            "next_ID": 4,
+                            "vertex_ID": 2,
+                            "edge_ID": 1,
+                            "loop_ID": 2
+                        },
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 4,
+                            "prev_ID": 3,
+                            "next_ID": 1,
+                            "vertex_ID": 1,
+                            "edge_ID": 3,
+                            "loop_ID": 2
+                        }
+                    ],
+                    "isClosed": false
+                }
+            ],
+            "attributes": {
+                "isDeleted": false,
+                "mesh": null,
+                "att_names": []
+            },
+            "dataSurf": {}
+        },
+        {
+            "type": "FACE",
+            "ID": 1,
+            "prev_ID": 0,
+            "next_ID": null,
+            "loop": {
+                "type": "LOOP",
+                "ID": 3,
+                "prev_ID": null,
+                "next_ID": null,
+                "face_ID": 1,
+                "he_loop": [
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 5,
+                        "prev_ID": 8,
+                        "next_ID": 6,
+                        "vertex_ID": 3,
+                        "edge_ID": 4,
+                        "loop_ID": 3
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 6,
+                        "prev_ID": 5,
+                        "next_ID": 7,
+                        "vertex_ID": 4,
+                        "edge_ID": 3,
+                        "loop_ID": 3
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 7,
+                        "prev_ID": 6,
+                        "next_ID": 8,
+                        "vertex_ID": 1,
+                        "edge_ID": 1,
+                        "loop_ID": 3
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 8,
+                        "prev_ID": 7,
+                        "next_ID": 5,
+                        "vertex_ID": 2,
+                        "edge_ID": 2,
+                        "loop_ID": 3
+                    }
+                ],
+                "isClosed": true
+            },
+            "intLoops": [],
+            "attributes": {
+                "isDeleted": false,
+                "mesh": {
+                    "type": "Mesh",
+                    "symbol": "Mesh",
+                    "name": "Isogeometric",
+                    "coords": [
+                        0.0,
+                        0.0,
+                        1.5,
+                        0.5,
+                        3.0,
+                        0.0,
+                        4.5,
+                        0.5,
+                        6.0,
+                        0.0,
+                        0.5,
+                        2.0,
+                        1.75,
+                        2.166666666666666,
+                        3.0,
+                        2.0,
+                        4.25,
+                        2.166666666666666,
+                        5.5,
+                        2.0,
+                        -0.5,
+                        4.0,
+                        1.25,
+                        3.833333333333333,
+                        3.0,
+                        4.0,
+                        4.75,
+                        3.833333333333333,
+                        6.5,
+                        4.0,
+                        0.0,
+                        6.0,
+                        1.5,
+                        5.5,
+                        3.0,
+                        6.0,
+                        4.5,
+                        5.5,
+                        6.0,
+                        6.0
+                    ],
+                    "conn": [
+                        9,
+                        0,
+                        1,
+                        2,
+                        5,
+                        6,
+                        7,
+                        10,
+                        11,
+                        12,
+                        9,
+                        1,
+                        2,
+                        3,
+                        6,
+                        7,
+                        8,
+                        11,
+                        12,
+                        13,
+                        9,
+                        2,
+                        3,
+                        4,
+                        7,
+                        8,
+                        9,
+                        12,
+                        13,
+                        14,
+                        9,
+                        5,
+                        6,
+                        7,
+                        10,
+                        11,
+                        12,
+                        15,
+                        16,
+                        17,
+                        9,
+                        6,
+                        7,
+                        8,
+                        11,
+                        12,
+                        13,
+                        16,
+                        17,
+                        18,
+                        9,
+                        7,
+                        8,
+                        9,
+                        12,
+                        13,
+                        14,
+                        17,
+                        18,
+                        19
+                    ],
+                    "IsoGe": {
+                        "weights": [
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "TSpline": false
+                    },
+                    "properties": {
+                        "Element type": "Isogeometric",
+                        "Number of nodes": 20,
+                        "Number of elements": 6
+                    },
+                    "properties_type": [
+                        "string",
+                        "int",
+                        "int"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": false,
+                    "applyOnFace": true
+                },
+                "att_names": []
+            },
+            "dataSurf": {
+                "degree_u": 2,
+                "degree_v": 2,
+                "ctrlpts_size_u": 5,
+                "ctrlpts_size_v": 4,
+                "ctrlpts": [
+                    [
+                        0.0,
+                        0.0
+                    ],
+                    [
+                        0.5,
+                        2.0
+                    ],
+                    [
+                        -0.5,
+                        4.0
+                    ],
+                    [
+                        0.0,
+                        6.0
+                    ],
+                    [
+                        1.5,
+                        0.5
+                    ],
+                    [
+                        1.75,
+                        2.166666666666666
+                    ],
+                    [
+                        1.25,
+                        3.833333333333333
+                    ],
+                    [
+                        1.5,
+                        5.5
+                    ],
+                    [
+                        3.0,
+                        0.0
+                    ],
+                    [
+                        3.0,
+                        2.0
+                    ],
+                    [
+                        3.0,
+                        4.0
+                    ],
+                    [
+                        3.0,
+                        6.0
+                    ],
+                    [
+                        4.5,
+                        0.5
+                    ],
+                    [
+                        4.25,
+                        2.166666666666666
+                    ],
+                    [
+                        4.75,
+                        3.833333333333333
+                    ],
+                    [
+                        4.5,
+                        5.5
+                    ],
+                    [
+                        6.0,
+                        0.0
+                    ],
+                    [
+                        5.5,
+                        2.0
+                    ],
+                    [
+                        6.5,
+                        4.0
+                    ],
+                    [
+                        6.0,
+                        6.0
+                    ]
+                ],
+                "weights": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "knotvector_u": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.333333,
+                    0.666667,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "knotvector_v": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0,
+                    1.0,
+                    1.0
+                ]
+            }
+        }
+    ],
+    "attributes_list": []
+}

@@ -61,16 +61,16 @@ class Mesh1D():
         return coords
 
     @staticmethod
-    def subdivideSegment(_segment, _nsbdv, _ratio, _quad):
+    def subdivideSegment(_segment, _nsbdv, _ratio, _isQuadratic, _isIsogeometric):
         coords = []
         pts = []
 
-        if _nsbdv is not None and _ratio is not None:
+        if not _isIsogeometric:
 
             if _nsbdv == 0 or _ratio == 0:
                 return coords
             elif _nsbdv == 1:
-                if _quad:
+                if _isQuadratic:
                     coords.append(_segment.evalPoint(0.5))
                 return coords
 
@@ -78,7 +78,7 @@ class Mesh1D():
             length = _segment.length()
             r1 = Pnt2D(0.0, 0.0)
             r2 = Pnt2D(length, 0.0)
-            coords = Mesh1D.subdivideLine(r1, r2, _nsbdv, _quad, _ratio)
+            coords = Mesh1D.subdivideLine(r1, r2, _nsbdv, _isQuadratic, _ratio)
 
             # calculates the coordinates of the real points on the segment
             for coord in coords:
@@ -87,21 +87,20 @@ class Mesh1D():
 
             return pts
 
-        elif _nsbdv is None and _ratio is None:
-
-            # Check if knots contains an element different from 0 or 1
+        elif _isIsogeometric:
+            # Check if knotvector contains a knot different from 0 or 1
             # if so, segment has more than one subdivision
             knots = _segment.curve.nurbs.knotvector
-            one_sdv = True
-            for i in knots:
-                if i != 0.0 or i != 1.0:
-                    one_sdv = False
-                    break
+            # one_sdv = True
+            # for i in knots:
+            #     if i != 0.0 or i != 1.0:
+            #         one_sdv = False
+            #         break
 
-            if one_sdv is True:
-                if _quad:
-                    coords.append(_segment.evalPoint(0.5))
-                return coords
+            # if one_sdv is True:
+            #     if _quad:
+            #         coords.append(_segment.evalPoint(0.5))
+            #     return coords
 
             knots = list(set(knots)) # Remove duplicates
             knots.sort()
@@ -111,3 +110,4 @@ class Mesh1D():
                 pts.append(_segment.evalPoint(t))
 
             return pts
+        

@@ -84,7 +84,7 @@ class CircleArc(Curve):
                             else:
                                 tetaQ1 = teta
                             r = self.radius
-                            d = r / math.sin(math.pi / 2.0 - tetaQ1 / 2.0)
+                            d = r / math.cos(tetaQ1 / 2.0)
                             ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1))
                             ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + tetaQ1 / 2.0))
                             ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ1))
@@ -96,7 +96,7 @@ class CircleArc(Curve):
                             else:
                                 tetaQ2 = teta
                             r = self.radius
-                            d = r / math.sin(math.pi / 2.0 - (tetaQ2 - tetaQ1) / 2.0)
+                            d = r / math.cos((tetaQ2 - tetaQ1) / 2.0)
                             ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + (tetaQ2 + tetaQ1) / 2.0))
                             ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ2))
                             weights.extend([math.cos((tetaQ2 - tetaQ1) / 2.0), 1.0])
@@ -107,7 +107,7 @@ class CircleArc(Curve):
                             else:
                                 tetaQ3 = teta
                             r = self.radius
-                            d = r / math.sin(math.pi / 2.0 - (tetaQ3 - tetaQ2) / 2.0)
+                            d = r / math.cos((tetaQ3 - tetaQ2) / 2.0)
                             ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + (tetaQ3 + tetaQ2) / 2.0))
                             ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ3))
                             weights.extend([math.cos((tetaQ3 - tetaQ2) / 2.0), 1.0])
@@ -115,7 +115,7 @@ class CircleArc(Curve):
                         if quad == 4:
                             tetaQ4 = teta
                             r = self.radius
-                            d = r / math.sin(math.pi / 2.0 - (tetaQ4 - tetaQ3) / 2.0)
+                            d = r / math.cos((tetaQ4 - tetaQ3) / 2.0)
                             ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + (tetaQ4 + tetaQ3) / 2.0))
                             ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ4))
                             weights.extend([math.cos((tetaQ4 - tetaQ3) / 2.0), 1.0])
@@ -198,7 +198,7 @@ class CircleArc(Curve):
         return refPtX, refPtY, v1, v2
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+    def buildCurve(self, _v1, _v2, _LenAndAng):
         if self.nPts == 0:
             pt = Pnt2D(_v1, _v2)
             self.center = pt
@@ -289,7 +289,7 @@ class CircleArc(Curve):
                     else:
                         tetaQ1 = teta
                     r = self.radius
-                    d = r / math.sin(math.pi / 2.0 - tetaQ1 / 2.0)
+                    d = r / math.cos(tetaQ1 / 2.0)
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1))
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + tetaQ1 / 2.0))
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ1))
@@ -301,7 +301,7 @@ class CircleArc(Curve):
                     else:
                         tetaQ2 = teta
                     r = self.radius
-                    d = r / math.sin(math.pi / 2.0 - (tetaQ2 - tetaQ1) / 2.0)
+                    d = r / math.cos((tetaQ2 - tetaQ1) / 2.0)
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + (tetaQ2 + tetaQ1) / 2.0))
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ2))
                     weights.extend([math.cos((tetaQ2 - tetaQ1) / 2.0), 1.0])
@@ -312,7 +312,7 @@ class CircleArc(Curve):
                     else:
                         tetaQ3 = teta
                     r = self.radius
-                    d = r / math.sin(math.pi / 2.0 - (tetaQ3 - tetaQ2) / 2.0)
+                    d = r / math.cos((tetaQ3 - tetaQ2) / 2.0)
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + (tetaQ3 + tetaQ2) / 2.0))
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ3))
                     weights.extend([math.cos((tetaQ3 - tetaQ2) / 2.0), 1.0])
@@ -320,7 +320,7 @@ class CircleArc(Curve):
                 if quad == 4:
                     tetaQ4 = teta
                     r = self.radius
-                    d = r / math.sin(math.pi / 2.0 - (tetaQ4 - tetaQ3) / 2.0)
+                    d = r / math.cos((tetaQ4 - tetaQ3) / 2.0)
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + (tetaQ4 + tetaQ3) / 2.0))
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ4))
                     weights.extend([math.cos((tetaQ4 - tetaQ3) / 2.0), 1.0])
@@ -580,7 +580,7 @@ class CircleArc(Curve):
                     else:
                         tetaQ1 = teta
                     r = self.radius
-                    d = r / math.sin(math.pi / 2.0 - tetaQ1 / 2.0)
+                    d = r / math.cos(tetaQ1 / 2.0)
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1))
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + tetaQ1 / 2.0))
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ1))
@@ -592,7 +592,7 @@ class CircleArc(Curve):
                     else:
                         tetaQ2 = teta
                     r = self.radius
-                    d = r / math.sin(math.pi / 2.0 - (tetaQ2 - tetaQ1) / 2.0)
+                    d = r / math.cos((tetaQ2 - tetaQ1) / 2.0)
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + (tetaQ2 + tetaQ1) / 2.0))
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ2))
                     weights.extend([math.cos((tetaQ2 - tetaQ1) / 2.0), 1.0])
@@ -603,7 +603,7 @@ class CircleArc(Curve):
                     else:
                         tetaQ3 = teta
                     r = self.radius
-                    d = r / math.sin(math.pi / 2.0 - (tetaQ3 - tetaQ2) / 2.0)
+                    d = r / math.cos((tetaQ3 - tetaQ2) / 2.0)
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + (tetaQ3 + tetaQ2) / 2.0))
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ3))
                     weights.extend([math.cos((tetaQ3 - tetaQ2) / 2.0), 1.0])
@@ -611,7 +611,7 @@ class CircleArc(Curve):
                 if quad == 4:
                     tetaQ4 = teta
                     r = self.radius
-                    d = r / math.sin(math.pi / 2.0 - (tetaQ4 - tetaQ3) / 2.0)
+                    d = r / math.cos((tetaQ4 - tetaQ3) / 2.0)
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + d, self.center.getY()), self.center, self.ang1 + (tetaQ4 + tetaQ3) / 2.0))
                     ctrlPts.append(Pnt2D.rotate(Pnt2D(self.center.getX() + r, self.center.getY()), self.center, self.ang1 + tetaQ4))
                     weights.extend([math.cos((tetaQ4 - tetaQ3) / 2.0), 1.0])

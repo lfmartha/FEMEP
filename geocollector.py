@@ -79,7 +79,7 @@ class GeoCollector:
                     abs(_y - self.prevPt.getY()) <= _tol):
                     return 0
 
-        self.geo.addCtrlPoint(_x, _y, _LenAndAng)
+        self.geo.buildCurve(_x, _y, _LenAndAng)
         if self.prevPt is None:
             self.prevPt = Point(_x, _y)
         else:

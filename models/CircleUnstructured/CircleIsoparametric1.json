@@ -1,0 +1,3292 @@
+{
+    "type": "SHELL",
+    "vertices": [
+        {
+            "type": "VERTEX",
+            "ID": 1,
+            "prev_ID": null,
+            "next_ID": 2,
+            "he_ID": 1,
+            "point": [
+                6.123233995736766e-17,
+                1.0
+            ],
+            "attributes": {
+                "att_names": [
+                    "sup1"
+                ]
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 2,
+            "prev_ID": 1,
+            "next_ID": 3,
+            "he_ID": 19,
+            "point": [
+                -1.0,
+                0.0
+            ],
+            "attributes": {
+                "att_names": [
+                    "sup2"
+                ]
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 3,
+            "prev_ID": 2,
+            "next_ID": 4,
+            "he_ID": 12,
+            "point": [
+                -4.0,
+                0.0
+            ],
+            "attributes": {
+                "att_names": [
+                    "sup2"
+                ]
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 4,
+            "prev_ID": 3,
+            "next_ID": 5,
+            "he_ID": 7,
+            "point": [
+                0.0,
+                4.0
+            ],
+            "attributes": {
+                "att_names": [
+                    "sup1"
+                ]
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 5,
+            "prev_ID": 4,
+            "next_ID": 6,
+            "he_ID": 11,
+            "point": [
+                -4.0,
+                4.0
+            ],
+            "attributes": {
+                "att_names": []
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 6,
+            "prev_ID": 5,
+            "next_ID": 7,
+            "he_ID": 2,
+            "point": [
+                -0.7071067811865475,
+                0.7071067811865475
+            ],
+            "attributes": {
+                "att_names": []
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 7,
+            "prev_ID": 6,
+            "next_ID": 8,
+            "he_ID": 4,
+            "point": [
+                -2.0,
+                0.0
+            ],
+            "attributes": {
+                "att_names": [
+                    "sup2"
+                ]
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 8,
+            "prev_ID": 7,
+            "next_ID": 9,
+            "he_ID": 10,
+            "point": [
+                -2.0,
+                2.0
+            ],
+            "attributes": {
+                "att_names": []
+            }
+        },
+        {
+            "type": "VERTEX",
+            "ID": 9,
+            "prev_ID": 8,
+            "next_ID": null,
+            "he_ID": 14,
+            "point": [
+                4.0821559971578444e-17,
+                2.0
+            ],
+            "attributes": {
+                "att_names": [
+                    "sup1"
+                ]
+            }
+        }
+    ],
+    "edges": [
+        {
+            "type": "EDGE",
+            "ID": 1,
+            "prev_ID": null,
+            "next_ID": 2,
+            "he1_ID": 5,
+            "he2_ID": 11,
+            "segment_type": "LINE",
+            "data": {
+                "pt0": [
+                    -4.0,
+                    0.0
+                ],
+                "pt1": [
+                    -4.0,
+                    4.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": [
+                    "load"
+                ]
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 2,
+            "prev_ID": 1,
+            "next_ID": 3,
+            "he1_ID": 15,
+            "he2_ID": 6,
+            "segment_type": "LINE",
+            "data": {
+                "pt0": [
+                    0.0,
+                    4.0
+                ],
+                "pt1": [
+                    -4.0,
+                    4.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": [
+                    "load"
+                ]
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 3,
+            "prev_ID": 2,
+            "next_ID": 4,
+            "he1_ID": 1,
+            "he2_ID": 23,
+            "segment_type": "CIRCLEARC",
+            "data": {
+                "center": [
+                    0.0,
+                    0.0
+                ],
+                "circ1": [
+                    0.0,
+                    1.0
+                ],
+                "circ2": [
+                    -0.7071067811865475,
+                    0.7071067811865475
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 8,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": []
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 4,
+            "prev_ID": 3,
+            "next_ID": 5,
+            "he1_ID": 2,
+            "he2_ID": 19,
+            "segment_type": "CIRCLEARC",
+            "data": {
+                "center": [
+                    0.0,
+                    0.0
+                ],
+                "circ1": [
+                    -0.7071067811865476,
+                    0.7071067811865476
+                ],
+                "circ2": [
+                    -1.0,
+                    0.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 8,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": []
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 5,
+            "prev_ID": 4,
+            "next_ID": 6,
+            "he1_ID": 3,
+            "he2_ID": 18,
+            "segment_type": "LINE",
+            "data": {
+                "pt0": [
+                    -1.0,
+                    0.0
+                ],
+                "pt1": [
+                    -2.0,
+                    0.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 4,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": [
+                    "sup2"
+                ]
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 6,
+            "prev_ID": 5,
+            "next_ID": 7,
+            "he1_ID": 4,
+            "he2_ID": 12,
+            "segment_type": "LINE",
+            "data": {
+                "pt0": [
+                    -2.0,
+                    0.0
+                ],
+                "pt1": [
+                    -4.0,
+                    0.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": [
+                    "sup2"
+                ]
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 7,
+            "prev_ID": 6,
+            "next_ID": 8,
+            "he1_ID": 20,
+            "he2_ID": 22,
+            "segment_type": "LINE",
+            "data": {
+                "pt0": [
+                    -0.7071067811865475,
+                    0.7071067811865475
+                ],
+                "pt1": [
+                    -2.0,
+                    2.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 4,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": []
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 8,
+            "prev_ID": 7,
+            "next_ID": 9,
+            "he1_ID": 10,
+            "he2_ID": 16,
+            "segment_type": "LINE",
+            "data": {
+                "pt0": [
+                    -2.0,
+                    2.0
+                ],
+                "pt1": [
+                    -4.0,
+                    4.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": []
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 9,
+            "prev_ID": 8,
+            "next_ID": 10,
+            "he1_ID": 9,
+            "he2_ID": 17,
+            "segment_type": "LINE",
+            "data": {
+                "pt0": [
+                    -2.0,
+                    0.0
+                ],
+                "pt1": [
+                    -2.0,
+                    2.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": []
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 10,
+            "prev_ID": 9,
+            "next_ID": 11,
+            "he1_ID": 24,
+            "he2_ID": 8,
+            "segment_type": "LINE",
+            "data": {
+                "pt0": [
+                    6.123233995736766e-17,
+                    1.0
+                ],
+                "pt1": [
+                    4.0821559971578444e-17,
+                    2.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 4,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": [
+                    "sup1"
+                ]
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 11,
+            "prev_ID": 10,
+            "next_ID": 12,
+            "he1_ID": 14,
+            "he2_ID": 7,
+            "segment_type": "LINE",
+            "data": {
+                "pt0": [
+                    4.0821559971578444e-17,
+                    2.0
+                ],
+                "pt1": [
+                    0.0,
+                    4.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": [
+                    "sup1"
+                ]
+            }
+        },
+        {
+            "type": "EDGE",
+            "ID": 12,
+            "prev_ID": 11,
+            "next_ID": null,
+            "he1_ID": 13,
+            "he2_ID": 21,
+            "segment_type": "LINE",
+            "data": {
+                "pt0": [
+                    -2.0,
+                    2.0
+                ],
+                "pt1": [
+                    4.0821559971578444e-17,
+                    2.0
+                ],
+                "isReversed": false,
+                "refinement": [],
+                "isSdvSet": true
+            },
+            "attributes": {
+                "nsudv": {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": 2,
+                        "Ratio": 1.0,
+                        "isIsogeometric": false,
+                        "Color": [
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "properties_type": [
+                        "int",
+                        "float",
+                        "bool",
+                        "color"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": true,
+                    "applyOnFace": false
+                },
+                "att_names": []
+            }
+        }
+    ],
+    "faces": [
+        {
+            "type": "FACE",
+            "ID": 0,
+            "prev_ID": null,
+            "next_ID": 1,
+            "loop": {
+                "type": "LOOP",
+                "ID": 1,
+                "prev_ID": null,
+                "next_ID": 2,
+                "face_ID": 0,
+                "he_loop": null,
+                "isClosed": false
+            },
+            "intLoops": [
+                {
+                    "type": "LOOP",
+                    "ID": 2,
+                    "prev_ID": 1,
+                    "next_ID": null,
+                    "face_ID": 0,
+                    "he_loop": [
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 1,
+                            "prev_ID": 8,
+                            "next_ID": 2,
+                            "vertex_ID": 1,
+                            "edge_ID": 3,
+                            "loop_ID": 2
+                        },
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 2,
+                            "prev_ID": 1,
+                            "next_ID": 3,
+                            "vertex_ID": 6,
+                            "edge_ID": 4,
+                            "loop_ID": 2
+                        },
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 3,
+                            "prev_ID": 2,
+                            "next_ID": 4,
+                            "vertex_ID": 2,
+                            "edge_ID": 5,
+                            "loop_ID": 2
+                        },
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 4,
+                            "prev_ID": 3,
+                            "next_ID": 5,
+                            "vertex_ID": 7,
+                            "edge_ID": 6,
+                            "loop_ID": 2
+                        },
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 5,
+                            "prev_ID": 4,
+                            "next_ID": 6,
+                            "vertex_ID": 3,
+                            "edge_ID": 1,
+                            "loop_ID": 2
+                        },
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 6,
+                            "prev_ID": 5,
+                            "next_ID": 7,
+                            "vertex_ID": 5,
+                            "edge_ID": 2,
+                            "loop_ID": 2
+                        },
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 7,
+                            "prev_ID": 6,
+                            "next_ID": 8,
+                            "vertex_ID": 4,
+                            "edge_ID": 11,
+                            "loop_ID": 2
+                        },
+                        {
+                            "type": "HALF-EDGE",
+                            "ID": 8,
+                            "prev_ID": 7,
+                            "next_ID": 1,
+                            "vertex_ID": 9,
+                            "edge_ID": 10,
+                            "loop_ID": 2
+                        }
+                    ],
+                    "isClosed": false
+                }
+            ],
+            "attributes": {
+                "isDeleted": false,
+                "mesh": null,
+                "att_names": []
+            },
+            "dataSurf": {}
+        },
+        {
+            "type": "FACE",
+            "ID": 1,
+            "prev_ID": 0,
+            "next_ID": 2,
+            "loop": {
+                "type": "LOOP",
+                "ID": 3,
+                "prev_ID": null,
+                "next_ID": null,
+                "face_ID": 1,
+                "he_loop": [
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 9,
+                        "prev_ID": 12,
+                        "next_ID": 10,
+                        "vertex_ID": 7,
+                        "edge_ID": 9,
+                        "loop_ID": 3
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 10,
+                        "prev_ID": 9,
+                        "next_ID": 11,
+                        "vertex_ID": 8,
+                        "edge_ID": 8,
+                        "loop_ID": 3
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 11,
+                        "prev_ID": 10,
+                        "next_ID": 12,
+                        "vertex_ID": 5,
+                        "edge_ID": 1,
+                        "loop_ID": 3
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 12,
+                        "prev_ID": 11,
+                        "next_ID": 9,
+                        "vertex_ID": 3,
+                        "edge_ID": 6,
+                        "loop_ID": 3
+                    }
+                ],
+                "isClosed": true
+            },
+            "intLoops": [],
+            "attributes": {
+                "isDeleted": false,
+                "mesh": {
+                    "type": "Mesh",
+                    "symbol": "Mesh",
+                    "name": "Quadrilateral Template",
+                    "coords": [
+                        -2.0,
+                        0.0,
+                        -2.0,
+                        1.0,
+                        -2.0,
+                        2.0,
+                        -3.0,
+                        0.0,
+                        -3.0,
+                        1.5,
+                        -3.0,
+                        3.0,
+                        -4.0,
+                        0.0,
+                        -4.0,
+                        2.0,
+                        -4.0,
+                        4.0,
+                        -2.0,
+                        0.5,
+                        -2.5,
+                        1.25,
+                        -3.0,
+                        0.75,
+                        -2.5,
+                        0.0,
+                        -2.0,
+                        1.5,
+                        -2.5,
+                        2.5,
+                        -3.0,
+                        2.25,
+                        -3.5,
+                        1.75,
+                        -4.0,
+                        1.0,
+                        -3.5,
+                        0.0,
+                        -3.5,
+                        3.5,
+                        -4.0,
+                        3.0
+                    ],
+                    "conn": [
+                        8,
+                        0,
+                        9,
+                        1,
+                        10,
+                        4,
+                        11,
+                        3,
+                        12,
+                        8,
+                        1,
+                        13,
+                        2,
+                        14,
+                        5,
+                        15,
+                        4,
+                        10,
+                        8,
+                        3,
+                        11,
+                        4,
+                        16,
+                        7,
+                        17,
+                        6,
+                        18,
+                        8,
+                        4,
+                        15,
+                        5,
+                        19,
+                        8,
+                        20,
+                        7,
+                        16
+                    ],
+                    "IsoGe": null,
+                    "properties": {
+                        "Element type": "Q8",
+                        "Number of nodes": 21,
+                        "Number of elements": 4
+                    },
+                    "properties_type": [
+                        "string",
+                        "int",
+                        "int"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": false,
+                    "applyOnFace": true
+                },
+                "att_names": [
+                    "mat",
+                    "thi"
+                ]
+            },
+            "dataSurf": {
+                "degree_u": 3,
+                "degree_v": 3,
+                "ctrlpts_size_u": 7,
+                "ctrlpts_size_v": 7,
+                "ctrlpts": [
+                    [
+                        -2.0,
+                        0.0
+                    ],
+                    [
+                        -2.1666666666666665,
+                        0.0
+                    ],
+                    [
+                        -2.5,
+                        0.0
+                    ],
+                    [
+                        -3.0,
+                        0.0
+                    ],
+                    [
+                        -3.5,
+                        0.0
+                    ],
+                    [
+                        -3.833333333333333,
+                        0.0
+                    ],
+                    [
+                        -4.0,
+                        0.0
+                    ],
+                    [
+                        -2.0,
+                        0.16666666666666666
+                    ],
+                    [
+                        -2.1666666666666665,
+                        0.16666666666666657
+                    ],
+                    [
+                        -2.5000000000000004,
+                        0.19444444444444448
+                    ],
+                    [
+                        -3.0,
+                        0.25
+                    ],
+                    [
+                        -3.4999999999999996,
+                        0.30555555555555547
+                    ],
+                    [
+                        -3.833333333333333,
+                        0.33333333333333337
+                    ],
+                    [
+                        -4.0,
+                        0.3333333333333333
+                    ],
+                    [
+                        -2.0,
+                        0.5
+                    ],
+                    [
+                        -2.166666666666667,
+                        0.5277777777777777
+                    ],
+                    [
+                        -2.5,
+                        0.6111111111111112
+                    ],
+                    [
+                        -2.9999999999999996,
+                        0.75
+                    ],
+                    [
+                        -3.499999999999999,
+                        0.8888888888888886
+                    ],
+                    [
+                        -3.8333333333333335,
+                        0.9722222222222221
+                    ],
+                    [
+                        -4.0,
+                        1.0
+                    ],
+                    [
+                        -2.0,
+                        0.9999999999999999
+                    ],
+                    [
+                        -2.1666666666666665,
+                        1.0833333333333333
+                    ],
+                    [
+                        -2.5,
+                        1.2499999999999996
+                    ],
+                    [
+                        -3.0,
+                        1.5
+                    ],
+                    [
+                        -3.4999999999999996,
+                        1.7499999999999996
+                    ],
+                    [
+                        -3.833333333333333,
+                        1.9166666666666663
+                    ],
+                    [
+                        -4.0,
+                        1.9999999999999998
+                    ],
+                    [
+                        -2.0,
+                        1.4999999999999998
+                    ],
+                    [
+                        -2.1666666666666665,
+                        1.6388888888888882
+                    ],
+                    [
+                        -2.5,
+                        1.8888888888888884
+                    ],
+                    [
+                        -3.0000000000000004,
+                        2.25
+                    ],
+                    [
+                        -3.4999999999999996,
+                        2.61111111111111
+                    ],
+                    [
+                        -3.8333333333333335,
+                        2.861111111111111
+                    ],
+                    [
+                        -4.0,
+                        2.9999999999999996
+                    ],
+                    [
+                        -2.0,
+                        1.8333333333333333
+                    ],
+                    [
+                        -2.1666666666666665,
+                        2.0
+                    ],
+                    [
+                        -2.5,
+                        2.3055555555555554
+                    ],
+                    [
+                        -3.0,
+                        2.75
+                    ],
+                    [
+                        -3.5,
+                        3.1944444444444438
+                    ],
+                    [
+                        -3.833333333333333,
+                        3.5
+                    ],
+                    [
+                        -4.0,
+                        3.6666666666666665
+                    ],
+                    [
+                        -2.0,
+                        2.0
+                    ],
+                    [
+                        -2.1666666666666665,
+                        2.1666666666666665
+                    ],
+                    [
+                        -2.5,
+                        2.5
+                    ],
+                    [
+                        -3.0,
+                        3.0
+                    ],
+                    [
+                        -3.5,
+                        3.5
+                    ],
+                    [
+                        -3.833333333333333,
+                        3.833333333333333
+                    ],
+                    [
+                        -4.0,
+                        4.0
+                    ]
+                ],
+                "weights": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    0.9999999999999998,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    0.9999999999999998,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "knotvector_u": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.25,
+                    0.5,
+                    0.75,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "knotvector_v": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.25,
+                    0.5,
+                    0.75,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ]
+            }
+        },
+        {
+            "type": "FACE",
+            "ID": 2,
+            "prev_ID": 1,
+            "next_ID": 3,
+            "loop": {
+                "type": "LOOP",
+                "ID": 4,
+                "prev_ID": null,
+                "next_ID": null,
+                "face_ID": 2,
+                "he_loop": [
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 13,
+                        "prev_ID": 16,
+                        "next_ID": 14,
+                        "vertex_ID": 8,
+                        "edge_ID": 12,
+                        "loop_ID": 4
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 14,
+                        "prev_ID": 13,
+                        "next_ID": 15,
+                        "vertex_ID": 9,
+                        "edge_ID": 11,
+                        "loop_ID": 4
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 15,
+                        "prev_ID": 14,
+                        "next_ID": 16,
+                        "vertex_ID": 4,
+                        "edge_ID": 2,
+                        "loop_ID": 4
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 16,
+                        "prev_ID": 15,
+                        "next_ID": 13,
+                        "vertex_ID": 5,
+                        "edge_ID": 8,
+                        "loop_ID": 4
+                    }
+                ],
+                "isClosed": true
+            },
+            "intLoops": [],
+            "attributes": {
+                "isDeleted": false,
+                "mesh": {
+                    "type": "Mesh",
+                    "symbol": "Mesh",
+                    "name": "Quadrilateral Template",
+                    "coords": [
+                        -2.0,
+                        2.0,
+                        -1.0,
+                        2.0,
+                        4.0821559971578444e-17,
+                        2.0,
+                        -3.0,
+                        3.0,
+                        -1.5,
+                        3.0,
+                        2.0410779985789222e-17,
+                        3.0,
+                        -4.0,
+                        4.0,
+                        -2.0,
+                        4.0,
+                        0.0,
+                        4.0,
+                        -1.5,
+                        2.0,
+                        -1.25,
+                        2.5,
+                        -2.25,
+                        3.0,
+                        -2.5,
+                        2.5,
+                        -0.5,
+                        2.0,
+                        3.0616169978683836e-17,
+                        2.5,
+                        -0.75,
+                        3.0,
+                        -1.75,
+                        3.5,
+                        -3.0,
+                        4.0,
+                        -3.5,
+                        3.5,
+                        1.0205389992894608e-17,
+                        3.5,
+                        -1.0,
+                        4.0
+                    ],
+                    "conn": [
+                        8,
+                        0,
+                        9,
+                        1,
+                        10,
+                        4,
+                        11,
+                        3,
+                        12,
+                        8,
+                        1,
+                        13,
+                        2,
+                        14,
+                        5,
+                        15,
+                        4,
+                        10,
+                        8,
+                        3,
+                        11,
+                        4,
+                        16,
+                        7,
+                        17,
+                        6,
+                        18,
+                        8,
+                        4,
+                        15,
+                        5,
+                        19,
+                        8,
+                        20,
+                        7,
+                        16
+                    ],
+                    "IsoGe": null,
+                    "properties": {
+                        "Element type": "Q8",
+                        "Number of nodes": 21,
+                        "Number of elements": 4
+                    },
+                    "properties_type": [
+                        "string",
+                        "int",
+                        "int"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": false,
+                    "applyOnFace": true
+                },
+                "att_names": [
+                    "mat",
+                    "thi"
+                ]
+            },
+            "dataSurf": {
+                "degree_u": 3,
+                "degree_v": 3,
+                "ctrlpts_size_u": 7,
+                "ctrlpts_size_v": 7,
+                "ctrlpts": [
+                    [
+                        -2.0,
+                        2.0
+                    ],
+                    [
+                        -2.1666666666666665,
+                        2.1666666666666665
+                    ],
+                    [
+                        -2.5,
+                        2.5
+                    ],
+                    [
+                        -3.0,
+                        3.0
+                    ],
+                    [
+                        -3.5,
+                        3.5
+                    ],
+                    [
+                        -3.833333333333333,
+                        3.833333333333333
+                    ],
+                    [
+                        -4.0,
+                        4.0
+                    ],
+                    [
+                        -1.8333333333333333,
+                        2.0
+                    ],
+                    [
+                        -2.0,
+                        2.1666666666666665
+                    ],
+                    [
+                        -2.3055555555555567,
+                        2.5000000000000004
+                    ],
+                    [
+                        -2.75,
+                        3.0
+                    ],
+                    [
+                        -3.194444444444444,
+                        3.4999999999999996
+                    ],
+                    [
+                        -3.5,
+                        3.833333333333333
+                    ],
+                    [
+                        -3.6666666666666665,
+                        4.0
+                    ],
+                    [
+                        -1.5,
+                        2.0
+                    ],
+                    [
+                        -1.6388888888888893,
+                        2.166666666666667
+                    ],
+                    [
+                        -1.8888888888888888,
+                        2.5
+                    ],
+                    [
+                        -2.25,
+                        2.9999999999999996
+                    ],
+                    [
+                        -2.6111111111111116,
+                        3.499999999999999
+                    ],
+                    [
+                        -2.8611111111111107,
+                        3.8333333333333335
+                    ],
+                    [
+                        -3.0,
+                        4.0
+                    ],
+                    [
+                        -1.0,
+                        2.0
+                    ],
+                    [
+                        -1.0833333333333333,
+                        2.1666666666666665
+                    ],
+                    [
+                        -1.25,
+                        2.5
+                    ],
+                    [
+                        -1.5,
+                        3.0
+                    ],
+                    [
+                        -1.75,
+                        3.4999999999999996
+                    ],
+                    [
+                        -1.9166666666666667,
+                        3.833333333333333
+                    ],
+                    [
+                        -2.0,
+                        4.0
+                    ],
+                    [
+                        -0.5,
+                        2.0
+                    ],
+                    [
+                        -0.5277777777777777,
+                        2.1666666666666665
+                    ],
+                    [
+                        -0.6111111111111112,
+                        2.5
+                    ],
+                    [
+                        -0.75,
+                        3.0000000000000004
+                    ],
+                    [
+                        -0.8888888888888888,
+                        3.4999999999999996
+                    ],
+                    [
+                        -0.9722222222222223,
+                        3.8333333333333335
+                    ],
+                    [
+                        -1.0,
+                        4.0
+                    ],
+                    [
+                        -0.16666666666666663,
+                        2.0
+                    ],
+                    [
+                        -0.16666666666666657,
+                        2.1666666666666665
+                    ],
+                    [
+                        -0.19444444444444442,
+                        2.5
+                    ],
+                    [
+                        -0.25,
+                        3.0
+                    ],
+                    [
+                        -0.3055555555555556,
+                        3.5
+                    ],
+                    [
+                        -0.33333333333333326,
+                        3.833333333333333
+                    ],
+                    [
+                        -0.3333333333333333,
+                        4.0
+                    ],
+                    [
+                        4.0821559971578444e-17,
+                        2.0
+                    ],
+                    [
+                        3.741976330728024e-17,
+                        2.1666666666666665
+                    ],
+                    [
+                        3.061616997868383e-17,
+                        2.5
+                    ],
+                    [
+                        2.0410779985789222e-17,
+                        3.0
+                    ],
+                    [
+                        1.0205389992894611e-17,
+                        3.5
+                    ],
+                    [
+                        3.4017966642982036e-18,
+                        3.833333333333333
+                    ],
+                    [
+                        0.0,
+                        4.0
+                    ]
+                ],
+                "weights": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    0.9999999999999998,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    0.9999999999999998,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "knotvector_u": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.25,
+                    0.5,
+                    0.75,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "knotvector_v": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.25,
+                    0.5,
+                    0.75,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ]
+            }
+        },
+        {
+            "type": "FACE",
+            "ID": 3,
+            "prev_ID": 2,
+            "next_ID": 4,
+            "loop": {
+                "type": "LOOP",
+                "ID": 5,
+                "prev_ID": null,
+                "next_ID": null,
+                "face_ID": 3,
+                "he_loop": [
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 17,
+                        "prev_ID": 20,
+                        "next_ID": 18,
+                        "vertex_ID": 8,
+                        "edge_ID": 9,
+                        "loop_ID": 5
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 18,
+                        "prev_ID": 17,
+                        "next_ID": 19,
+                        "vertex_ID": 7,
+                        "edge_ID": 5,
+                        "loop_ID": 5
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 19,
+                        "prev_ID": 18,
+                        "next_ID": 20,
+                        "vertex_ID": 2,
+                        "edge_ID": 4,
+                        "loop_ID": 5
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 20,
+                        "prev_ID": 19,
+                        "next_ID": 17,
+                        "vertex_ID": 6,
+                        "edge_ID": 7,
+                        "loop_ID": 5
+                    }
+                ],
+                "isClosed": true
+            },
+            "intLoops": [],
+            "attributes": {
+                "isDeleted": false,
+                "mesh": {
+                    "type": "Mesh",
+                    "symbol": "Mesh",
+                    "name": "Quadrilateral Template",
+                    "coords": [
+                        -1.6647086019760546,
+                        0.6720693075416007,
+                        -1.6734713402930326,
+                        0.8170857949310337,
+                        -1.6590403774163123,
+                        0.9486014359269062,
+                        -1.7222467683631928,
+                        0.6085359676377728,
+                        -1.7566026336700602,
+                        0.864387517297788,
+                        -1.7122067594953931,
+                        1.0753937509653748,
+                        -1.8168258065720597,
+                        0.44845789675539177,
+                        -1.855073291344098,
+                        0.919541699286111,
+                        -1.8023782696409385,
+                        1.3388333855410055,
+                        -2.0,
+                        0.0,
+                        -2.0,
+                        1.0,
+                        -2.0,
+                        2.0,
+                        -1.7500000000000002,
+                        0.0,
+                        -1.4999999999999998,
+                        0.0,
+                        -1.25,
+                        0.0,
+                        -1.0,
+                        0.0,
+                        -1.6583147952497022,
+                        0.26520470676028446,
+                        -1.4496149976371853,
+                        0.18091570146565492,
+                        -1.2236969998708098,
+                        0.13239641035810298,
+                        -0.9953460488764663,
+                        0.09636515441801104,
+                        -1.5941296199205672,
+                        0.4453051633937796,
+                        -1.4084514550761458,
+                        0.33808040358985825,
+                        -1.1965790400793588,
+                        0.25983676617182216,
+                        -0.9811562764314341,
+                        0.19321584101518063,
+                        -1.5553764071388039,
+                        0.5853016440563217,
+                        -1.3772926987233975,
+                        0.48361213019394367,
+                        -1.1700827177583457,
+                        0.38474627394313987,
+                        -0.9572878591696148,
+                        0.28913656753592376,
+                        -0.9238795325112867,
+                        0.38268343236509,
+                        -0.881355164360041,
+                        0.4724543091727337,
+                        -1.1440884810739145,
+                        0.5110505763612383,
+                        -1.118019133787195,
+                        0.6383955583570646,
+                        -1.3588191724400325,
+                        0.6354866599507408,
+                        -1.3464029356247984,
+                        0.7913827896983656,
+                        -1.543668098683036,
+                        0.7421734877030637,
+                        -1.5413660115058363,
+                        0.9049395695033154,
+                        -0.8304064878829056,
+                        0.5571580250539139,
+                        -0.7719563949468504,
+                        0.635675486628722,
+                        -0.7071067811865475,
+                        0.7071067811865475,
+                        -1.0901448507673825,
+                        0.7653478715235638,
+                        -1.060988776409685,
+                        0.8956734237663135,
+                        -1.0303300858899105,
+                        1.0303300858899105,
+                        -1.3428108244266364,
+                        0.954315128800921,
+                        -1.3441569164129277,
+                        1.137317049171861,
+                        -1.353553390593274,
+                        1.353553390593274,
+                        -1.5614853738301937,
+                        1.078912909614126,
+                        -1.6045082626562457,
+                        1.3198036997493903,
+                        -1.676776695296637,
+                        1.676776695296637,
+                        -1.6690899711345435,
+                        0.7445775512363172,
+                        -1.7150369869815463,
+                        0.8407366561144108,
+                        -1.7394247010166266,
+                        0.7364617424677804,
+                        -1.6934776851696238,
+                        0.6403026375896868,
+                        -1.6662558588546723,
+                        0.8828436154289699,
+                        -1.6856235684558527,
+                        1.0119975934461405,
+                        -1.7344046965827267,
+                        0.9698906341315814,
+                        -1.805837962507079,
+                        0.8919646082919495,
+                        -1.8359495489580788,
+                        0.6839997980207514,
+                        -1.7695362874676261,
+                        0.5284969321965823,
+                        -1.757292514568166,
+                        1.2071135682531902,
+                        -1.828725780492518,
+                        1.1291875424135582,
+                        -1.927536645672049,
+                        0.9597708496430555,
+                        -2.0,
+                        0.5,
+                        -1.9084129032860297,
+                        0.22422894837769589,
+                        -1.9011891348204693,
+                        1.6694166927705028,
+                        -2.0,
+                        1.5,
+                        -1.875,
+                        0.0,
+                        -1.7041573976248512,
+                        0.13260235338014223,
+                        -1.737570300910881,
+                        0.3568313017578381,
+                        -1.625,
+                        0.0,
+                        -1.4748074988185924,
+                        0.09045785073282746,
+                        -1.5539648964434436,
+                        0.22306020411296967,
+                        -1.375,
+                        0.0,
+                        -1.2368484999354048,
+                        0.06619820517905149,
+                        -1.3366559987539977,
+                        0.15665605591187895,
+                        -1.125,
+                        0.0,
+                        -0.9988455880857379,
+                        0.048036352501583945,
+                        -1.109521524373638,
+                        0.11438078238805702,
+                        -1.6262222075851347,
+                        0.35525493507703204,
+                        -1.65818819414188,
+                        0.5269205655157763,
+                        -1.4290332263566654,
+                        0.2594980525277566,
+                        -1.5012905374983565,
+                        0.3916927834918189,
+                        -1.2101380199750844,
+                        0.1961165882649626,
+                        -1.3025152475777522,
+                        0.2989585848808402,
+                        -0.9894584838674494,
+                        0.144816810842969,
+                        -1.0888676582553964,
+                        0.2265263035935014,
+                        -1.5747530135296857,
+                        0.5153034037250507,
+                        -1.6100425045574291,
+                        0.6286854757989612,
+                        -1.3928720768997715,
+                        0.41084626689190096,
+                        -1.4663345529311007,
+                        0.5344568871251327,
+                        -1.1833308789188521,
+                        0.322291520057481,
+                        -1.2736877082408715,
+                        0.43417920206854177,
+                        -0.9704299696521603,
+                        0.24138283700567273,
+                        -1.0636852884639802,
+                        0.3369414207395318,
+                        -0.941756274560304,
+                        0.33629617798348127,
+                        -1.0339840067926005,
+                        0.4468670043631642,
+                        -1.15708559941613,
+                        0.4478984251521891,
+                        -0.9037195559058088,
+                        0.42812494002733353,
+                        -0.999687149073618,
+                        0.5554249337648991,
+                        -1.1310538074305547,
+                        0.5747230673591515,
+                        -1.2514538267569735,
+                        0.5732686181559896,
+                        -1.368055935581715,
+                        0.5595493950723422,
+                        -1.2322110347059967,
+                        0.7148891740277151,
+                        -1.3526110540324154,
+                        0.7134347248245532,
+                        -1.4512436355615344,
+                        0.6888300738269022,
+                        -1.5495222529109198,
+                        0.6637375658796927,
+                        -1.4438844735653174,
+                        0.8481611796008406,
+                        -1.5425170550944363,
+                        0.8235565286031896,
+                        -1.6085697194880342,
+                        0.7796296413170487,
+                        -1.6002031944610744,
+                        0.9267705027151107,
+                        -0.8568810531164563,
+                        0.5155141712989401,
+                        -0.9602756693251441,
+                        0.6612529482887388,
+                        -1.1040819922772886,
+                        0.7018717149403142,
+                        -0.8020537526221064,
+                        0.5972518546683608,
+                        -0.9164725856782677,
+                        0.7656744551975178,
+                        -1.0755668135885337,
+                        0.8305106476449386,
+                        -0.7402573192910273,
+                        0.6723236580963531,
+                        -0.868718433538229,
+                        0.868718433538229,
+                        -1.0456594311497978,
+                        0.963001754828112,
+                        -1.2164778375970093,
+                        0.8598315001622423,
+                        -1.3446068800257174,
+                        0.8728489592496433,
+                        -1.2025728464113064,
+                        1.0164952364690873,
+                        -1.343483870419782,
+                        1.045816088986391,
+                        -1.1919417382415922,
+                        1.1919417382415922,
+                        -1.3488551535031008,
+                        1.2454352198825673,
+                        -1.452148099128415,
+                        1.0166140192075235,
+                        -1.551425692668015,
+                        0.9919262395587207,
+                        -1.4743325895345867,
+                        1.2285603744606255,
+                        -1.5829968182432197,
+                        1.1993583046817582,
+                        -1.5151650429449552,
+                        1.5151650429449552,
+                        -1.6406424789764413,
+                        1.4982901975230136,
+                        -1.6368460666627933,
+                        1.0771533302897502,
+                        -1.703443266148592,
+                        1.3293185426451979,
+                        -1.8383883476483185,
+                        1.8383883476483185
+                    ],
+                    "conn": [
+                        8,
+                        0,
+                        48,
+                        1,
+                        49,
+                        4,
+                        50,
+                        3,
+                        51,
+                        8,
+                        1,
+                        52,
+                        2,
+                        53,
+                        5,
+                        54,
+                        4,
+                        49,
+                        8,
+                        3,
+                        50,
+                        4,
+                        55,
+                        7,
+                        56,
+                        6,
+                        57,
+                        8,
+                        4,
+                        54,
+                        5,
+                        58,
+                        8,
+                        59,
+                        7,
+                        55,
+                        8,
+                        6,
+                        56,
+                        7,
+                        60,
+                        10,
+                        61,
+                        9,
+                        62,
+                        8,
+                        7,
+                        59,
+                        8,
+                        63,
+                        11,
+                        64,
+                        10,
+                        60,
+                        8,
+                        9,
+                        65,
+                        12,
+                        66,
+                        16,
+                        67,
+                        6,
+                        62,
+                        8,
+                        12,
+                        68,
+                        13,
+                        69,
+                        17,
+                        70,
+                        16,
+                        66,
+                        8,
+                        13,
+                        71,
+                        14,
+                        72,
+                        18,
+                        73,
+                        17,
+                        69,
+                        8,
+                        14,
+                        74,
+                        15,
+                        75,
+                        19,
+                        76,
+                        18,
+                        72,
+                        8,
+                        6,
+                        67,
+                        16,
+                        77,
+                        20,
+                        78,
+                        3,
+                        57,
+                        8,
+                        16,
+                        70,
+                        17,
+                        79,
+                        21,
+                        80,
+                        20,
+                        77,
+                        8,
+                        17,
+                        73,
+                        18,
+                        81,
+                        22,
+                        82,
+                        21,
+                        79,
+                        8,
+                        18,
+                        76,
+                        19,
+                        83,
+                        23,
+                        84,
+                        22,
+                        81,
+                        8,
+                        3,
+                        78,
+                        20,
+                        85,
+                        24,
+                        86,
+                        0,
+                        51,
+                        8,
+                        20,
+                        80,
+                        21,
+                        87,
+                        25,
+                        88,
+                        24,
+                        85,
+                        8,
+                        21,
+                        82,
+                        22,
+                        89,
+                        26,
+                        90,
+                        25,
+                        87,
+                        8,
+                        22,
+                        84,
+                        23,
+                        91,
+                        27,
+                        92,
+                        26,
+                        89,
+                        8,
+                        27,
+                        93,
+                        28,
+                        94,
+                        30,
+                        95,
+                        26,
+                        92,
+                        8,
+                        28,
+                        96,
+                        29,
+                        97,
+                        31,
+                        98,
+                        30,
+                        94,
+                        8,
+                        26,
+                        95,
+                        30,
+                        99,
+                        32,
+                        100,
+                        25,
+                        90,
+                        8,
+                        30,
+                        98,
+                        31,
+                        101,
+                        33,
+                        102,
+                        32,
+                        99,
+                        8,
+                        25,
+                        100,
+                        32,
+                        103,
+                        34,
+                        104,
+                        24,
+                        88,
+                        8,
+                        32,
+                        102,
+                        33,
+                        105,
+                        35,
+                        106,
+                        34,
+                        103,
+                        8,
+                        24,
+                        104,
+                        34,
+                        107,
+                        1,
+                        48,
+                        0,
+                        86,
+                        8,
+                        34,
+                        106,
+                        35,
+                        108,
+                        2,
+                        52,
+                        1,
+                        107,
+                        8,
+                        29,
+                        109,
+                        36,
+                        110,
+                        39,
+                        111,
+                        31,
+                        97,
+                        8,
+                        36,
+                        112,
+                        37,
+                        113,
+                        40,
+                        114,
+                        39,
+                        110,
+                        8,
+                        37,
+                        115,
+                        38,
+                        116,
+                        41,
+                        117,
+                        40,
+                        113,
+                        8,
+                        31,
+                        111,
+                        39,
+                        118,
+                        42,
+                        119,
+                        33,
+                        101,
+                        8,
+                        39,
+                        114,
+                        40,
+                        120,
+                        43,
+                        121,
+                        42,
+                        118,
+                        8,
+                        40,
+                        117,
+                        41,
+                        122,
+                        44,
+                        123,
+                        43,
+                        120,
+                        8,
+                        33,
+                        119,
+                        42,
+                        124,
+                        45,
+                        125,
+                        35,
+                        105,
+                        8,
+                        42,
+                        121,
+                        43,
+                        126,
+                        46,
+                        127,
+                        45,
+                        124,
+                        8,
+                        43,
+                        123,
+                        44,
+                        128,
+                        47,
+                        129,
+                        46,
+                        126,
+                        8,
+                        35,
+                        125,
+                        45,
+                        130,
+                        5,
+                        53,
+                        2,
+                        108,
+                        8,
+                        45,
+                        127,
+                        46,
+                        131,
+                        8,
+                        58,
+                        5,
+                        130,
+                        8,
+                        46,
+                        129,
+                        47,
+                        132,
+                        11,
+                        63,
+                        8,
+                        131
+                    ],
+                    "IsoGe": null,
+                    "properties": {
+                        "Element type": "Q8",
+                        "Number of nodes": 133,
+                        "Number of elements": 38
+                    },
+                    "properties_type": [
+                        "string",
+                        "int",
+                        "int"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": false,
+                    "applyOnFace": true
+                },
+                "att_names": [
+                    "mat",
+                    "thi"
+                ]
+            },
+            "dataSurf": {}
+        },
+        {
+            "type": "FACE",
+            "ID": 4,
+            "prev_ID": 3,
+            "next_ID": null,
+            "loop": {
+                "type": "LOOP",
+                "ID": 6,
+                "prev_ID": null,
+                "next_ID": null,
+                "face_ID": 4,
+                "he_loop": [
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 21,
+                        "prev_ID": 24,
+                        "next_ID": 22,
+                        "vertex_ID": 9,
+                        "edge_ID": 12,
+                        "loop_ID": 6
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 22,
+                        "prev_ID": 21,
+                        "next_ID": 23,
+                        "vertex_ID": 8,
+                        "edge_ID": 7,
+                        "loop_ID": 6
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 23,
+                        "prev_ID": 22,
+                        "next_ID": 24,
+                        "vertex_ID": 6,
+                        "edge_ID": 3,
+                        "loop_ID": 6
+                    },
+                    {
+                        "type": "HALF-EDGE",
+                        "ID": 24,
+                        "prev_ID": 23,
+                        "next_ID": 21,
+                        "vertex_ID": 1,
+                        "edge_ID": 10,
+                        "loop_ID": 6
+                    }
+                ],
+                "isClosed": true
+            },
+            "intLoops": [],
+            "attributes": {
+                "isDeleted": false,
+                "mesh": {
+                    "type": "Mesh",
+                    "symbol": "Mesh",
+                    "name": "Quadrilateral Template",
+                    "coords": [
+                        -0.9486014359269058,
+                        1.6590403774163118,
+                        -0.8170857949310334,
+                        1.6734713402930321,
+                        -0.6720693075416002,
+                        1.664708601976054,
+                        -1.0753937509653746,
+                        1.7122067594953931,
+                        -0.8643875172977875,
+                        1.7566026336700598,
+                        -0.6085359676377726,
+                        1.7222467683631926,
+                        -1.3388333855410055,
+                        1.802378269640938,
+                        -0.9195416992861107,
+                        1.8550732913440977,
+                        -0.4484578967553916,
+                        1.8168258065720595,
+                        -2.0,
+                        2.0,
+                        -1.0,
+                        2.0,
+                        0.0,
+                        2.0,
+                        -1.676776695296637,
+                        1.676776695296637,
+                        -1.3535533905932742,
+                        1.3535533905932742,
+                        -1.0303300858899107,
+                        1.0303300858899107,
+                        -0.7071067811865475,
+                        0.7071067811865475,
+                        -1.31980369974939,
+                        1.6045082626562457,
+                        -1.137317049171861,
+                        1.3441569164129277,
+                        -0.8956734237663135,
+                        1.0609887764096853,
+                        -0.635675486628722,
+                        0.7719563949468504,
+                        -1.0789129096141257,
+                        1.5614853738301937,
+                        -0.9543151288009206,
+                        1.3428108244266364,
+                        -0.7653478715235635,
+                        1.0901448507673823,
+                        -0.5571580250539137,
+                        0.8304064878829058,
+                        -0.904939569503315,
+                        1.541366011505836,
+                        -0.7913827896983653,
+                        1.346402935624798,
+                        -0.6383955583570643,
+                        1.118019133787195,
+                        -0.47245430917273346,
+                        0.8813551643600411,
+                        -0.3826834323650896,
+                        0.9238795325112867,
+                        -0.2891365675359236,
+                        0.9572878591696148,
+                        -0.511050576361238,
+                        1.1440884810739143,
+                        -0.38474627394313965,
+                        1.1700827177583455,
+                        -0.6354866599507404,
+                        1.3588191724400325,
+                        -0.48361213019394345,
+                        1.3772926987233975,
+                        -0.7421734877030632,
+                        1.5436680986830358,
+                        -0.5853016440563215,
+                        1.5553764071388037,
+                        -0.19321584101518055,
+                        0.9811562764314339,
+                        -0.09636515441801088,
+                        0.9953460488764662,
+                        6.123233995736766e-17,
+                        1.0,
+                        -0.25983676617182205,
+                        1.1965790400793586,
+                        -0.13239641035810285,
+                        1.22369699987081,
+                        5.612964496092035e-17,
+                        1.25,
+                        -0.338080403589858,
+                        1.408451455076146,
+                        -0.18091570146565478,
+                        1.4496149976371853,
+                        5.102694996447305e-17,
+                        1.5000000000000002,
+                        -0.44530516339377935,
+                        1.594129619920567,
+                        -0.26520470676028435,
+                        1.658314795249702,
+                        4.592425496802574e-17,
+                        1.75,
+                        -0.8828436154289696,
+                        1.6662558588546719,
+                        -0.8407366561144105,
+                        1.7150369869815458,
+                        -0.969890634131581,
+                        1.7344046965827264,
+                        -1.0119975934461403,
+                        1.6856235684558525,
+                        -0.7445775512363169,
+                        1.669089971134543,
+                        -0.6403026375896864,
+                        1.6934776851696234,
+                        -0.7364617424677801,
+                        1.7394247010166262,
+                        -0.8919646082919491,
+                        1.8058379625070788,
+                        -1.129187542413558,
+                        1.8287257804925179,
+                        -1.20711356825319,
+                        1.7572925145681655,
+                        -0.5284969321965821,
+                        1.7695362874676261,
+                        -0.6839997980207512,
+                        1.8359495489580786,
+                        -0.9597708496430554,
+                        1.9275366456720489,
+                        -1.5,
+                        2.0,
+                        -1.6694166927705028,
+                        1.901189134820469,
+                        -0.2242289483776958,
+                        1.9084129032860297,
+                        -0.5,
+                        2.0,
+                        -1.8383883476483185,
+                        1.8383883476483185,
+                        -1.4982901975230134,
+                        1.6406424789764413,
+                        -1.3293185426451979,
+                        1.7034432661485919,
+                        -1.5151650429449552,
+                        1.5151650429449552,
+                        -1.2454352198825676,
+                        1.3488551535031008,
+                        -1.2285603744606255,
+                        1.4743325895345867,
+                        -1.1919417382415922,
+                        1.1919417382415922,
+                        -0.9630017548281121,
+                        1.045659431149798,
+                        -1.0164952364690873,
+                        1.2025728464113064,
+                        -0.868718433538229,
+                        0.868718433538229,
+                        -0.6723236580963529,
+                        0.7402573192910276,
+                        -0.7656744551975178,
+                        0.9164725856782678,
+                        -1.1993583046817577,
+                        1.5829968182432197,
+                        -1.0771533302897502,
+                        1.6368460666627933,
+                        -1.0458160889863908,
+                        1.343483870419782,
+                        -1.0166140192075233,
+                        1.452148099128415,
+                        -0.8305106476449385,
+                        1.0755668135885337,
+                        -0.8598315001622421,
+                        1.2164778375970093,
+                        -0.5972518546683607,
+                        0.8020537526221064,
+                        -0.6612529482887386,
+                        0.9602756693251441,
+                        -0.9919262395587203,
+                        1.551425692668015,
+                        -0.9267705027151104,
+                        1.600203194461074,
+                        -0.8728489592496429,
+                        1.3446068800257172,
+                        -0.8481611796008401,
+                        1.443884473565317,
+                        -0.701871714940314,
+                        1.1040819922772886,
+                        -0.7148891740277148,
+                        1.2322110347059965,
+                        -0.5155141712989398,
+                        0.8568810531164563,
+                        -0.5554249337648989,
+                        0.9996871490736181,
+                        -0.4281249400273334,
+                        0.9037195559058088,
+                        -0.4468670043631638,
+                        1.0339840067926005,
+                        -0.5747230673591511,
+                        1.1310538074305545,
+                        -0.3362961779834811,
+                        0.941756274560304,
+                        -0.3369414207395316,
+                        1.0636852884639802,
+                        -0.4478984251521888,
+                        1.15708559941613,
+                        -0.5732686181559892,
+                        1.2514538267569733,
+                        -0.7134347248245528,
+                        1.3526110540324152,
+                        -0.43417920206854155,
+                        1.2736877082408715,
+                        -0.5595493950723419,
+                        1.368055935581715,
+                        -0.6888300738269018,
+                        1.4512436355615341,
+                        -0.8235565286031892,
+                        1.5425170550944358,
+                        -0.5344568871251325,
+                        1.4663345529311007,
+                        -0.6637375658796923,
+                        1.5495222529109198,
+                        -0.7796296413170483,
+                        1.608569719488034,
+                        -0.6286854757989608,
+                        1.6100425045574287,
+                        -0.24138283700567245,
+                        0.9704299696521604,
+                        -0.2265263035935013,
+                        1.0888676582553962,
+                        -0.32229152005748085,
+                        1.1833308789188521,
+                        -0.1448168108429689,
+                        0.9894584838674494,
+                        -0.11438078238805686,
+                        1.109521524373638,
+                        -0.19611658826496245,
+                        1.2101380199750844,
+                        -0.048036352501583675,
+                        0.9988455880857379,
+                        5.868099245914401e-17,
+                        1.125,
+                        -0.0661982051790514,
+                        1.236848499935405,
+                        -0.29895858488084004,
+                        1.3025152475777522,
+                        -0.41084626689190074,
+                        1.3928720768997718,
+                        -0.1566560559118788,
+                        1.3366559987539977,
+                        -0.2594980525277564,
+                        1.4290332263566656,
+                        5.35782974626967e-17,
+                        1.375,
+                        -0.09045785073282736,
+                        1.4748074988185929,
+                        -0.3916927834918187,
+                        1.5012905374983565,
+                        -0.5153034037250503,
+                        1.5747530135296852,
+                        -0.22306020411296956,
+                        1.5539648964434436,
+                        -0.3552549350770319,
+                        1.6262222075851345,
+                        4.8475602466249403e-17,
+                        1.625,
+                        -0.13260235338014215,
+                        1.704157397624851,
+                        -0.526920565515776,
+                        1.65818819414188,
+                        -0.35683130175783795,
+                        1.7375703009108807,
+                        4.3372907469802093e-17,
+                        1.875
+                    ],
+                    "conn": [
+                        8,
+                        0,
+                        48,
+                        1,
+                        49,
+                        4,
+                        50,
+                        3,
+                        51,
+                        8,
+                        1,
+                        52,
+                        2,
+                        53,
+                        5,
+                        54,
+                        4,
+                        49,
+                        8,
+                        3,
+                        50,
+                        4,
+                        55,
+                        7,
+                        56,
+                        6,
+                        57,
+                        8,
+                        4,
+                        54,
+                        5,
+                        58,
+                        8,
+                        59,
+                        7,
+                        55,
+                        8,
+                        6,
+                        56,
+                        7,
+                        60,
+                        10,
+                        61,
+                        9,
+                        62,
+                        8,
+                        7,
+                        59,
+                        8,
+                        63,
+                        11,
+                        64,
+                        10,
+                        60,
+                        8,
+                        9,
+                        65,
+                        12,
+                        66,
+                        16,
+                        67,
+                        6,
+                        62,
+                        8,
+                        12,
+                        68,
+                        13,
+                        69,
+                        17,
+                        70,
+                        16,
+                        66,
+                        8,
+                        13,
+                        71,
+                        14,
+                        72,
+                        18,
+                        73,
+                        17,
+                        69,
+                        8,
+                        14,
+                        74,
+                        15,
+                        75,
+                        19,
+                        76,
+                        18,
+                        72,
+                        8,
+                        6,
+                        67,
+                        16,
+                        77,
+                        20,
+                        78,
+                        3,
+                        57,
+                        8,
+                        16,
+                        70,
+                        17,
+                        79,
+                        21,
+                        80,
+                        20,
+                        77,
+                        8,
+                        17,
+                        73,
+                        18,
+                        81,
+                        22,
+                        82,
+                        21,
+                        79,
+                        8,
+                        18,
+                        76,
+                        19,
+                        83,
+                        23,
+                        84,
+                        22,
+                        81,
+                        8,
+                        3,
+                        78,
+                        20,
+                        85,
+                        24,
+                        86,
+                        0,
+                        51,
+                        8,
+                        20,
+                        80,
+                        21,
+                        87,
+                        25,
+                        88,
+                        24,
+                        85,
+                        8,
+                        21,
+                        82,
+                        22,
+                        89,
+                        26,
+                        90,
+                        25,
+                        87,
+                        8,
+                        22,
+                        84,
+                        23,
+                        91,
+                        27,
+                        92,
+                        26,
+                        89,
+                        8,
+                        27,
+                        93,
+                        28,
+                        94,
+                        30,
+                        95,
+                        26,
+                        92,
+                        8,
+                        28,
+                        96,
+                        29,
+                        97,
+                        31,
+                        98,
+                        30,
+                        94,
+                        8,
+                        26,
+                        95,
+                        30,
+                        99,
+                        32,
+                        100,
+                        25,
+                        90,
+                        8,
+                        30,
+                        98,
+                        31,
+                        101,
+                        33,
+                        102,
+                        32,
+                        99,
+                        8,
+                        25,
+                        100,
+                        32,
+                        103,
+                        34,
+                        104,
+                        24,
+                        88,
+                        8,
+                        32,
+                        102,
+                        33,
+                        105,
+                        35,
+                        106,
+                        34,
+                        103,
+                        8,
+                        24,
+                        104,
+                        34,
+                        107,
+                        1,
+                        48,
+                        0,
+                        86,
+                        8,
+                        34,
+                        106,
+                        35,
+                        108,
+                        2,
+                        52,
+                        1,
+                        107,
+                        8,
+                        29,
+                        109,
+                        36,
+                        110,
+                        39,
+                        111,
+                        31,
+                        97,
+                        8,
+                        36,
+                        112,
+                        37,
+                        113,
+                        40,
+                        114,
+                        39,
+                        110,
+                        8,
+                        37,
+                        115,
+                        38,
+                        116,
+                        41,
+                        117,
+                        40,
+                        113,
+                        8,
+                        31,
+                        111,
+                        39,
+                        118,
+                        42,
+                        119,
+                        33,
+                        101,
+                        8,
+                        39,
+                        114,
+                        40,
+                        120,
+                        43,
+                        121,
+                        42,
+                        118,
+                        8,
+                        40,
+                        117,
+                        41,
+                        122,
+                        44,
+                        123,
+                        43,
+                        120,
+                        8,
+                        33,
+                        119,
+                        42,
+                        124,
+                        45,
+                        125,
+                        35,
+                        105,
+                        8,
+                        42,
+                        121,
+                        43,
+                        126,
+                        46,
+                        127,
+                        45,
+                        124,
+                        8,
+                        43,
+                        123,
+                        44,
+                        128,
+                        47,
+                        129,
+                        46,
+                        126,
+                        8,
+                        35,
+                        125,
+                        45,
+                        130,
+                        5,
+                        53,
+                        2,
+                        108,
+                        8,
+                        45,
+                        127,
+                        46,
+                        131,
+                        8,
+                        58,
+                        5,
+                        130,
+                        8,
+                        46,
+                        129,
+                        47,
+                        132,
+                        11,
+                        63,
+                        8,
+                        131
+                    ],
+                    "IsoGe": null,
+                    "properties": {
+                        "Element type": "Q8",
+                        "Number of nodes": 133,
+                        "Number of elements": 38
+                    },
+                    "properties_type": [
+                        "string",
+                        "int",
+                        "int"
+                    ],
+                    "applyOnVertex": false,
+                    "applyOnEdge": false,
+                    "applyOnFace": true
+                },
+                "att_names": [
+                    "mat",
+                    "thi"
+                ]
+            },
+            "dataSurf": {}
+        }
+    ],
+    "attributes_list": [
+        {
+            "type": "Material",
+            "symbol": "Material",
+            "name": "mat",
+            "properties": {
+                "YoungsModulus": 10000.0,
+                "PoisonsRatio": 0.25,
+                "Conductivity": 0.0,
+                "SpecificHeat": 0.0,
+                "Color": [
+                    147,
+                    168,
+                    198
+                ]
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": false,
+            "applyOnFace": true,
+            "properties_type": [
+                "float",
+                "float",
+                "float",
+                "float",
+                "color"
+            ]
+        },
+        {
+            "type": "Thickness",
+            "symbol": "Thickness",
+            "name": "thi",
+            "properties": {
+                "Value": 1.0
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": false,
+            "applyOnFace": true,
+            "properties_type": [
+                "float"
+            ]
+        },
+        {
+            "type": "Support Conditions",
+            "symbol": "Support",
+            "name": "sup1",
+            "properties": {
+                "Dx": true,
+                "Dx pos": {
+                    "list": [
+                        "Left",
+                        "Right"
+                    ],
+                    "index": 0
+                },
+                "Dx value": 0.0,
+                "Dy": false,
+                "Dy pos": {
+                    "list": [
+                        "Down",
+                        "Up"
+                    ],
+                    "index": 0
+                },
+                "Dy value": 0.0,
+                "Rz": false,
+                "Rz value": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": true,
+            "applyOnEdge": true,
+            "applyOnFace": false,
+            "properties_type": [
+                "bool",
+                "options",
+                "float",
+                "bool",
+                "options",
+                "float",
+                "bool",
+                "float",
+                "color"
+            ]
+        },
+        {
+            "type": "Support Conditions",
+            "symbol": "Support",
+            "name": "sup2",
+            "properties": {
+                "Dx": false,
+                "Dx pos": {
+                    "list": [
+                        "Left",
+                        "Right"
+                    ],
+                    "index": 0
+                },
+                "Dx value": 0.0,
+                "Dy": true,
+                "Dy pos": {
+                    "list": [
+                        "Down",
+                        "Up"
+                    ],
+                    "index": 0
+                },
+                "Dy value": 0.0,
+                "Rz": false,
+                "Rz value": 0.0,
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": true,
+            "applyOnEdge": true,
+            "applyOnFace": false,
+            "properties_type": [
+                "bool",
+                "options",
+                "float",
+                "bool",
+                "options",
+                "float",
+                "bool",
+                "float",
+                "color"
+            ]
+        },
+        {
+            "type": "Uniform Load",
+            "symbol": "Arrow",
+            "name": "load",
+            "properties": {
+                "Qx": 1.0,
+                "Qy": 1.0,
+                "Direction": {
+                    "list": [
+                        "Global",
+                        "Local"
+                    ],
+                    "index": 0
+                },
+                "Color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "applyOnVertex": false,
+            "applyOnEdge": true,
+            "applyOnFace": false,
+            "properties_type": [
+                "float",
+                "float",
+                "options",
+                "color"
+            ]
+        }
+    ]
+}

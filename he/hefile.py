@@ -18,6 +18,7 @@ from he.topologicalEntities.halfedge import HalfEdge
 from he.topologicalEntities.shell import Shell
 from geometry.attributes.attribsymbols import AttribSymbols
 from compgeom.compgeom import CompGeom
+from mesh.mesh import MeshGeneration
 from mesh.mesh1d import Mesh1D
 from geometry.segment import Segment
 from geometry.curves.curve import Curve
@@ -303,13 +304,13 @@ class HeFile():
                 segment.isReversed = data_dict['isReversed']
 
                 if data_dict['isReversed'] == True:
-                    segment.ReverseNurbs(True)
+                    segment.reverseNurbsCurve(True)
 
                 for ref in data_dict['refinement']:
                     if ref == 'degreeElevation':
                         segment.degreeElevation()
                     elif ref == 'knotInsertion':
-                        segment.refineUsingKnotInsertion()
+                        segment.knotInsertion()
 
             elif type == 'POLYLINE':
                 pts = []
@@ -322,13 +323,13 @@ class HeFile():
                 segment.isReversed = data_dict['isReversed']
 
                 if data_dict['isReversed'] == True:
-                    segment.ReverseNurbs(True)
+                    segment.reverseNurbsCurve(True)
 
                 for ref in data_dict['refinement']:
                     if ref == 'degreeElevation':
                         segment.degreeElevation()
                     elif ref == 'knotInsertion':
-                        segment.refineUsingKnotInsertion()
+                        segment.knotInsertion()
 
             elif type == 'CUBICSPLINE':
                 degree = data_dict['degree']
@@ -352,13 +353,13 @@ class HeFile():
                 segment.isReversed = data_dict['isReversed']
                     
                 if data_dict['isReversed'] == True:
-                    segment.ReverseNurbs(True)
+                    segment.reverseNurbsCurve(True)
 
                 for ref in data_dict['refinement']:
                     if ref == 'degreeElevation':
                         segment.degreeElevation()
                     elif ref == 'knotInsertion':
-                        segment.refineUsingKnotInsertion()
+                        segment.knotInsertion()
 
             elif type == 'ELLIPSEARC':
                 center = Pnt2D(data_dict['center'][0], data_dict['center'][1])
@@ -373,13 +374,13 @@ class HeFile():
                 segment.isReversed = data_dict['isReversed']
 
                 if data_dict['isReversed'] == True:
-                    segment.ReverseNurbs(True)
+                    segment.reverseNurbsCurve(True)
 
                 for ref in data_dict['refinement']:
                     if ref == 'degreeElevation':
                         segment.degreeElevation()
                     elif ref == 'knotInsertion':
-                        segment.refineUsingKnotInsertion()
+                        segment.knotInsertion()
 
             edge.segment = segment
 
@@ -571,6 +572,7 @@ class HeFile():
     # Export to Femoolab - Finite Element Model Laboratory
     def exportFileToFemoolabPlaneStress(_shell, _filename, _gpT3, _gpT6, _gpQ4, _qpQ8):
 
+        # File name
         split_name = _filename.split('.')
         if split_name[-1] == 'json':
             split_name.remove('json')
@@ -582,17 +584,22 @@ class HeFile():
             else:
                 filename += '.' + split_name[i]
 
+        # Get faces edges and vertices
         faces = _shell.faces
         edges = _shell.edges
         vertices = _shell.vertices
 
-        # the faces of the solid must be connected
+        # The faces of the solid must be connected
         if len(_shell.face.intLoops) > 1:
             raise Error
 
+        # Lists of points and segments (in case of uniform load) where boundary conditions are applied
         sc_points = []  # points that have support conditions
         ul_segments = []  # segments that have uniform load
         cl_points = []  # points that have concentrated load
+
+        bezierExtraction = False
+        # Loop over edges
         for edge in edges:
             attributes = edge.segment.attributes
             support_condition = None
@@ -602,27 +609,36 @@ class HeFile():
             isIsogeometric = False
             incidentFaces = edge.incidentFaces()
 
+            # Loop over incident faces
             for face in incidentFaces:
                 if face.patch.mesh is not None:
-                    mesh_dict = face.patch.mesh.mesh_dict
+                    mesh_dict = face.patch.mesh.mesh_dict # get mesh dictionary
+
+                    # In case element type is T6 or Q8, set isQuadratic as True
                     if mesh_dict['properties']['Element type'] == "T6" or mesh_dict['properties']['Element type'] == "Q8":
                         isQuadratic = True
 
+                    # In case element type is isogeometric, set isIsogeometric as True
                     if mesh_dict['properties']['Element type'] == "Isogeometric":
                         isIsogeometric = True
+                    elif mesh_dict['properties']['Element type'] == "Isogeometric Template":
+                        isIsogeometric = True
+                        bezierExtraction = True
+                        break
 
+            # Loop over attributes
             for att in attributes:
                 if att["type"] == "Uniform Load":
-                    uniform_load = att
+                    uniform_load = att # get uniform load attribute
                 elif att["type"] == "Support Conditions":
-                    support_condition = att
+                    support_condition = att # get support condition attribute
                 elif att["type"] == "Number of Subdivisions":
-                    number_subdv = att
+                    number_subdv = att # get number of subdivisions attribute
 
+            # Check for support condition attribute
             if support_condition is not None:
                 if number_subdv is not None:
-                    subdv_pts = HeFile.Nsbdvs(
-                        number_subdv, edge.segment, isQuadratic, isIsogeometric)
+                    subdv_pts = HeFile.Nsbdvs(number_subdv, edge.segment, isQuadratic)
 
                     for pt in subdv_pts:
                         sc_point = {
@@ -631,8 +647,8 @@ class HeFile():
                         }
                         sc_points.append(sc_point)
 
+            # Check for uniform load attribute
             if uniform_load is not None:
-
                 if uniform_load['properties']['Direction']["index"] != 0:
                     localUL = True
                 else:
@@ -641,8 +657,7 @@ class HeFile():
                             uniform_load['properties']['Qy']]
 
                 if number_subdv is not None:
-                    subdv_pts = HeFile.Nsbdvs(
-                        number_subdv, edge.segment, isQuadratic, isIsogeometric)
+                    subdv_pts = HeFile.Nsbdvs(number_subdv, edge.segment, isQuadratic)
                     edge_pts = edge.segment.getPoints()
                     subdv_pts.insert(0, edge_pts[0])
                     subdv_pts.append(edge_pts[-1])
@@ -658,7 +673,8 @@ class HeFile():
                             ul_segment = {
                                 "segment": seg,
                                 "load": load,
-                                "mesh_pts": [0] * len(subdv_pts)
+                                # "mesh_pts": [0] * len(subdv_pts)
+                                "mesh_pts": []
                             }
                             ul_segments.append(ul_segment)
                             subdv_pts = []
@@ -678,7 +694,6 @@ class HeFile():
                             }
                             ul_segments.append(ul_segment)
                 else:
-                    # ???
                     ul_segment = {
                         "segment": edge.segment,
                         "load": load,
@@ -687,9 +702,11 @@ class HeFile():
                     }
                     ul_segments.append(ul_segment)
 
+        # Loop over vertices
         for vertex in vertices:
             attributes = vertex.point.attributes
 
+            # Loop over attributes
             for att in attributes:
                 if att["type"] == "Support Conditions":
                     sc_point = {
@@ -729,16 +746,38 @@ class HeFile():
                 continue
 
             # collect nurbs surface properties
-            nurbs_surf = faces[i].patch.nurbs
-            if nurbs_surf != []:
-                surf_dict = {'degree_u': nurbs_surf.degree_u,
-                             'degree_v': nurbs_surf.degree_v,
-                             'ctrlpts_size_u': nurbs_surf.ctrlpts_size_u,
-                             'ctrlpts_size_v': nurbs_surf.ctrlpts_size_v,
-                             'knotvector_u': nurbs_surf.knotvector_u,
-                             'knotvector_v': nurbs_surf.knotvector_v
-                             }
-                surf_map.append(surf_dict)
+            if isIsogeometric and not bezierExtraction:
+                nurbs_surf = faces[i].patch.nurbs
+                if nurbs_surf != []:
+                    surf_dict = {'degree_u': nurbs_surf.degree_u,
+                                'degree_v': nurbs_surf.degree_v,
+                                'ctrlpts_size_u': nurbs_surf.ctrlpts_size_u,
+                                'ctrlpts_size_v': nurbs_surf.ctrlpts_size_v,
+                                'knotvector_u': nurbs_surf.knotvector_u,
+                                'knotvector_v': nurbs_surf.knotvector_v,
+                                'TSpline': False
+                                }
+                    surf_map.append(surf_dict)
+
+            elif isIsogeometric and bezierExtraction:
+                nurbs_surf = faces[i].patch.nurbs
+                if nurbs_surf != []:
+                    surf_dict = {'degree_u': nurbs_surf.degree_u,
+                                'degree_v': nurbs_surf.degree_v,
+                                'ctrlpts_size_u': nurbs_surf.ctrlpts_size_u,
+                                'ctrlpts_size_v': nurbs_surf.ctrlpts_size_v,
+                                'knotvector_u': nurbs_surf.knotvector_u,
+                                'knotvector_v': nurbs_surf.knotvector_v,
+                                'TSpline': False
+                                }
+                    surf_map.append(surf_dict)
+
+                elif nurbs_surf == []:
+                    surf_dict = {'degree_u': 3,
+                                'degree_v': 3,
+                                'TSpline': True
+                                }
+                    surf_map.append(surf_dict)
                              
             mesh_index += 1
             mesh_map = []
@@ -807,6 +846,7 @@ class HeFile():
                 insert = True
                 for pt_dict in mesh_points:
                     tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
+                    # tol = Pnt2D(0.0, 0.0)
                     if Pnt2D.equal(pt_dict["point"], point, tol):
                         insert = False
                         pt_dict_target = pt_dict
@@ -857,13 +897,17 @@ class HeFile():
 
                     # uniform load
                     tol = Pnt2D(Curve.COORD_TOL, Curve.COORD_TOL)
+                    #tol = Pnt2D(0.0, 0.0)
                     for ul_segment in ul_segments:
 
                         if isIsogeometric:
                             pts = ul_segment['segment'].getEquivPolyline()
-                            for j in range(len(pts)):
-                                if Pnt2D.equal(pts[j], point, tol):
-                                    ul_segment['mesh_pts'][j] = mesh_point_dict
+                            # for j in range(len(pts)):
+                            #     if Pnt2D.equal(pts[j], point, tol):
+                            #         ul_segment['mesh_pts'][j] = mesh_point_dict
+                            for pt in pts:
+                                if Pnt2D.equal(pt, point, tol):
+                                    ul_segment['mesh_pts'].append(mesh_point_dict)
 
                         else:
                             pts = ul_segment['segment'].getEquivPolyline()
@@ -897,7 +941,13 @@ class HeFile():
         elem_pressure = []  # list of elements that are under pressure
         copy_meshes_map_pts = meshes_map_pts.copy() # copy of meshes_map_pts
         for mesh in meshes:
-            conn = mesh['mesh']['conn'].copy()
+            if isIsogeometric:
+                if mesh['mesh']['IsoGe']['TSpline']:
+                    conn = mesh['mesh']['IsoGe']['connectivity'].copy()
+                else:
+                    conn = mesh['mesh']['conn'].copy()
+            else:
+                conn = mesh['mesh']['conn'].copy() #obssss
             mesh_map = copy_meshes_map_pts.pop(0)
 
             while len(conn) > 0:
@@ -936,7 +986,6 @@ class HeFile():
                     "mesh_index": mesh_map[0]['mesh_index'],
                     "index": nel_index
                 }
-
                 mesh_elem.append(elem_dict)
 
                 if isIsogeometric:
@@ -967,8 +1016,11 @@ class HeFile():
 
             # type of analysis
             file.write("%HEADER.ANALYSIS\n")
-            if isIsogeometric:
+            if isIsogeometric and not bezierExtraction:
                 file.write("'plane_stress ISOGEOMETRIC'\n")
+                file.write("\n")
+            elif isIsogeometric and bezierExtraction:
+                file.write("'plane_stress ISOGEOMETRIC BEZIER_EXTRACTION'\n")
                 file.write("\n")
             else:
                 file.write("'plane_stress ISOPARAMETRIC'\n")
@@ -1062,35 +1114,47 @@ class HeFile():
                 file.write("\n")
 
                 # surface knot vectors
-                file.write("%SURFACE.KNOTVECTOR\n")
-                for i in range(len(surf_map)):
+                if not bezierExtraction:
+                    file.write("%SURFACE.KNOTVECTOR\n")
+                    for i in range(len(surf_map)):
 
-                    knotvector_u = ''
-                    for knot in surf_map[i]['knotvector_u']:
-                        knotvector_u += str(round(knot,6)) + ' '
-                    knotvector_u = knotvector_u[:-1]
+                        knotvector_u = ''
+                        for knot in surf_map[i]['knotvector_u']:
+                            knotvector_u += str(round(knot,6)) + ' '
+                        knotvector_u = knotvector_u[:-1]
 
-                    knotvector_v = ''
-                    for knot in surf_map[i]['knotvector_v']:
-                        knotvector_v += str(round(knot,6)) + ' '
-                    knotvector_v = knotvector_v[:-1]
+                        knotvector_v = ''
+                        for knot in surf_map[i]['knotvector_v']:
+                            knotvector_v += str(round(knot,6)) + ' '
+                        knotvector_v = knotvector_v[:-1]
 
-                    file.write(f"{i+1}   {len(surf_map[i]['knotvector_u'])}   {knotvector_u}   {len(surf_map[i]['knotvector_v'])}   {knotvector_v}\n")
-                file.write("\n")
+                        file.write(f"{i+1}   {len(surf_map[i]['knotvector_u'])}   {knotvector_u}   {len(surf_map[i]['knotvector_v'])}   {knotvector_v}\n")
+                    file.write("\n")
 
                 # surface control net
                 file.write("%SURFACE.CTRLNET\n")
-                copy_meshes_map_pts = meshes_map_pts.copy()
-                for i in range(len(copy_meshes_map_pts)):
-                    file.write(f"{i+1}\n")
-                    Nu = surf_map[i]['ctrlpts_size_u']
-                    Nv = surf_map[i]['ctrlpts_size_v']
-                    for j in range(Nv):
-                        for k in range(Nu):
+                if not bezierExtraction:
+                    copy_meshes_map_pts = meshes_map_pts.copy()
+                    for i in range(len(copy_meshes_map_pts)):
+                        file.write(f"{i+1}\n")
+                        Nu = surf_map[i]['ctrlpts_size_u']
+                        Nv = surf_map[i]['ctrlpts_size_v']
+                        for j in range(Nv):
+                            for k in range(Nu):
+                                file.write(f"{copy_meshes_map_pts[i][0]['global_index']}  ")
+                                copy_meshes_map_pts[i].pop(0)
+                            file.write("\n")
+                    file.write("\n")
+
+                elif bezierExtraction:
+                    copy_meshes_map_pts = meshes_map_pts.copy()
+                    for i in range(len(copy_meshes_map_pts)):
+                        file.write(f"{i+1}   {len(copy_meshes_map_pts[i])}\n")
+                        for j in range(len(copy_meshes_map_pts[i])):
                             file.write(f"{copy_meshes_map_pts[i][0]['global_index']}  ")
                             copy_meshes_map_pts[i].pop(0)
                         file.write("\n")
-                file.write("\n")
+                    file.write("\n")
 
             # elements
             file.write("%ELEMENT\n")
@@ -1099,23 +1163,74 @@ class HeFile():
 
             index = 0
             if len(Iso) > 0:
-                file.write("%ELEMENT.ISOGEOMETRIC\n")
-                for i in range(len(surf_map)):
-                    uniqueKnotVectorU = sorted(set(surf_map[i]['knotvector_u']))
-                    uniqueKnotVectorV = sorted(set(surf_map[i]['knotvector_v']))
-                    NelemU = len(uniqueKnotVectorU) - 1
-                    NelemV = len(uniqueKnotVectorV) - 1
-                    Nelem = NelemU * NelemV
-                    # Nelem = (len(set(surf_map[i]['knotvector_u'])) - 1) * (len(set(surf_map[i]['knotvector_v'])) - 1)
-                    file.write(f"{i+1}   {Nelem}\n")
-                    for j in range(NelemV):
-                        for k in range(NelemU):
-                            file.write(f"{Iso[index]['index']}   {Iso[index]['material']} {Iso[index]['thickness']} {4}   {len(Iso[index]['conn_list'])}   {Iso[index]['conn']}   {round(uniqueKnotVectorU[0],6)} {round(uniqueKnotVectorU[1],6)}   {round(uniqueKnotVectorV[0],6)} {round(uniqueKnotVectorV[1],6)}\n")
-                            index += 1
-                            uniqueKnotVectorU.pop(0)
+                if not bezierExtraction:
+                    file.write("%ELEMENT.ISOGEOMETRIC\n")
+                    for i in range(len(surf_map)):
                         uniqueKnotVectorU = sorted(set(surf_map[i]['knotvector_u']))
-                        uniqueKnotVectorV.pop(0)
-            file.write("\n")
+                        uniqueKnotVectorV = sorted(set(surf_map[i]['knotvector_v']))
+                        NelemU = len(uniqueKnotVectorU) - 1
+                        NelemV = len(uniqueKnotVectorV) - 1
+                        Nelem = NelemU * NelemV
+                        # Nelem = (len(set(surf_map[i]['knotvector_u'])) - 1) * (len(set(surf_map[i]['knotvector_v'])) - 1)
+                        file.write(f"{i+1}   {Nelem}\n")
+                        for j in range(NelemV):
+                            for k in range(NelemU):
+                                file.write(f"{Iso[index]['index']}   {Iso[index]['material']} {Iso[index]['thickness']} {4}   {len(Iso[index]['conn_list'])}   {Iso[index]['conn']}   {round(uniqueKnotVectorU[0],6)} {round(uniqueKnotVectorU[1],6)}   {round(uniqueKnotVectorV[0],6)} {round(uniqueKnotVectorV[1],6)}\n")
+                                index += 1
+                                uniqueKnotVectorU.pop(0)
+                            uniqueKnotVectorU = sorted(set(surf_map[i]['knotvector_u']))
+                            uniqueKnotVectorV.pop(0)
+                    file.write("\n")
+
+                elif bezierExtraction:
+                    file.write("%ELEMENT.ISOGEOMETRIC.BEZIER_EXTRACTION\n")
+                    for i in range(len(surf_map)):
+                        if surf_map[i]['TSpline']:
+                            try:
+                                operators = meshes[i]['mesh']['IsoGe']['extractionOperators']
+                            except:
+                                print("aqui")
+                            Nelem = len(operators)
+                            file.write(f"{i+1}   {Nelem}\n")
+                            CRegulars = MeshGeneration.extractionOperatorUnivariate([0, 0, 0, 0, 1, 2, 3, 4, 5, 5, 5, 5], 3)
+                            CRegularsBivariate = MeshGeneration.extractionOperatorBivariate(CRegulars, CRegulars)
+                            for j in range(Nelem):
+                                try:
+                                    file.write(f"{Iso[index]['index']}   {Iso[index]['material']} {Iso[index]['thickness']} {4}   {len(Iso[index]['conn_list'])}   {Iso[index]['conn']}\n")
+                                except:
+                                    print("aqui")
+                                op = operators[j]
+                                if op == "EP" or op[:4] == 'case': 
+                                    op = MeshGeneration.extractionOperatorIrregular(op)
+                                elif op[:8] == "CRegular":
+                                    opIndex = op.split("CRegular", 1)[1]
+                                    op = CRegularsBivariate[int(opIndex)-1].tolist()
+                                op = str(op).replace('],', '\n').replace('[', '').replace(']', '').replace(',', '')
+                                file.write(f"{op}\n")
+                                index += 1
+                        elif not surf_map[i]['TSpline']:
+                            knotVectorU = surf_map[i]['knotvector_u']
+                            knotVectorV = surf_map[i]['knotvector_v']
+                            degreeU = surf_map[i]['degree_u']
+                            degreeV = surf_map[i]['degree_v']
+                            uniqueKnotVectorU = sorted(set(knotVectorU))
+                            uniqueKnotVectorV = sorted(set(knotVectorV))
+                            NelemU = len(uniqueKnotVectorU) - 1
+                            NelemV = len(uniqueKnotVectorV) - 1
+                            Nelem = NelemU * NelemV
+                            file.write(f"{i+1}   {Nelem}\n")
+                            CRegularsU = MeshGeneration.extractionOperatorUnivariate(knotVectorU, degreeU)
+                            CRegularsV = MeshGeneration.extractionOperatorUnivariate(knotVectorV, degreeV)
+                            CRegularsBivariate = MeshGeneration.extractionOperatorBivariate(CRegularsV, CRegularsU)
+                            for j in range(Nelem):
+                                try:
+                                    file.write(f"{Iso[index]['index']}   {Iso[index]['material']} {Iso[index]['thickness']} {4}   {len(Iso[index]['conn_list'])}   {Iso[index]['conn']}\n")
+                                except:
+                                    print("aqui")
+                                op = CRegularsBivariate[j].tolist()
+                                op = str(op).replace('],', '\n').replace('[', '').replace(']', '').replace(',', '')
+                                file.write(f"{op}\n")
+                                index += 1
 
             if len(T3) > 0:
                 file.write("%ELEMENT.T3\n")
@@ -1197,24 +1312,28 @@ class HeFile():
                             NuElem = surf_map[surf_index]['degree_u'] + 1
                             NvElem = surf_map[surf_index]['degree_v'] + 1
                             conn = np.array(elem['conn_list'])
-                            conn_matrix = np.array(conn).reshape((NvElem, NuElem))
+                            try:
+                                conn_matrix = np.array(conn).reshape((NvElem, NuElem))
+
                             
-                            row_in_matrix = np.where(np.all(np.isin(conn_matrix, pts_index), axis=1))[0].tolist()
-                            column_in_matrix = np.where(np.all(np.isin(conn_matrix, pts_index), axis=0))[0].tolist()
+                                row_in_matrix = np.where(np.all(np.isin(conn_matrix, pts_index), axis=1))[0].tolist()
+                                column_in_matrix = np.where(np.all(np.isin(conn_matrix, pts_index), axis=0))[0].tolist()
 
-                            if len(row_in_matrix) > 0:
-                                row = conn_matrix[row_in_matrix[0],:]
-                                index_pt1 = row[0]
-                                index_pt2 = row[-1]
-                                string_loads.append(f"{elem['index']}   {index_pt1} {index_pt2}   0   {Qx:.6f} {Qy:.6f} 0.000000")
-                                count_load_elems += 1
+                                if len(row_in_matrix) > 0:
+                                    row = conn_matrix[row_in_matrix[0],:]
+                                    index_pt1 = row[0]
+                                    index_pt2 = row[-1]
+                                    string_loads.append(f"{elem['index']}   {index_pt1} {index_pt2}   0   {Qx:.6f} {Qy:.6f} 0.000000")
+                                    count_load_elems += 1
 
-                            if len(column_in_matrix) > 0:
-                                column = conn_matrix[:,column_in_matrix[0]]
-                                index_pt1 = column[-1]
-                                index_pt2 = row[0]
-                                string_loads.append(f"{elem['index']}   {index_pt1} {index_pt2}   0   {Qx:.6f} {Qy:.6f} 0.000000")
-                                count_load_elems += 1
+                                if len(column_in_matrix) > 0:
+                                    column = conn_matrix[:,column_in_matrix[0]]
+                                    index_pt1 = column[-1]
+                                    index_pt2 = row[0]
+                                    string_loads.append(f"{elem['index']}   {index_pt1} {index_pt2}   0   {Qx:.6f} {Qy:.6f} 0.000000")
+                                    count_load_elems += 1
+                            except:
+                                pass
 
                     file.write(f"{count_load_elems}\n")
                     for load in string_loads:
@@ -1773,22 +1892,23 @@ class HeFile():
 
             file.write("%END")
 
-    def Nsbdvs(_attribute, _seg, _isQuadratic, _isIsogeometric):
+    def Nsbdvs(_attribute, _seg, _isQuadratic):
         points = []
 
         if _attribute is not None:
             properties = _attribute['properties']
             number = properties['Value']
             ratio = properties['Ratio']
+            isIsogeometric = properties['isIsogeometric']
 
-            if _isIsogeometric:
+            if isIsogeometric:
                 ctrlpts = _seg.getCtrlPts().copy()
                 ctrlpts.pop(0)
                 ctrlpts.pop()
                 for ctrlpt in ctrlpts:
                     points.append(Pnt2D(ctrlpt[0], ctrlpt[1]))
             else:
-                points = Mesh1D.subdivideSegment(_seg, number, ratio, _isQuadratic)
+                points = Mesh1D.subdivideSegment(_seg, number, ratio, _isQuadratic, isIsogeometric)
 
         return points
 

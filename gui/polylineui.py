@@ -119,7 +119,7 @@ class Ui_polyline(object):
         self.InitialPointYTitle.setText(_translate("MainWindow", "Y:"))
         self.InitialPointpushButton.setText(_translate("MainWindow", "Set"))
 
-        self.EndPointTitle.setText(_translate("MainWindow", "Set End Point:"))
+        self.EndPointTitle.setText(_translate("MainWindow", "Set Next Point:"))
         self.EndPointXTitle.setText(_translate("MainWindow", "X:"))
         self.EndPointYTitle.setText(_translate("MainWindow", "Y:"))
         self.addPolylinepushButton.setText(_translate("MainWindow", "Add"))

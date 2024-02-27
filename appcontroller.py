@@ -84,7 +84,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         # set default mouse action on canvas
         self.canvas_list[0].setMouseAction('SELECTION')
 
-        # tab buttons
+        # Tab buttons
         self.tabWidget.tabCloseRequested.connect(self.closetab)
         self.tabWidget.tabBarClicked.connect(self.tabBarClicked)
 
@@ -112,8 +112,8 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.actionRedo.triggered.connect(self.Redo)
         self.actionNew.triggered.connect(self.on_actionAdd_tab)
         self.actionSave.triggered.connect(self.saveFile)
-        self.actionOpen.triggered.connect(self.openFile)
         self.actionSaveAs.triggered.connect(self.saveAsFile)
+        self.actionOpen.triggered.connect(self.openFile)
         self.actionExport.triggered.connect(self.exportFile_disp)
         self.actionExit.triggered.connect(self.exit)
         self.actionAttmanager.triggered.connect(self.AttributeManager)
@@ -170,19 +170,19 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.prop_vertex_display.closepushbutton.clicked.connect(self.close_propVertex)
 
         # Prop edge QPushButton
-        self.prop_edge_display.degreeElevation.clicked.connect(self.degreeElevation)
-        self.prop_edge_display.rescuepushbutton.clicked.connect(self.BackToOriginalNurbs)
-        self.prop_edge_display.reversepushbutton.clicked.connect(self.ReverseNurbs)
+        self.prop_edge_display.degreeElevationpushbutton.clicked.connect(self.degreeElevation)
+        self.prop_edge_display.knotInsertionpushbutton.clicked.connect(self.knotInsertion)
+        self.prop_edge_display.conformNurbsCurvespushbutton.clicked.connect(self.conformNurbsCurves)
+        self.prop_edge_display.rescueNurbsCurvepushbutton.clicked.connect(self.rescueNurbsCurve)
+        self.prop_edge_display.reverseNurbsCurveCurvepushbutton.clicked.connect(self.reverseNurbsCurve)
         self.prop_edge_display.closepushbutton.clicked.connect(self.close_propEdge)
 
         # Prop face QPushButton
+        self.prop_face_display.knotInsertionSurfpushbutton.clicked.connect(self.knotInsertionSurf)
         self.prop_face_display.closepushbutton.clicked.connect(self.close_propFace)
 
         # Subdivisions QPushButton
         self.nsudv_display.nsudvpushButton.clicked.connect(self.setNumberSdv)
-        self.nsudv_display.knotrefinementpushButton.clicked.connect(self.refineUsingKnotInsertion)
-        self.nsudv_display.rescuepushButton.clicked.connect(self.BackToOriginalNurbsRefine)
-        self.nsudv_display.knotconformpushButton.clicked.connect(self.conformSegs)
 
         # Mesh QPushButton
         self.mesh_display.genMeshpushButton.clicked.connect(self.generateMesh)
@@ -191,9 +191,9 @@ class AppController(QMainWindow, Ui_MainWindow):
         # Attributes QPushButton
         self.attribute_display.addpushButton.clicked.connect(self.addAttribute)
         self.attribute_display.saveAttpushButton.clicked.connect(self.saveAttributeValues)
-        self.attribute_display.delpushButton.clicked.connect(self.delAttribute)
         self.attribute_display.setAttpushButton.clicked.connect(self.setAttribute)
         self.attribute_display.unsetpushButton.clicked.connect(self.unSetAttribute)
+        self.attribute_display.delpushButton.clicked.connect(self.delAttribute)
         self.attribute_display.renamepushButton.clicked.connect(self.renameAttribute)
 
         # Export QPushButton
@@ -211,6 +211,7 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         # Prop edge Checkbox
         self.prop_edge_display.ctrlPolygonCheckBox.clicked.connect(self.updateCtrlPolyView)
+        self.prop_edge_display.directionCheckBox.clicked.connect(self.updateDirectionView)
 
         # Prop Face Checkbox
         self.prop_face_display.ctrlNetCheckBox.clicked.connect(self.updateCtrlNetView)
@@ -234,9 +235,6 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.ellipsearc_display.FirstArcPointcomboBox.activated.connect(self.setEllipseArcFirstArcPointOptions)
         self.ellipsearc_display.SecondArcPointcomboBox.activated.connect(self.setEllipseArcSecondArcPointOptions)
 
-        # Subdivisions QComboBox
-        self.nsudv_display.nsudvcomboBox.activated.connect(self.setNumSubdivisionsOptions)
-
         # Attribute QComboBox
         self.attribute_display.attcomboBox.activated.connect(self.setAttPropertiesDisplay)
 
@@ -244,12 +242,384 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.mesh_display.meshcomboBox.activated.connect(self.setMeshOptions)
         self.mesh_display.shapecomboBox.activated.connect(self.setDiagOptions)
 
-    def resizeEvent(self, a0: QtGui.QResizeEvent):
-        self.attribute_display.resizeEvent(a0)
-        self.prop_edge_display.resizeEvent(a0)
-        self.prop_face_display.resizeEvent(a0)
-        self.prop_vertex_display.resizeEvent(a0)
-        return super().resizeEvent(a0)
+    # ---------------------------------------------------------------------
+    # Tab buttons methods
+    def closetab(self, _index):
+        for tab in self.tab_list:
+            if self.tabWidget.indexOf(tab) == _index:
+                currentIndex = self.getTabIndex(tab)
+                break
+
+        hecontroller = self.hecontrollers_list[currentIndex]
+        if (hecontroller.isChanged and not hecontroller.hemodel.isEmpty()):
+            filename = self.tabWidget.tabText(currentIndex)
+            qm = QMessageBox
+            ans = qm.question(
+                self, 'Warning', f"Save current {filename} changes?", qm.Yes | qm.No | qm.Cancel)
+
+            if ans == qm.Yes:
+                self.saveFile()
+            elif ans == qm.Cancel:
+                return False
+
+        # setup interface
+        if self.current_canvas == self.canvas_list[currentIndex]:
+            self.clearDispText(self.line_display)
+            self.clearDispText(self.polyline_display)
+            self.clearDispText(self.cubicspline_display)
+            self.clearDispText(self.circle_display)
+            self.clearDispText(self.circlearc_display)
+            self.clearDispText(self.ellipse_display)
+            self.clearDispText(self.ellipsearc_display)
+
+        self.tabWidget.removeTab(_index)
+        self.canvas_list.pop(currentIndex)
+        self.hecontrollers_list.pop(currentIndex)
+        self.tab_list.pop(currentIndex)
+
+        if len(self.tab_list) > 0:
+            tab = self.tabWidget.currentWidget()
+            currentIndex = self.getTabIndex(tab)
+            self.current_canvas = self.canvas_list[currentIndex]
+            self.current_hecontroller = self.hecontrollers_list[currentIndex]
+
+            if self.actionSelect.isChecked():
+                if self.current_canvas.prop_disp:
+                    self.properties()
+                else:
+                    self.closeAllDisplayers()
+                    self.select_display.show()
+            elif self.actionAttmanager.isChecked():
+                self.AttributeManager()
+
+        if len(self.tab_list) == 0:
+            self.tabWidget.setStyleSheet(
+                "image: url(icons/new-file-bg.png);")
+            self.on_actionSelect()
+
+        self.update()
+        return True
+            
+    def tabBarClicked(self, _index):
+        # setup interface
+        self.current_canvas.collector.endGeoCollection()
+        self.clearDispText(self.line_display)
+        self.clearDispText(self.polyline_display)
+        self.clearDispText(self.cubicspline_display)
+        self.clearDispText(self.circle_display)
+        self.clearDispText(self.circlearc_display)
+        self.clearDispText(self.ellipse_display)
+        self.clearDispText(self.ellipsearc_display)
+
+        self.tabWidget.setCurrentIndex(_index)
+        tab = self.tabWidget.currentWidget()
+        currentIndex = self.getTabIndex(tab)
+        self.current_canvas = self.canvas_list[currentIndex]
+        self.current_hecontroller = self.hecontrollers_list[currentIndex]
+
+        if self.actionAttmanager.isChecked():
+            self.AttributeManager()
+
+        if self.actionSelect.isChecked():
+            if self.current_canvas.prop_disp:
+                self.properties()
+            else:
+                self.closeAllDisplayers()
+                self.select_display.show()
+
+        self.update()
+
+    def getTabIndex(self, _tab):
+        for i in range(0, len(self.tab_list)):
+            if _tab == self.tab_list[i]:
+                return i
+
+    # ---------------------------------------------------------------------
+    # QActions Toolbar methods
+    def on_actionPoint(self):
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionPoint.setChecked(True)
+
+        # Turn on Line display
+        self.closeAllDisplayers()
+        self.point_display.setParent(self.leftToolbarFrame)
+        self.point_display.show()
+
+        # clear txts
+        self.clearDispText(self.point_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('POINT')
+
+    def on_actionLine(self):
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionLine.setChecked(True)
+
+        # Turn on Line display
+        self.closeAllDisplayers()
+        self.line_display.setParent(self.leftToolbarFrame)
+        self.line_display.show()
+
+        # clear txts
+        self.clearDispText(self.line_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('LINE')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionPolyline(self):
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionPolyline.setChecked(True)
+
+        # Turn on Polyline display
+        self.closeAllDisplayers()
+        self.polyline_display.setParent(self.leftToolbarFrame)
+        self.polyline_display.show()
+
+        # clear txts
+        self.clearDispText(self.polyline_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('POLYLINE')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionCubicSpline(self):
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionCubicSpline.setChecked(True)
+
+        # Turn on CubicSpline display
+        self.closeAllDisplayers()
+        self.cubicspline_display.setParent(self.leftToolbarFrame)
+        self.cubicspline_display.show()
+
+        # clear txts
+        self.clearDispText(self.cubicspline_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('CUBICSPLINE')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionCircle(self):
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionCircle.setChecked(True)
+
+        # Turn on Circle display
+        self.closeAllDisplayers()
+        self.circle_display.setParent(self.leftToolbarFrame)
+        self.circle_display.show()
+
+        # clear txts
+        self.clearDispText(self.circle_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('CIRCLE')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionCircleArc(self):
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionCircleArc.setChecked(True)
+
+        # Turn on CircleArc display
+        self.closeAllDisplayers()
+        self.circlearc_display.setParent(self.leftToolbarFrame)
+        self.circlearc_display.show()
+
+        # clear txts
+        self.clearDispText(self.circlearc_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('CIRCLEARC')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionEllipse(self):
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionEllipse.setChecked(True)
+
+        # Turn on Ellipse display
+        self.closeAllDisplayers()
+        self.ellipse_display.setParent(self.leftToolbarFrame)
+        self.ellipse_display.show()
+
+        # clear txts
+        self.clearDispText(self.ellipse_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('ELLIPSE')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionEllipseArc(self):
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionEllipseArc.setChecked(True)
+
+        # Turn on EllipseArc display
+        self.closeAllDisplayers()
+        self.ellipsearc_display.setParent(self.leftToolbarFrame)
+        self.ellipsearc_display.show()
+
+        # clear txts
+        self.clearDispText(self.ellipsearc_display)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('COLLECTION')
+            canvas.setGeoType('ELLIPSEARC')
+
+        # set LineEdits
+        self.set_curves_lineEdits()
+
+    def on_actionSelect(self):
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionSelect.setChecked(True)
+
+        # close displayers
+        self.closeAllDisplayers()
+        self.select_display.setParent(self.leftToolbarFrame)
+        self.select_display.show()
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('SELECTION')
+
+    def delSelectedEntities(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.delSelectedEntities()
+
+    def fitWorldToViewport(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.fitWorldToViewport()
+
+    def zoomIn(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.zoomIn()
+
+    def zoomOut(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.zoomOut()
+
+    def PanRight(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.PanRight()
+
+    def PanLeft(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.PanLeft()
+
+    def PanUp(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.PanUp()
+
+    def PanDown(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.PanDown()
+
+    def on_actionGrid(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        # turn off view grid
+        if self.current_canvas.viewGrid:
+            self.current_canvas.viewGrid = False
+            self.current_canvas.update()
+            return
+
+        # verifies if the grid button is turned on or off
+        if not self.view_grid_display:
+            # Turn on grid display
+            self.closeAllDisplayers()
+            self.grid_display.setParent(self.leftToolbarFrame)
+            self.grid_display.show()
+            self.view_grid_display = True
+
+            # get data from grid/snap and set in the dialog
+            dX = 0
+            dY = 0
+            _, dX, dY = self.current_canvas.getGridSnapInfo(
+                dX, dY)
+            self.grid_display.gridXlineEdit.setText(str(dX))
+            self.grid_display.gridYlineEdit.setText(str(dY))
+        else:
+            self.grid_display.close()
+            self.view_grid_display = False
+
+            # check if there is other display on
+            self.showCurrentdisplay()
+
+    def createPatch(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.createPatch()
+
+    def Undo(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.Undo()
+
+        if self.actionSelect.isChecked():
+            self.properties()
+            self.update()
+
+    def Redo(self):
+        if len(self.canvas_list) == 0:
+            return
+
+        self.current_canvas.Redo()
+
+        if self.actionSelect.isChecked():
+            self.properties()
+            self.update()
 
     def on_actionAdd_tab(self):
         new_tab = QWidget()
@@ -337,321 +707,194 @@ class AppController(QMainWindow, Ui_MainWindow):
             # set new tab as the current tab
             self.tabBarClicked(len(self.tab_list)-1)
 
-    def tabBarClicked(self, _index):
+    def saveFile(self):
+        if len(self.canvas_list) == 0:
+            return
 
-        # setup interface
-        self.current_canvas.collector.endGeoCollection()
-        self.clearDispText(self.line_display)
-        self.clearDispText(self.polyline_display)
-        self.clearDispText(self.cubicspline_display)
-        self.clearDispText(self.circle_display)
-        self.clearDispText(self.circlearc_display)
-        self.clearDispText(self.ellipse_display)
-        self.clearDispText(self.ellipsearc_display)
+        if self.current_hecontroller.hemodel.isEmpty():
+            return
 
-        self.tabWidget.setCurrentIndex(_index)
+        file = self.current_hecontroller.file
+
+        if file is None:
+            filename, _ = QFileDialog.getSaveFileName(
+                self.centralwidget, 'Save File')
+        else:
+            filename = file
+
+        if filename == '':
+            return
+
+        split_name = filename.split('/')
+        split_name = split_name[-1].split('.')
+        tr = QtCore.QCoreApplication.translate
         tab = self.tabWidget.currentWidget()
-        currentIndex = self.getTabIndex(tab)
-        self.current_canvas = self.canvas_list[currentIndex]
-        self.current_hecontroller = self.hecontrollers_list[currentIndex]
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(tab), tr("MainWindow", f"{split_name[0]}"))
+        self.current_canvas.saveFile(filename)
 
-        if self.actionAttmanager.isChecked():
-            self.AttributeManager()
+    def saveAsFile(self):
+        if len(self.canvas_list) == 0:
+            return
 
-        if self.actionSelect.isChecked():
-            if self.current_canvas.prop_disp:
-                self.properties()
-            else:
-                self.closeAllDisplayers()
-                self.select_display.show()
+        if self.current_hecontroller.hemodel.isEmpty():
+            return
 
-        self.update()
+        filename, _ = QFileDialog.getSaveFileName(
+            self.centralwidget, 'Save File')
 
-    def closetab(self, _index):
-        for tab in self.tab_list:
-            if self.tabWidget.indexOf(tab) == _index:
-                currentIndex = self.getTabIndex(tab)
-                break
+        if filename == '':
+            return
 
-        hecontroller = self.hecontrollers_list[currentIndex]
-        if (hecontroller.isChanged and not hecontroller.hemodel.isEmpty()):
-            filename = self.tabWidget.tabText(currentIndex)
-            qm = QMessageBox
-            ans = qm.question(
-                self, 'Warning', f"Save current {filename} changes?", qm.Yes | qm.No | qm.Cancel)
+        split_name = filename.split('/')
+        split_name = split_name[-1].split('.')
 
-            if ans == qm.Yes:
-                self.saveFile()
-            elif ans == qm.Cancel:
-                return False
+        tr = QtCore.QCoreApplication.translate
+        tab = self.tabWidget.currentWidget()
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(tab), tr("MainWindow", f"{split_name[0]}"))
+        self.current_canvas.saveFile(filename)
 
-        # setup interface
-        if self.current_canvas == self.canvas_list[currentIndex]:
-            self.clearDispText(self.line_display)
-            self.clearDispText(self.polyline_display)
-            self.clearDispText(self.cubicspline_display)
-            self.clearDispText(self.circle_display)
-            self.clearDispText(self.circlearc_display)
-            self.clearDispText(self.ellipse_display)
-            self.clearDispText(self.ellipsearc_display)
+    def openFile(self):
+        if len(self.canvas_list) == 0:
+            return
 
-        self.tabWidget.removeTab(_index)
-        self.canvas_list.pop(currentIndex)
-        self.hecontrollers_list.pop(currentIndex)
-        self.tab_list.pop(currentIndex)
+        filename, _ = QFileDialog.getOpenFileName(
+            self.centralwidget, 'Open File')
 
-        if len(self.tab_list) > 0:
-            tab = self.tabWidget.currentWidget()
-            currentIndex = self.getTabIndex(tab)
-            self.current_canvas = self.canvas_list[currentIndex]
-            self.current_hecontroller = self.hecontrollers_list[currentIndex]
+        if filename == '':
+            return
 
-            if self.actionSelect.isChecked():
-                if self.current_canvas.prop_disp:
-                    self.properties()
-                else:
-                    self.closeAllDisplayers()
-                    self.select_display.show()
-            elif self.actionAttmanager.isChecked():
-                self.AttributeManager()
+        # try:
+        self.current_canvas.openFile(filename)
+        # except:
+        #     msg = QMessageBox(self)
+        #     msg.setWindowTitle('Error')
+        #     msg.setText('It was not possible read the file')
+        #     msg.exec()
+        #     return
 
-        if len(self.tab_list) == 0:
-            self.tabWidget.setStyleSheet(
-                "image: url(icons/new-file-bg.png);")
-            self.on_actionSelect()
+        split_name = filename.split('/')
+        split_name = split_name[-1].split('.')
+        tr = QtCore.QCoreApplication.translate
+        tab = self.tabWidget.currentWidget()
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(tab), tr("MainWindow", f"{split_name[0]}"))
 
-        self.update()
+        # set action select
+        self.on_actionSelect()
 
-        return True
-
-    def getTabIndex(self, _tab):
-        for i in range(0, len(self.tab_list)):
-            if _tab == self.tab_list[i]:
-                return i
-
-    def on_actionSelect(self):
-
+    def exportFile_disp(self):
         # setup checked buttons
         self.setFalseButtonsChecked()
-        self.actionSelect.setChecked(True)
 
         # close displayers
         self.closeAllDisplayers()
-        self.select_display.setParent(self.leftToolbarFrame)
-        self.select_display.show()
+        self.exportFile_display.setParent(self.leftToolbarFrame)
+        self.exportFile_display.show()
 
         # set corresponding mouse action on canvas
         for canvas in self.canvas_list:
             canvas.setMouseAction('SELECTION')
 
-    def on_actionPoint(self):
+    def exit(self):
+        qm = QMessageBox
+        ans = qm.question(
+            self, 'Warning', "Do you really want to exit?", qm.Yes | qm.No)
 
-        # setup checked buttons
-        self.setFalseButtonsChecked()
-        self.actionPoint.setChecked(True)
-
-        # Turn on Line display
-        self.closeAllDisplayers()
-        self.point_display.setParent(self.leftToolbarFrame)
-        self.point_display.show()
-
-        # clear txts
-        self.clearDispText(self.point_display)
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('COLLECTION')
-            canvas.setGeoType('POINT')
-
-    def on_actionLine(self):
-
-        # setup checked buttons
-        self.setFalseButtonsChecked()
-        self.actionLine.setChecked(True)
-
-        # Turn on Line display
-        self.closeAllDisplayers()
-        self.line_display.setParent(self.leftToolbarFrame)
-        self.line_display.show()
-
-        # clear txts
-        self.clearDispText(self.line_display)
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('COLLECTION')
-            canvas.setGeoType('LINE')
-
-        # set LineEdits
-        self.set_curves_lineEdits()
-
-    def on_actionPolyline(self):
-
-        # setup checked buttons
-        self.setFalseButtonsChecked()
-        self.actionPolyline.setChecked(True)
-
-        # Turn on Polyline display
-        self.closeAllDisplayers()
-        self.polyline_display.setParent(self.leftToolbarFrame)
-        self.polyline_display.show()
-
-        # clear txts
-        self.clearDispText(self.polyline_display)
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('COLLECTION')
-            canvas.setGeoType('POLYLINE')
-
-        # set LineEdits
-        self.set_curves_lineEdits()
-
-    def on_actionCubicSpline(self):
-
-        # setup checked buttons
-        self.setFalseButtonsChecked()
-        self.actionCubicSpline.setChecked(True)
-
-        # Turn on CubicSpline display
-        self.closeAllDisplayers()
-        self.cubicspline_display.setParent(self.leftToolbarFrame)
-        self.cubicspline_display.show()
-
-        # clear txts
-        self.clearDispText(self.cubicspline_display)
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('COLLECTION')
-            canvas.setGeoType('CUBICSPLINE')
-
-        # set LineEdits
-        self.set_curves_lineEdits()
-
-    def on_actionCircle(self):
-
-        # setup checked buttons
-        self.setFalseButtonsChecked()
-        self.actionCircle.setChecked(True)
-
-        # Turn on Circle display
-        self.closeAllDisplayers()
-        self.circle_display.setParent(self.leftToolbarFrame)
-        self.circle_display.show()
-
-        # clear txts
-        self.clearDispText(self.circle_display)
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('COLLECTION')
-            canvas.setGeoType('CIRCLE')
-
-        # set LineEdits
-        self.set_curves_lineEdits()
-
-    def on_actionCircleArc(self):
-
-        # setup checked buttons
-        self.setFalseButtonsChecked()
-        self.actionCircleArc.setChecked(True)
-
-        # Turn on CircleArc display
-        self.closeAllDisplayers()
-        self.circlearc_display.setParent(self.leftToolbarFrame)
-        self.circlearc_display.show()
-
-        # clear txts
-        self.clearDispText(self.circlearc_display)
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('COLLECTION')
-            canvas.setGeoType('CIRCLEARC')
-
-        # set LineEdits
-        self.set_curves_lineEdits()
-
-    def on_actionEllipse(self):
-
-        # setup checked buttons
-        self.setFalseButtonsChecked()
-        self.actionEllipse.setChecked(True)
-
-        # Turn on Ellipse display
-        self.closeAllDisplayers()
-        self.ellipse_display.setParent(self.leftToolbarFrame)
-        self.ellipse_display.show()
-
-        # clear txts
-        self.clearDispText(self.ellipse_display)
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('COLLECTION')
-            canvas.setGeoType('ELLIPSE')
-
-        # set LineEdits
-        self.set_curves_lineEdits()
-
-    def on_actionEllipseArc(self):
-
-        # setup checked buttons
-        self.setFalseButtonsChecked()
-        self.actionEllipseArc.setChecked(True)
-
-        # Turn on EllipseArc display
-        self.closeAllDisplayers()
-        self.ellipsearc_display.setParent(self.leftToolbarFrame)
-        self.ellipsearc_display.show()
-
-        # clear txts
-        self.clearDispText(self.ellipsearc_display)
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('COLLECTION')
-            canvas.setGeoType('ELLIPSEARC')
-
-        # set LineEdits
-        self.set_curves_lineEdits()
-
-    def on_actionGrid(self):
+        if ans == qm.No:
+            return
 
         if len(self.canvas_list) == 0:
-            return
+            QtCore.QCoreApplication.quit()
 
-        # turn off view grid
-        if self.current_canvas.viewGrid:
-            self.current_canvas.viewGrid = False
-            self.current_canvas.update()
-            return
+        while len(self.canvas_list) > 0:
+            check = self.closetab(self.tabWidget.currentIndex())
 
-        # verifies if the grid button is turned on or off
-        if not self.view_grid_display:
-            # Turn on grid display
-            self.closeAllDisplayers()
-            self.grid_display.setParent(self.leftToolbarFrame)
-            self.grid_display.show()
-            self.view_grid_display = True
+            if not check:
+                return
 
-            # get data from grid/snap and set in the dialog
-            dX = 0
-            dY = 0
-            _, dX, dY = self.current_canvas.getGridSnapInfo(
-                dX, dY)
-            self.grid_display.gridXlineEdit.setText(str(dX))
-            self.grid_display.gridYlineEdit.setText(str(dY))
-        else:
-            self.grid_display.close()
-            self.view_grid_display = False
+        QtCore.QCoreApplication.quit()
 
-            # check if there is other display on
-            self.showCurrentdisplay()
+    def AttributeManager(self):
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('SELECTION')
 
+        # setup buttons checked
+        self.setFalseButtonsChecked()
+        self.actionAttmanager.setChecked(True)
+
+        # close displayers
+        self.closeAllDisplayers()
+        self.attribute_display.setParent(self.leftToolbarFrame)
+        self.attribute_display.show()
+
+        # get attribute controller
+        attManager = self.current_hecontroller.attManager
+        prototypes = attManager.getPrototypes()
+        attributes = attManager.getAttributes()
+
+        # setup scrool area
+        scrollAreaContent = QWidget()
+        self.attribute_display.scrollArea.setWidget(scrollAreaContent)
+
+        # set types
+        self.attribute_display.typescomboBox.clear()
+        for prototype in prototypes:
+            self.attribute_display.typescomboBox.addItem(prototype['type'])
+
+        # set attributes
+        self.attribute_display.attcomboBox.clear()
+        for att in attributes:
+            self.attribute_display.attcomboBox.addItem(att['name'])
+
+        # hide buttons
+        self.attribute_display.setAttpushButton.hide()
+        self.attribute_display.saveAttpushButton.hide()
+        self.attribute_display.delpushButton.hide()
+        self.attribute_display.renamepushButton.hide()
+        self.attribute_display.renamelineEdit.hide()
+        self.attribute_display.unsetpushButton.hide()
+
+    def on_action_nsudv(self):
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('SELECTION')
+
+        # setup buttons checked
+        self.setFalseButtonsChecked()
+        self.actionNsudv.setChecked(True)
+
+        # close displayers
+        self.closeAllDisplayers()
+        self.nsudv_display.setParent(self.leftToolbarFrame)
+        self.nsudv_display.show()
+
+        # clean lineEdits
+        self.nsudv_display.valuelineEdit.setText("0")
+        self.nsudv_display.ratiolineEdit.setText("1.0")
+
+    def on_action_Mesh(self):
+        # setup checked buttons
+        self.setFalseButtonsChecked()
+        self.actionMesh.setChecked(True)
+
+        # set corresponding mouse action on canvas
+        for canvas in self.canvas_list:
+            canvas.setMouseAction('SELECTION')
+
+        # close displayers
+        self.closeAllDisplayers()
+        self.mesh_display.setParent(self.leftToolbarFrame)
+        self.mesh_display.show()
+
+        self.setMeshOptions()
+
+    # ---------------------------------------------------------------------
+    # QPushButtons
+    # Grid QPushButton method
     def setgrid(self):
-
         # get data from grid/snap and set in the dialog
         dX, dY = self.current_canvas.grid.getGridSpace()
         isSnapOn, dX, dY = self.current_canvas.getGridSnapInfo(
@@ -690,38 +933,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         # check if there is other display on
         self.showCurrentdisplay()
 
-    def change_select(self):
-
-        if self.select_display.pointcheckBox.isChecked():
-            for canvas in self.canvas_list:
-                canvas.hecontroller.select_point = True
-        else:
-            for canvas in self.canvas_list:
-                canvas.hecontroller.select_point = False
-
-        if self.select_display.segmentcheckBox.isChecked():
-            for canvas in self.canvas_list:
-                canvas.hecontroller.select_segment = True
-        else:
-            for canvas in self.canvas_list:
-                canvas.hecontroller.select_segment = False
-
-        if self.select_display.patchcheckBox.isChecked():
-            for canvas in self.canvas_list:
-                canvas.hecontroller.select_patch = True
-        else:
-            for canvas in self.canvas_list:
-                canvas.hecontroller.select_patch = False
-
-    def change_snapgrid(self):
-
-        if self.snapcheckBox.isChecked():
-            for canvas in self.canvas_list:
-                canvas.grid.isSnapOn = True
-        else:
-            for canvas in self.canvas_list:
-                canvas.grid.isSnapOn = False
-
+    # Point QPushButton method
     def add_point(self):
         if len(self.canvas_list) == 0:
             return
@@ -752,7 +964,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         # clear txts
         self.clearDispText(self.point_display)
 
-    # Line pushButton methods
+    # Line QPushButton methods
     def add_lineInitialPoint(self):
         if len(self.canvas_list) == 0:
              return
@@ -828,7 +1040,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         # set LineEdits
         self.set_curves_lineEdits()
 
-    # Polyline pushButton methods
+    # Polyline QpushButton methods
     def add_polylineInitialPoint(self):
         if len(self.canvas_list) == 0:
              return
@@ -936,7 +1148,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         # set LineEdits
         self.set_curves_lineEdits()
 
-    # Cubicspline pushButton methods
+    # Cubicspline QpushButton methods
     def add_cubicsplineInitialPoint(self):
         if len(self.canvas_list) == 0:
              return
@@ -1044,7 +1256,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         # set LineEdits
         self.set_curves_lineEdits()
 
-    # Circle pushButton methods
+    # Circle QpushButton methods
     def set_circleCenter(self):
         if len(self.canvas_list) == 0:
              return
@@ -1127,7 +1339,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         # set LineEdits
         self.set_curves_lineEdits()
 
-    # Circle Arc pushButton methods
+    # Circle Arc QpushButton methods
     def set_circlearcCenter(self):
         if len(self.canvas_list) == 0:
              return
@@ -1257,7 +1469,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         # set LineEdits
         self.set_curves_lineEdits()
 
-    # Ellipse pushButton methods
+    # Ellipse QpushButton methods
     def set_ellipseCenter(self):
         if len(self.canvas_list) == 0:
              return
@@ -1387,7 +1599,7 @@ class AppController(QMainWindow, Ui_MainWindow):
         # set LineEdits
         self.set_curves_lineEdits()
 
-    # Ellipse Arc pushButton methods
+    # Ellipse Arc QpushButton methods
     def set_ellipsearcCenter(self):
         if len(self.canvas_list) == 0:
              return
@@ -1622,275 +1834,97 @@ class AppController(QMainWindow, Ui_MainWindow):
         # set LineEdits
         self.set_curves_lineEdits()
 
-    def delSelectedEntities(self):
+    # Select QpushButton method
+    def properties(self):
+
         if len(self.canvas_list) == 0:
-            return
+            return False, None
 
-        self.current_canvas.delSelectedEntities()
+        hemodel = self.current_hecontroller.hemodel
+        selectedEntities = []
+        selectedVertices = hemodel.selectedVertices()
+        selectedEdges = hemodel.selectedEdges()
+        selectedFaces = hemodel.selectedFaces()
+        selectedEntities.extend(selectedVertices)
+        selectedEntities.extend(selectedEdges)
+        selectedEntities.extend(selectedFaces)
 
-    def fitWorldToViewport(self):
-        if len(self.canvas_list) == 0:
-            return
+        if len(selectedEntities) == 1:
 
-        self.current_canvas.fitWorldToViewport()
+            self.closeAllDisplayers()
+            self.current_canvas.prop_disp = True
 
-    def zoomIn(self):
-        if len(self.canvas_list) == 0:
-            return
+            if len(selectedVertices) == 1:
+                self.prop_vertex_display.setParent(self.leftToolbarFrame)
+                self.prop_vertex_display.show()
+                self.prop_vertex_display.set_vertex_prop(selectedEntities[0])
+            elif len(selectedEdges) == 1:
+                self.prop_edge_display.setParent(self.leftToolbarFrame)
+                self.prop_edge_display.show()
+                self.prop_edge_display.set_edge_prop(selectedEntities[0])
+            elif not selectedEntities[0].patch.isDeleted:
+                self.prop_face_display.setParent(self.leftToolbarFrame)
+                self.prop_face_display.show()
+                self.prop_face_display.set_face_prop(selectedEntities[0])
+            else:
+                return False, None
 
-        self.current_canvas.zoomIn()
+            return True, selectedEntities[0]
 
-    def zoomOut(self):
-        if len(self.canvas_list) == 0:
-            return
+        return False, None
 
-        self.current_canvas.zoomOut()
+    # Prop vertex QPushButton method
+    def close_propVertex(self):
+        self.prop_vertex_display.close()
+        self.select_display.show()
+        self.current_canvas.prop_disp = False
 
-    def PanRight(self):
-        if len(self.canvas_list) == 0:
-            return
+    # Prop edge QPushButton methods
+    def degreeElevation(self):
+        check, error_text = self.current_hecontroller.degreeElevation()
 
-        self.current_canvas.PanRight()
-
-    def PanLeft(self):
-        if len(self.canvas_list) == 0:
-            return
-
-        self.current_canvas.PanLeft()
-
-    def PanUp(self):
-        if len(self.canvas_list) == 0:
-            return
-
-        self.current_canvas.PanUp()
-
-    def PanDown(self):
-        if len(self.canvas_list) == 0:
-            return
-
-        self.current_canvas.PanDown()
-
-    def createPatch(self):
-        if len(self.canvas_list) == 0:
-            return
-
-        self.current_canvas.createPatch()
-
-    def Undo(self):
-        if len(self.canvas_list) == 0:
-            return
-
-        self.current_canvas.Undo()
-
-        if self.actionSelect.isChecked():
+        if check:
             self.properties()
-            self.update()
-
-    def Redo(self):
-        if len(self.canvas_list) == 0:
-            return
-
-        self.current_canvas.Redo()
-
-        if self.actionSelect.isChecked():
-            self.properties()
-            self.update()
-
-    def saveFile(self):
-        if len(self.canvas_list) == 0:
-            return
-
-        if self.current_hecontroller.hemodel.isEmpty():
-            return
-
-        file = self.current_hecontroller.file
-
-        if file is None:
-            filename, _ = QFileDialog.getSaveFileName(
-                self.centralwidget, 'Save File')
-        else:
-            filename = file
-
-        if filename == '':
-            return
-
-        split_name = filename.split('/')
-        split_name = split_name[-1].split('.')
-        tr = QtCore.QCoreApplication.translate
-        tab = self.tabWidget.currentWidget()
-        self.tabWidget.setTabText(
-            self.tabWidget.indexOf(tab), tr("MainWindow", f"{split_name[0]}"))
-        self.current_canvas.saveFile(filename)
-
-    def saveAsFile(self):
-
-        if len(self.canvas_list) == 0:
-            return
-
-        if self.current_hecontroller.hemodel.isEmpty():
-            return
-
-        filename, _ = QFileDialog.getSaveFileName(
-            self.centralwidget, 'Save File')
-
-        if filename == '':
-            return
-
-        split_name = filename.split('/')
-        split_name = split_name[-1].split('.')
-
-        tr = QtCore.QCoreApplication.translate
-        tab = self.tabWidget.currentWidget()
-        self.tabWidget.setTabText(
-            self.tabWidget.indexOf(tab), tr("MainWindow", f"{split_name[0]}"))
-        self.current_canvas.saveFile(filename)
-
-    def openFile(self):
-        if len(self.canvas_list) == 0:
-            return
-
-        filename, _ = QFileDialog.getOpenFileName(
-            self.centralwidget, 'Open File')
-
-        if filename == '':
-            return
-
-        # try:
-        self.current_canvas.openFile(filename)
-        # except:
-        #     msg = QMessageBox(self)
-        #     msg.setWindowTitle('Error')
-        #     msg.setText('It was not possible read the file')
-        #     msg.exec()
-        #     return
-
-        split_name = filename.split('/')
-        split_name = split_name[-1].split('.')
-        tr = QtCore.QCoreApplication.translate
-        tab = self.tabWidget.currentWidget()
-        self.tabWidget.setTabText(
-            self.tabWidget.indexOf(tab), tr("MainWindow", f"{split_name[0]}"))
-
-        # set action select
-        self.on_actionSelect()
-
-    def exportFile_disp(self):
-        # setup checked buttons
-        self.setFalseButtonsChecked()
-
-        # close displayers
-        self.closeAllDisplayers()
-        self.exportFile_display.setParent(self.leftToolbarFrame)
-        self.exportFile_display.show()
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('SELECTION')
-
-    def exportFile(self):
-        option = self.exportFile_display.optionscomboBox.currentText()
-        alType = self.exportFile_display.aloptionscomboBox.currentText()
-        gpT3 = self.exportFile_display.T3comboBox.currentText()
-        gpT6 = self.exportFile_display.T6comboBox.currentText()
-        gpQ4 = self.exportFile_display.Q4comboBox.currentText()
-        gpQ8 = self.exportFile_display.Q8comboBox.currentText()
-
-        self.saveFile()
-        self.current_hecontroller.exportFile(
-            option, alType, gpT3, gpT6, gpQ4, gpQ8)
-
-        """
-        try:
-            self.saveFile()
-            self.current_hecontroller.exportFile(
-                option, alType, gpT3, gpT6, gpQ4, gpQ8)
-        except:
+        elif not check:
             msg = QMessageBox(self)
             msg.setWindowTitle('Error')
-            msg.setText('it is not possible to export the model')
+            msg.setText(error_text)
             msg.exec()
-        """
 
-    def closeEvent(self, event):
-        self.exit()
-        event.ignore()
-
-    def exit(self):
-
-        qm = QMessageBox
-        ans = qm.question(
-            self, 'Warning', "Do you really want to exit?", qm.Yes | qm.No)
-
-        if ans == qm.No:
-            return
-
-        if len(self.canvas_list) == 0:
-            QtCore.QCoreApplication.quit()
-
-        while len(self.canvas_list) > 0:
-            check = self.closetab(self.tabWidget.currentIndex())
-
-            if not check:
-                return
-
-        QtCore.QCoreApplication.quit()
-
-    def on_action_nsudv(self):
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('SELECTION')
-
-        # setup buttons checked
-        self.setFalseButtonsChecked()
-        self.actionNsudv.setChecked(True)
-
-        # close displayers
-        self.closeAllDisplayers()
-        self.nsudv_display.setParent(self.leftToolbarFrame)
-        self.nsudv_display.show()
-
-        # clean lineEdits
-        self.nsudv_display.valuelineEdit.setText("0")
-        self.nsudv_display.ratiolineEdit.setText("1.0")
-
-    def setNumberSdv(self):
-
-        Subdivision_option = self.nsudv_display.nsudvcomboBox.currentText()
-        if Subdivision_option == "Set Subdivisions":
-            try:
-                number = int(self.nsudv_display.valuelineEdit.text())
-                ratio = float(self.nsudv_display.ratiolineEdit.text())
-            except:
-                msg = QMessageBox(self)
-                msg.setWindowTitle('Warning')
-                msg.setText('These data fields only accept numbers')
-                msg.exec()
-                return
-        
-        elif Subdivision_option == "Get from Knot Vector":
-            number = None
-            ratio = None
-
-        self.current_hecontroller.setNumberSdv(number, ratio)
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def refineUsingKnotInsertion(self):
+    def knotInsertion(self):
+        check, error_text = self.current_hecontroller.knotInsertion()
 
-        self.current_hecontroller.refineUsingKnotInsertion()
+        if check:
+            self.properties()
+        elif not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def BackToOriginalNurbsRefine(self):
+    def conformNurbsCurves(self):
+        check, error_text = self.current_hecontroller.conformNurbsCurves()
 
-        self.current_hecontroller.BackToOriginalNurbsRefine()
+        if check:
+            self.properties()
+        elif not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def BackToOriginalNurbs(self):
+    def rescueNurbsCurve(self):
+        check, error_text = self.current_hecontroller.rescueNurbsCurve()
 
-        check, error_text = self.current_hecontroller.BackToOriginalNurbs()
         if check:
             self.properties()
         elif not check:
@@ -1902,9 +1936,9 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def degreeElevation(self):
+    def reverseNurbsCurve(self):
+        check, error_text = self.current_hecontroller.reverseNurbsCurve()
 
-        check, error_text = self.current_hecontroller.degreeElevation()
         if check:
             self.properties()
         elif not check:
@@ -1916,9 +1950,15 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def ReverseNurbs(self):
+    def close_propEdge(self):
+        self.prop_edge_display.close()
+        self.select_display.show()
+        self.current_canvas.prop_disp = False
 
-        check, error_text = self.current_hecontroller.ReverseNurbs()
+    # Prop face QPushButton method
+    def knotInsertionSurf(self):
+        check, error_text = self.current_hecontroller.knotInsertionSurf()
+
         if check:
             self.properties()
         elif not check:
@@ -1930,97 +1970,96 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def conformSegs(self):
+    def close_propFace(self):
+        self.prop_face_display.close()
+        self.select_display.show()
+        self.current_canvas.prop_disp = False
 
-        check, error_text = self.current_hecontroller.conformSegs()
-        if not check:
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Error')
-            msg.setText(error_text)
-            msg.exec()
+    # Subdivisions QPushButton method
+    def setNumberSdv(self):
+        Subdivision_option = "Set Subdivisions"
+        if Subdivision_option == "Set Subdivisions":
+            try:
+                number = int(self.nsudv_display.valuelineEdit.text())
+                ratio = float(self.nsudv_display.ratiolineEdit.text())
+            except:
+                msg = QMessageBox(self)
+                msg.setWindowTitle('Warning')
+                msg.setText('These data fields only accept numbers')
+                msg.exec()
+                return
+            isIsogeometric = False
+        
+        elif Subdivision_option == "Get from Knot Vector":
+            number = None
+            ratio = None
+            isIsogeometric = True
 
+        self.current_hecontroller.setNumberSdv(number, ratio, isIsogeometric)
         self.current_canvas.updatedDsp = False
         self.current_canvas.update()
 
-    def updateCtrlPolyView(self):
+    # Mesh QPushButton methods
+    def generateMesh(self):
+        # mesh_type = self.mesh_display.meshcomboBox.currentText()
+        # diag_type = self.mesh_display.diagcomboBox.currentText()
+        # elem_type = self.mesh_display.elemcomboBox.currentText()
+        # bc_flag = self.mesh_display.flagcomboBox.currentText()
 
-        if self.prop_edge_display.ctrlPolygonCheckBox.isChecked():
-            status = True
-        else:
-            status = False
-        check, error_text = self.current_hecontroller.updateCtrlPolyView(status)
-        if check:
-            self.properties()
-        elif not check:
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Error')
-            msg.setText(error_text)
-            msg.exec()
+        # if mesh_type == "Trilinear Transfinite":
+        #     shape_type = "Triangular"
+        # elif mesh_type == "Quadrilateral Template":
+        #     shape_type = "Quadrilateral"
+        # elif mesh_type == "Quadrilateral Seam":
+        #     shape_type = "Quadrilateral"
+        # elif mesh_type == "Triangular Boundary Contraction":
+        #     shape_type = "Triangular"
+        # elif mesh_type == "Isogeometric":
+        #     shape_type = "Quadrilateral"
+        # elif mesh_type == "Isogeometric Template":
+        #     shape_type = "Quadrilateral"
+        # else:
+        #     shape_type = self.mesh_display.shapecomboBox.currentText()
 
-        self.current_canvas.updatedDsp = False
-        self.current_canvas.update()
+        mesh_type = self.mesh_display.meshcomboBox.currentText()
+        shape_type, elem_type, diag_type, bc_flag = None, None, None, None
 
-    def updateCtrlNetView(self):
-        if self.prop_face_display.ctrlNetCheckBox.isChecked():
-            status = True
-        else:
-            status = False
-        check, error_text = self.current_hecontroller.updateCtrlPolyView(status)
-        if check:
-            self.properties()
-        elif not check:
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Error')
-            msg.setText(error_text)
-            msg.exec()
+        if mesh_type == "Bilinear Transfinite":
+            shape_type = self.mesh_display.shapecomboBox.currentText()
+            elem_type = self.mesh_display.elemcomboBox.currentText()
+            if shape_type == "Triangular":
+                diag_type = self.mesh_display.diagcomboBox.currentText()
 
-        self.current_canvas.updatedDsp = False
-        self.current_canvas.update()
+        elif mesh_type == "Trilinear Transfinite":
+            shape_type = "Triangular"
+            elem_type = self.mesh_display.elemcomboBox.currentText()
 
-    def AttributeManager(self):
+        elif mesh_type == "Triangular Boundary Contraction":
+            shape_type = "Triangular"
+            elem_type = self.mesh_display.elemcomboBox.currentText()
+            bc_flag = self.mesh_display.flagcomboBox.currentText()
 
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('SELECTION')
+        elif mesh_type == "Quadrilateral Seam":
+            shape_type = "Quadrilateral"
+            elem_type = self.mesh_display.elemcomboBox.currentText()
 
-        # setup buttons checked
-        self.setFalseButtonsChecked()
-        self.actionAttmanager.setChecked(True)
+        elif mesh_type == "Quadrilateral Template":
+            shape_type = "Quadrilateral"
+            elem_type = self.mesh_display.elemcomboBox.currentText()
 
-        # close displayers
-        self.closeAllDisplayers()
-        self.attribute_display.setParent(self.leftToolbarFrame)
-        self.attribute_display.show()
+        # try:
+        self.current_canvas.generateMesh(mesh_type, shape_type, elem_type, diag_type, bc_flag)
+        # except:
+        #     msg = QMessageBox(self)
+        #     msg.setWindowTitle('Warning')
+        #     msg.setText('It was not possible to generate the mesh')
+        #     msg.exec()
 
-        # get attribute controller
-        attManager = self.current_hecontroller.attManager
-        prototypes = attManager.getPrototypes()
-        attributes = attManager.getAttributes()
+    def delMesh(self):
+        self.current_canvas.delMesh()
 
-        # setup scrool area
-        scrollAreaContent = QWidget()
-        self.attribute_display.scrollArea.setWidget(scrollAreaContent)
-
-        # set types
-        self.attribute_display.typescomboBox.clear()
-        for prototype in prototypes:
-            self.attribute_display.typescomboBox.addItem(prototype['type'])
-
-        # set attributes
-        self.attribute_display.attcomboBox.clear()
-        for att in attributes:
-            self.attribute_display.attcomboBox.addItem(att['name'])
-
-        # hide buttons
-        self.attribute_display.setAttpushButton.hide()
-        self.attribute_display.saveAttpushButton.hide()
-        self.attribute_display.delpushButton.hide()
-        self.attribute_display.renamepushButton.hide()
-        self.attribute_display.renamelineEdit.hide()
-        self.attribute_display.unsetpushButton.hide()
-
+    # Attributes QPushButton methods
     def addAttribute(self):
-
         # get  hecontroller
         hecontroller = self.current_hecontroller
 
@@ -2054,7 +2093,6 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.setAttPropertiesDisplay()
 
     def saveAttributeValues(self):
-
         # get attributeManager
         attManager = self.current_hecontroller.attManager
 
@@ -2134,6 +2172,26 @@ class AppController(QMainWindow, Ui_MainWindow):
 
         canvas.unSetAttribute(name)
 
+    def delAttribute(self):
+        # get name
+        name = self.attribute_display.attcomboBox.currentText()
+
+        qm = QMessageBox
+        ans = qm.question(
+            self, 'Warning', f"Do you really want to delete {name}?", qm.Yes | qm.No)
+
+        if ans == qm.No:
+            return
+
+        # get canvas
+        canvas = self.current_canvas
+
+        # removes attribute
+        canvas.delAttribute(name, self.attribute_display.attcomboBox)
+
+        # setup attPropertiesDisplay
+        self.setAttPropertiesDisplay()
+
     def renameAttribute(self):
         new_name = self.attribute_display.renamelineEdit.text()
         old_name = self.attribute_display.attcomboBox.currentText()
@@ -2170,27 +2228,272 @@ class AppController(QMainWindow, Ui_MainWindow):
         self.attribute_display.attcomboBox.setCurrentText(new_name)
         self.setAttPropertiesDisplay()
 
-    def delAttribute(self):
+    # Export QPushButton method
+    def exportFile(self):
+        option = self.exportFile_display.optionscomboBox.currentText()
+        alType = self.exportFile_display.aloptionscomboBox.currentText()
+        gpT3 = self.exportFile_display.T3comboBox.currentText()
+        gpT6 = self.exportFile_display.T6comboBox.currentText()
+        gpQ4 = self.exportFile_display.Q4comboBox.currentText()
+        gpQ8 = self.exportFile_display.Q8comboBox.currentText()
 
-        # get name
-        name = self.attribute_display.attcomboBox.currentText()
+        self.saveFile()
+        self.current_hecontroller.exportFile(
+            option, alType, gpT3, gpT6, gpQ4, gpQ8)
 
-        qm = QMessageBox
-        ans = qm.question(
-            self, 'Warning', f"Do you really want to delete {name}?", qm.Yes | qm.No)
+        """
+        try:
+            self.saveFile()
+            self.current_hecontroller.exportFile(
+                option, alType, gpT3, gpT6, gpQ4, gpQ8)
+        except:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText('it is not possible to export the model')
+            msg.exec()
+        """
 
-        if ans == qm.No:
-            return
+    # ---------------------------------------------------------------------
+    # QCheckBoxes
+    # Snap QCheckBox method
+    def change_snapgrid(self):
+        if self.snapcheckBox.isChecked():
+            for canvas in self.canvas_list:
+                canvas.grid.isSnapOn = True
+        else:
+            for canvas in self.canvas_list:
+                canvas.grid.isSnapOn = False
 
-        # get canvas
-        canvas = self.current_canvas
+    # Select QCheckBox method
+    def change_select(self):
+        if self.select_display.pointcheckBox.isChecked():
+            for canvas in self.canvas_list:
+                canvas.hecontroller.select_point = True
+        else:
+            for canvas in self.canvas_list:
+                canvas.hecontroller.select_point = False
 
-        # removes attribute
-        canvas.delAttribute(name, self.attribute_display.attcomboBox)
+        if self.select_display.segmentcheckBox.isChecked():
+            for canvas in self.canvas_list:
+                canvas.hecontroller.select_segment = True
+        else:
+            for canvas in self.canvas_list:
+                canvas.hecontroller.select_segment = False
 
-        # setup attPropertiesDisplay
-        self.setAttPropertiesDisplay()
+        if self.select_display.patchcheckBox.isChecked():
+            for canvas in self.canvas_list:
+                canvas.hecontroller.select_patch = True
+        else:
+            for canvas in self.canvas_list:
+                canvas.hecontroller.select_patch = False
 
+    # Prop edge Checkbox methods
+    def updateCtrlPolyView(self):
+        if self.prop_edge_display.ctrlPolygonCheckBox.isChecked():
+            status = True
+        else:
+            status = False
+        check, error_text = self.current_hecontroller.updateCtrlPolyView(status)
+        if check:
+            self.properties()
+        elif not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
+    def updateDirectionView(self):
+        if self.prop_edge_display.directionCheckBox.isChecked():
+            status = True
+        else:
+            status = False
+
+        check, error_text = self.current_hecontroller.updateDirectionView(status)
+
+        if check:
+            self.properties()
+        elif not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
+    # Prop Face Checkbox method
+    def updateCtrlNetView(self):
+        if self.prop_face_display.ctrlNetCheckBox.isChecked():
+            status = True
+        else:
+            status = False
+        check, error_text = self.current_hecontroller.updateCtrlPolyView(status)
+        if check:
+            self.properties()
+        elif not check:
+            msg = QMessageBox(self)
+            msg.setWindowTitle('Error')
+            msg.setText(error_text)
+            msg.exec()
+
+        self.current_canvas.updatedDsp = False
+        self.current_canvas.update()
+
+    # ---------------------------------------------------------------------
+    # QComboBoxes
+    # Circle QComboBox method
+    def setCircleRadiusOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        Radius_option = self.circle_display.RadiuscomboBox.currentText()
+
+        if Radius_option == "Coordinates":
+            self.circle_display.RadiusXTitle.setText(_translate("MainWindow", "X:"))
+            self.circle_display.RadiusYTitle.setText(_translate("MainWindow", "Y:"))
+            self.circle_display.RadiusXlineEdit.clear()
+            self.circle_display.RadiusYlineEdit.clear()
+        elif Radius_option == "Radius and Angle":
+            self.circle_display.RadiusXTitle.setText(_translate("MainWindow", "Radius:"))
+            self.circle_display.RadiusYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.circle_display.RadiusXlineEdit.clear()
+            self.circle_display.RadiusYlineEdit.clear()
+
+    # Circle Arc QComboBox methods
+    def setCircleArcFirstArcPointOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        FirstArcPoint_option = self.circlearc_display.FirstArcPointcomboBox.currentText()
+
+        if FirstArcPoint_option == "Coordinates":
+            self.circlearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "X:"))
+            self.circlearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Y:"))
+            self.circlearc_display.FirstArcPointXlineEdit.clear()
+            self.circlearc_display.FirstArcPointYlineEdit.clear()
+        elif FirstArcPoint_option == "Radius and Angle":
+            self.circlearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "Radius:"))
+            self.circlearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.circlearc_display.FirstArcPointXlineEdit.clear()
+            self.circlearc_display.FirstArcPointYlineEdit.clear()
+
+    def setCircleArcSecondArcPointOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        SecondArcPoint_option = self.circlearc_display.SecondArcPointcomboBox.currentText()
+
+        if SecondArcPoint_option == "Coordinates":
+            self.circlearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "X:"))
+            self.circlearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Y:"))
+            self.circlearc_display.SecondArcPointXlineEdit.setEnabled(True)
+            self.circlearc_display.SecondArcPointXlineEdit.clear()
+            self.circlearc_display.SecondArcPointYlineEdit.clear()
+        elif SecondArcPoint_option == "Radius and Angle":
+            self.circlearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "Radius:"))
+            self.circlearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.circlearc_display.SecondArcPointXlineEdit.setEnabled(False)
+            self.set_curves_lineEdits_text(0.0, 0.0)
+            self.circlearc_display.SecondArcPointYlineEdit.clear()
+
+    # Ellipse QComboBox methods
+    def setEllipseFirstAxisOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        FirstAxis_option = self.ellipse_display.FirstAxiscomboBox.currentText()
+
+        if FirstAxis_option == "Coordinates":
+            self.ellipse_display.FirstAxisXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipse_display.FirstAxisYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipse_display.FirstAxisXlineEdit.clear()
+            self.ellipse_display.FirstAxisYlineEdit.clear()
+        elif FirstAxis_option == "Length and Angle":
+            self.ellipse_display.FirstAxisXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipse_display.FirstAxisYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipse_display.FirstAxisXlineEdit.clear()
+            self.ellipse_display.FirstAxisYlineEdit.clear()
+
+    def setEllipseSecondAxisOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        SecondAxis_option = self.ellipse_display.SecondAxiscomboBox.currentText()
+
+        if SecondAxis_option == "Coordinates":
+            self.ellipse_display.SecondAxisXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipse_display.SecondAxisYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipse_display.SecondAxisYlineEdit.setEnabled(True)
+            self.ellipse_display.SecondAxisXlineEdit.clear()
+            self.ellipse_display.SecondAxisYlineEdit.clear()
+        elif SecondAxis_option == "Length and Angle":
+            self.ellipse_display.SecondAxisXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipse_display.SecondAxisYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipse_display.SecondAxisYlineEdit.setEnabled(False)
+            self.set_curves_lineEdits_text(0.0, 0.0)
+            self.ellipse_display.SecondAxisXlineEdit.clear()
+
+    # Ellipse Arc QComboBox methods
+    def setEllipseArcFirstAxisOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        FirstAxis_option = self.ellipsearc_display.FirstAxiscomboBox.currentText()
+
+        if FirstAxis_option == "Coordinates":
+            self.ellipsearc_display.FirstAxisXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipsearc_display.FirstAxisYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipsearc_display.FirstAxisXlineEdit.clear()
+            self.ellipsearc_display.FirstAxisYlineEdit.clear()
+        elif FirstAxis_option == "Length and Angle":
+            self.ellipsearc_display.FirstAxisXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipsearc_display.FirstAxisYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipsearc_display.FirstAxisXlineEdit.clear()
+            self.ellipsearc_display.FirstAxisYlineEdit.clear()
+
+    def setEllipseArcSecondAxisOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        SecondAxis_option = self.ellipsearc_display.SecondAxiscomboBox.currentText()
+
+        if SecondAxis_option == "Coordinates":
+            self.ellipsearc_display.SecondAxisXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipsearc_display.SecondAxisYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(True)
+            self.ellipsearc_display.SecondAxisXlineEdit.clear()
+            self.ellipsearc_display.SecondAxisYlineEdit.clear()
+        elif SecondAxis_option == "Length and Angle":
+            self.ellipsearc_display.SecondAxisXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipsearc_display.SecondAxisYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(False)
+            self.set_curves_lineEdits_text(0.0, 0.0)
+            self.ellipsearc_display.SecondAxisXlineEdit.clear()
+
+    def setEllipseArcFirstArcPointOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        FirstArcPoint_option = self.ellipsearc_display.FirstArcPointcomboBox.currentText()
+
+        if FirstArcPoint_option == "Coordinates":
+            self.ellipsearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipsearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(True)
+            self.ellipsearc_display.FirstArcPointXlineEdit.clear()
+            self.ellipsearc_display.FirstArcPointYlineEdit.clear()
+        elif FirstArcPoint_option == "Length and Angle":
+            self.ellipsearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipsearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(False)
+            self.ellipsearc_display.FirstArcPointXlineEdit.clear()
+            self.ellipsearc_display.FirstArcPointYlineEdit.clear()
+
+    def setEllipseArcSecondArcPointOptions(self):
+        _translate = QtCore.QCoreApplication.translate
+        SecondArcPoint_option = self.ellipsearc_display.SecondArcPointcomboBox.currentText()
+
+        if SecondArcPoint_option == "Coordinates":
+            self.ellipsearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "X:"))
+            self.ellipsearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Y:"))
+            self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(True)
+            self.ellipsearc_display.SecondArcPointXlineEdit.clear()
+            self.ellipsearc_display.SecondArcPointYlineEdit.clear()
+        elif SecondArcPoint_option == "Length and Angle":
+            self.ellipsearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "Length:"))
+            self.ellipsearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
+            self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(False)
+            self.ellipsearc_display.SecondArcPointXlineEdit.clear()
+            self.ellipsearc_display.SecondArcPointYlineEdit.clear()
+
+    # Attribute QComboBox method
     def setAttPropertiesDisplay(self, _index=None):
         attManager = self.current_hecontroller.attManager
 
@@ -2217,86 +2520,8 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.attribute_display.renamelineEdit.show()
             self.attribute_display.unsetpushButton.show()
 
-    def properties(self):
-
-        if len(self.canvas_list) == 0:
-            return False, None
-
-        hemodel = self.current_hecontroller.hemodel
-        selectedEntities = []
-        selectedVertices = hemodel.selectedVertices()
-        selectedEdges = hemodel.selectedEdges()
-        selectedFaces = hemodel.selectedFaces()
-        selectedEntities.extend(selectedVertices)
-        selectedEntities.extend(selectedEdges)
-        selectedEntities.extend(selectedFaces)
-
-        if len(selectedEntities) == 1:
-
-            self.closeAllDisplayers()
-            self.current_canvas.prop_disp = True
-
-            if len(selectedVertices) == 1:
-                self.prop_vertex_display.setParent(self.leftToolbarFrame)
-                self.prop_vertex_display.show()
-                self.prop_vertex_display.set_vertex_prop(selectedEntities[0])
-            elif len(selectedEdges) == 1:
-                self.prop_edge_display.setParent(self.leftToolbarFrame)
-                self.prop_edge_display.show()
-                self.prop_edge_display.set_edge_prop(selectedEntities[0])
-            elif not selectedEntities[0].patch.isDeleted:
-                self.prop_face_display.setParent(self.leftToolbarFrame)
-                self.prop_face_display.show()
-                self.prop_face_display.set_face_prop(selectedEntities[0])
-            else:
-                return False, None
-
-            return True, selectedEntities[0]
-
-        # elif len(selectedEntities) > 1:
-        #     msg = QMessageBox(self)
-        #     msg.setWindowTitle('Warning')
-        #     msg.setText('Please select only one entity')
-        #     msg.exec()
-
-        # self.closeAllDisplayers()
-        # self.select_display.show()
-
-        return False, None
-
-    def close_propVertex(self):
-        self.prop_vertex_display.close()
-        self.select_display.show()
-        self.current_canvas.prop_disp = False
-
-    def close_propEdge(self):
-        self.prop_edge_display.close()
-        self.select_display.show()
-        self.current_canvas.prop_disp = False
-
-    def close_propFace(self):
-        self.prop_face_display.close()
-        self.select_display.show()
-        self.current_canvas.prop_disp = False
-
-    def on_action_Mesh(self):
-        # setup checked buttons
-        self.setFalseButtonsChecked()
-        self.actionMesh.setChecked(True)
-
-        # set corresponding mouse action on canvas
-        for canvas in self.canvas_list:
-            canvas.setMouseAction('SELECTION')
-
-        # close displayers
-        self.closeAllDisplayers()
-        self.mesh_display.setParent(self.leftToolbarFrame)
-        self.mesh_display.show()
-
-        self.setMeshOptions()
-
+    # Mesh QComboBox methods
     def setMeshOptions(self):
-
         # setup display
         mesh_type = self.mesh_display.meshcomboBox.currentText()
         self.mesh_display.elemTypesLAbel.hide()
@@ -2380,36 +2605,16 @@ class AppController(QMainWindow, Ui_MainWindow):
             self.mesh_display.delMeshpushButton.setGeometry(
                 QtCore.QRect(50, 230, 100, 25))
 
-    def generateMesh(self):
-        mesh_type = self.mesh_display.meshcomboBox.currentText()
-        diag_type = self.mesh_display.diagcomboBox.currentText()
-        elem_type = self.mesh_display.elemcomboBox.currentText()
-        bc_flag = self.mesh_display.flagcomboBox.currentText()
+    def resizeEvent(self, a0: QtGui.QResizeEvent):
+        self.attribute_display.resizeEvent(a0)
+        self.prop_edge_display.resizeEvent(a0)
+        self.prop_face_display.resizeEvent(a0)
+        self.prop_vertex_display.resizeEvent(a0)
+        return super().resizeEvent(a0)
 
-        if mesh_type == "Trilinear Transfinite":
-            shape_type = "Triangular"
-        elif mesh_type == "Quadrilateral Template":
-            shape_type = "Quadrilateral"
-        elif mesh_type == "Quadrilateral Seam":
-            shape_type = "Quadrilateral"
-        elif mesh_type == "Triangular Boundary Contraction":
-            shape_type = "Triangular"
-        elif (mesh_type == "Isogeometric" or 
-              mesh_type == "Isogeometric Template"):
-            shape_type = "Quadrilateral"
-        else:
-            shape_type = self.mesh_display.shapecomboBox.currentText()
-
-        try:
-            self.current_canvas.generateMesh(mesh_type, shape_type, elem_type, diag_type, bc_flag)
-        except:
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Warning')
-            msg.setText('It was not possible to generate the mesh')
-            msg.exec()
-
-    def delMesh(self):
-        self.current_canvas.delMesh()
+    def closeEvent(self, event):
+        self.exit()
+        event.ignore()
 
     def setFalseButtonsChecked(self):
         self.actionMesh.setChecked(False)
@@ -2992,182 +3197,3 @@ class AppController(QMainWindow, Ui_MainWindow):
                 refX, refY, v1, v2 = canvas.collector.updateCollectingPntInfo(xW, yW, LenAndAng)
                 self.ellipsearc_display.SecondArcPointXlineEdit.setText(str(round(v1, 3)))
                 self.ellipsearc_display.SecondArcPointYlineEdit.setText(str(round(v2, 3)))
-
-    # Check Circle comboBoxes options
-    def setCircleRadiusOptions(self):
-        _translate = QtCore.QCoreApplication.translate
-        Radius_option = self.circle_display.RadiuscomboBox.currentText()
-
-        if Radius_option == "Coordinates":
-            self.circle_display.RadiusXTitle.setText(_translate("MainWindow", "X:"))
-            self.circle_display.RadiusYTitle.setText(_translate("MainWindow", "Y:"))
-            self.circle_display.RadiusXlineEdit.clear()
-            self.circle_display.RadiusYlineEdit.clear()
-        elif Radius_option == "Radius and Angle":
-            self.circle_display.RadiusXTitle.setText(_translate("MainWindow", "Radius:"))
-            self.circle_display.RadiusYTitle.setText(_translate("MainWindow", "Angle:"))
-            self.circle_display.RadiusXlineEdit.clear()
-            self.circle_display.RadiusYlineEdit.clear()
-
-    # Check Circle Arc comboBoxes options
-    def setCircleArcFirstArcPointOptions(self):
-        _translate = QtCore.QCoreApplication.translate
-        FirstArcPoint_option = self.circlearc_display.FirstArcPointcomboBox.currentText()
-
-        if FirstArcPoint_option == "Coordinates":
-            self.circlearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "X:"))
-            self.circlearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Y:"))
-            self.circlearc_display.FirstArcPointXlineEdit.clear()
-            self.circlearc_display.FirstArcPointYlineEdit.clear()
-        elif FirstArcPoint_option == "Radius and Angle":
-            self.circlearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "Radius:"))
-            self.circlearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
-            self.circlearc_display.FirstArcPointXlineEdit.clear()
-            self.circlearc_display.FirstArcPointYlineEdit.clear()
-
-    def setCircleArcSecondArcPointOptions(self):
-        _translate = QtCore.QCoreApplication.translate
-        SecondArcPoint_option = self.circlearc_display.SecondArcPointcomboBox.currentText()
-
-        if SecondArcPoint_option == "Coordinates":
-            self.circlearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "X:"))
-            self.circlearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Y:"))
-            self.circlearc_display.SecondArcPointXlineEdit.setEnabled(True)
-            self.circlearc_display.SecondArcPointXlineEdit.clear()
-            self.circlearc_display.SecondArcPointYlineEdit.clear()
-        elif SecondArcPoint_option == "Radius and Angle":
-            self.circlearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "Radius:"))
-            self.circlearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
-            self.circlearc_display.SecondArcPointXlineEdit.setEnabled(False)
-            self.set_curves_lineEdits_text(0.0, 0.0)
-            self.circlearc_display.SecondArcPointYlineEdit.clear()
-
-    # Check Ellipse comboBoxes options
-    def setEllipseFirstAxisOptions(self):
-        _translate = QtCore.QCoreApplication.translate
-        FirstAxis_option = self.ellipse_display.FirstAxiscomboBox.currentText()
-
-        if FirstAxis_option == "Coordinates":
-            self.ellipse_display.FirstAxisXTitle.setText(_translate("MainWindow", "X:"))
-            self.ellipse_display.FirstAxisYTitle.setText(_translate("MainWindow", "Y:"))
-            self.ellipse_display.FirstAxisXlineEdit.clear()
-            self.ellipse_display.FirstAxisYlineEdit.clear()
-        elif FirstAxis_option == "Length and Angle":
-            self.ellipse_display.FirstAxisXTitle.setText(_translate("MainWindow", "Length:"))
-            self.ellipse_display.FirstAxisYTitle.setText(_translate("MainWindow", "Angle:"))
-            self.ellipse_display.FirstAxisXlineEdit.clear()
-            self.ellipse_display.FirstAxisYlineEdit.clear()
-
-    def setEllipseSecondAxisOptions(self):
-        _translate = QtCore.QCoreApplication.translate
-        SecondAxis_option = self.ellipse_display.SecondAxiscomboBox.currentText()
-
-        if SecondAxis_option == "Coordinates":
-            self.ellipse_display.SecondAxisXTitle.setText(_translate("MainWindow", "X:"))
-            self.ellipse_display.SecondAxisYTitle.setText(_translate("MainWindow", "Y:"))
-            self.ellipse_display.SecondAxisYlineEdit.setEnabled(True)
-            self.ellipse_display.SecondAxisXlineEdit.clear()
-            self.ellipse_display.SecondAxisYlineEdit.clear()
-        elif SecondAxis_option == "Length and Angle":
-            self.ellipse_display.SecondAxisXTitle.setText(_translate("MainWindow", "Length:"))
-            self.ellipse_display.SecondAxisYTitle.setText(_translate("MainWindow", "Angle:"))
-            self.ellipse_display.SecondAxisYlineEdit.setEnabled(False)
-            self.set_curves_lineEdits_text(0.0, 0.0)
-            self.ellipse_display.SecondAxisXlineEdit.clear()
-
-    # Check Ellipse Arc comboBoxes options
-    def setEllipseArcFirstAxisOptions(self):
-        _translate = QtCore.QCoreApplication.translate
-        FirstAxis_option = self.ellipsearc_display.FirstAxiscomboBox.currentText()
-
-        if FirstAxis_option == "Coordinates":
-            self.ellipsearc_display.FirstAxisXTitle.setText(_translate("MainWindow", "X:"))
-            self.ellipsearc_display.FirstAxisYTitle.setText(_translate("MainWindow", "Y:"))
-            self.ellipsearc_display.FirstAxisXlineEdit.clear()
-            self.ellipsearc_display.FirstAxisYlineEdit.clear()
-        elif FirstAxis_option == "Length and Angle":
-            self.ellipsearc_display.FirstAxisXTitle.setText(_translate("MainWindow", "Length:"))
-            self.ellipsearc_display.FirstAxisYTitle.setText(_translate("MainWindow", "Angle:"))
-            self.ellipsearc_display.FirstAxisXlineEdit.clear()
-            self.ellipsearc_display.FirstAxisYlineEdit.clear()
-
-    def setEllipseArcSecondAxisOptions(self):
-        _translate = QtCore.QCoreApplication.translate
-        SecondAxis_option = self.ellipsearc_display.SecondAxiscomboBox.currentText()
-
-        if SecondAxis_option == "Coordinates":
-            self.ellipsearc_display.SecondAxisXTitle.setText(_translate("MainWindow", "X:"))
-            self.ellipsearc_display.SecondAxisYTitle.setText(_translate("MainWindow", "Y:"))
-            self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(True)
-            self.ellipsearc_display.SecondAxisXlineEdit.clear()
-            self.ellipsearc_display.SecondAxisYlineEdit.clear()
-        elif SecondAxis_option == "Length and Angle":
-            self.ellipsearc_display.SecondAxisXTitle.setText(_translate("MainWindow", "Length:"))
-            self.ellipsearc_display.SecondAxisYTitle.setText(_translate("MainWindow", "Angle:"))
-            self.ellipsearc_display.SecondAxisYlineEdit.setEnabled(False)
-            self.set_curves_lineEdits_text(0.0, 0.0)
-            self.ellipsearc_display.SecondAxisXlineEdit.clear()
-
-    def setEllipseArcFirstArcPointOptions(self):
-        _translate = QtCore.QCoreApplication.translate
-        FirstArcPoint_option = self.ellipsearc_display.FirstArcPointcomboBox.currentText()
-
-        if FirstArcPoint_option == "Coordinates":
-            self.ellipsearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "X:"))
-            self.ellipsearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Y:"))
-            self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(True)
-            self.ellipsearc_display.FirstArcPointXlineEdit.clear()
-            self.ellipsearc_display.FirstArcPointYlineEdit.clear()
-        elif FirstArcPoint_option == "Length and Angle":
-            self.ellipsearc_display.FirstArcPointXTitle.setText(_translate("MainWindow", "Length:"))
-            self.ellipsearc_display.FirstArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
-            self.ellipsearc_display.FirstArcPointXlineEdit.setEnabled(False)
-            self.ellipsearc_display.FirstArcPointXlineEdit.clear()
-            self.ellipsearc_display.FirstArcPointYlineEdit.clear()
-
-    def setEllipseArcSecondArcPointOptions(self):
-        _translate = QtCore.QCoreApplication.translate
-        SecondArcPoint_option = self.ellipsearc_display.SecondArcPointcomboBox.currentText()
-
-        if SecondArcPoint_option == "Coordinates":
-            self.ellipsearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "X:"))
-            self.ellipsearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Y:"))
-            self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(True)
-            self.ellipsearc_display.SecondArcPointXlineEdit.clear()
-            self.ellipsearc_display.SecondArcPointYlineEdit.clear()
-        elif SecondArcPoint_option == "Length and Angle":
-            self.ellipsearc_display.SecondArcPointXTitle.setText(_translate("MainWindow", "Length:"))
-            self.ellipsearc_display.SecondArcPointYTitle.setText(_translate("MainWindow", "Angle:"))
-            self.ellipsearc_display.SecondArcPointXlineEdit.setEnabled(False)
-            self.ellipsearc_display.SecondArcPointXlineEdit.clear()
-            self.ellipsearc_display.SecondArcPointYlineEdit.clear()
-
-    # Check Number os Subdivisions comboBox options
-    def setNumSubdivisionsOptions(self):
-        _translate = QtCore.QCoreApplication.translate
-        Subdivision_option = self.nsudv_display.nsudvcomboBox.currentText()
-
-        if Subdivision_option == "Set Subdivisions":
-            self.nsudv_display.valueTitle.show()
-            self.nsudv_display.valuelineEdit.show()
-            self.nsudv_display.ratioTitle.show()
-            self.nsudv_display.ratiolineEdit.show()
-            self.nsudv_display.nsudvpushButton.setGeometry(QtCore.QRect(70, 140, 60, 25))
-            self.nsudv_display.nsudvpushButton.setText(_translate("MainWindow", "Set"))
-            self.nsudv_display.knotrefinementTitle.hide()
-            self.nsudv_display.knotrefinementpushButton.hide()
-            self.nsudv_display.rescuepushButton.hide()
-            self.nsudv_display.knotconformTitle.hide()
-            self.nsudv_display.knotconformpushButton.hide()
-        elif Subdivision_option == "Get from Knot Vector":
-            self.nsudv_display.valueTitle.hide()
-            self.nsudv_display.valuelineEdit.hide()
-            self.nsudv_display.ratioTitle.hide()
-            self.nsudv_display.ratiolineEdit.hide()
-            self.nsudv_display.nsudvpushButton.setGeometry(QtCore.QRect(70, 100, 60, 25))
-            self.nsudv_display.nsudvpushButton.setText(_translate("MainWindow", "Get"))
-            self.nsudv_display.knotrefinementTitle.show()
-            self.nsudv_display.knotrefinementpushButton.show()
-            self.nsudv_display.rescuepushButton.show()
-            self.nsudv_display.knotconformTitle.show()
-            self.nsudv_display.knotconformpushButton.show()

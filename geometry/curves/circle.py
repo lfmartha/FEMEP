@@ -107,7 +107,7 @@ class Circle(Curve):
         return refPtX, refPtY, v1, v2
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+    def buildCurve(self, _v1, _v2, _LenAndAng):
         if self.nPts == 0:
             pt = Pnt2D(_v1, _v2)
             self.center = pt

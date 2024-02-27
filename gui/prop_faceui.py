@@ -11,7 +11,7 @@ class Ui_prop_face(object):
 
         # Tabs
         self.propertiesFrame = QtWidgets.QTabWidget(prop_face)
-        self.propertiesFrame.setMinimumSize(QtCore.QSize(200, 325))
+        self.propertiesFrame.setMinimumSize(QtCore.QSize(200, 415))
         self.propertiesFrame.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.propertiesFrame.setStyleSheet("")
         self.propertiesFrame.setTabPosition(QtWidgets.QTabWidget.North)
@@ -29,7 +29,7 @@ class Ui_prop_face(object):
         self.tabDS.setObjectName("tabDS")
 
         self.scrollAreaDS = QtWidgets.QScrollArea(self.tabDS)
-        self.scrollAreaDS.setGeometry(QtCore.QRect(0, 0, 200, 300))
+        self.scrollAreaDS.setGeometry(QtCore.QRect(0, 0, 200, 390))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -49,7 +49,7 @@ class Ui_prop_face(object):
         self.tabAtt.setObjectName("tabDS")
 
         self.scrollAreaAtt = QtWidgets.QScrollArea(self.tabAtt)
-        self.scrollAreaAtt.setGeometry(QtCore.QRect(0, 0, 200, 300))
+        self.scrollAreaAtt.setGeometry(QtCore.QRect(0, 0, 200, 390))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -64,16 +64,26 @@ class Ui_prop_face(object):
 
         self.propertiesFrame.addTab(self.tabAtt, "Attributes")
 
-        # Add buttons
-        self.closepushbutton = QtWidgets.QPushButton(prop_face)
-        self.closepushbutton.setAutoDefault(True)
-        self.closepushbutton.setGeometry(QtCore.QRect(70, 390, 60, 25))
-        self.closepushbutton.setObjectName("closepushbutton")
+        # Surface refinement
+        self.refinementTitle = QtWidgets.QLabel(prop_face)
+        self.refinementTitle.setGeometry(QtCore.QRect(0, 420, 110, 20))
+        self.refinementTitle.setAlignment(QtCore.Qt.AlignLeft)
+        self.refinementTitle.setObjectName("refinementTitle")
 
-        # Add control net checkbox
+        self.knotInsertionSurfpushbutton = QtWidgets.QPushButton(prop_face)
+        self.knotInsertionSurfpushbutton.setAutoDefault(True)
+        self.knotInsertionSurfpushbutton.setGeometry(QtCore.QRect(60, 440, 80, 25))
+        self.knotInsertionSurfpushbutton.setObjectName("knotInsertionSurfpushbutton")
+
+        # Control polygon
+        self.ctrlPolygonTitle = QtWidgets.QLabel(prop_face)
+        self.ctrlPolygonTitle.setGeometry(QtCore.QRect(0, 480, 110, 20))
+        self.ctrlPolygonTitle.setAlignment(QtCore.Qt.AlignLeft)
+        self.ctrlPolygonTitle.setObjectName("ctrlPolygonTitle")
+
         self.ctrlNetCheckBox = QtWidgets.QCheckBox(prop_face)
         self.ctrlNetCheckBox.setEnabled(True)
-        self.ctrlNetCheckBox.setGeometry(QtCore.QRect(10, 377, 70, 20))
+        self.ctrlNetCheckBox.setGeometry(QtCore.QRect(140, 480, 70, 20))
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -88,12 +98,21 @@ class Ui_prop_face(object):
         self.ctrlNetCheckBox.setStyleSheet("image: url(icons/ctrlnet.png);")
         self.ctrlNetCheckBox.setText("")
         self.ctrlNetCheckBox.setObjectName("ctrlNetCheckBox")
+
+        # Close push button
+        self.closepushbutton = QtWidgets.QPushButton(prop_face)
+        self.closepushbutton.setAutoDefault(True)
+        self.closepushbutton.setGeometry(QtCore.QRect(70, 620, 60, 25))
+        self.closepushbutton.setObjectName("closepushbutton")
         self.retranslateUi(prop_face)
 
         QtCore.QMetaObject.connectSlotsByName(prop_face)
 
     def retranslateUi(self, prop_face):
         _translate = QtCore.QCoreApplication.translate
+        self.refinementTitle.setText(_translate("MainWindow", "Surface refinement:"))
+        self.knotInsertionSurfpushbutton.setText(_translate("MainWindow", "Insert Knots"))
+        self.ctrlPolygonTitle.setText(_translate("MainWindow", "View control net:"))
         self.closepushbutton.setText(_translate("MainWindow", "Close"))
 
 
@@ -107,11 +126,14 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
         if self.frame is not None:
             self.resize(self.frame.size())
             dy = self.frame.height() - self.frame.minimumHeight()
-            self.propertiesFrame.setMinimumSize(QtCore.QSize(200, 325 + dy))
-            self.scrollAreaDS.setGeometry(QtCore.QRect(0, 0, 200, 300 + dy))
-            self.scrollAreaAtt.setGeometry(QtCore.QRect(0, 0, 200, 300 + dy))
-            self.closepushbutton.setGeometry(QtCore.QRect(70, 390 + dy, 60, 25))
-            self.ctrlNetCheckBox.setGeometry(QtCore.QRect(10, 377 + dy, 70, 20))
+            self.propertiesFrame.setMinimumSize(QtCore.QSize(200, 415 + dy))
+            self.scrollAreaDS.setGeometry(QtCore.QRect(0, 0, 200, 390 + dy))
+            self.scrollAreaAtt.setGeometry(QtCore.QRect(0, 0, 200, 390 + dy))
+            self.refinementTitle.setGeometry(QtCore.QRect(0, 420 + dy, 110, 20))
+            self.knotInsertionSurfpushbutton.setGeometry(QtCore.QRect(60, 440 + dy, 80, 25))
+            self.ctrlPolygonTitle.setGeometry(QtCore.QRect(0, 480 + dy, 110, 20))
+            self.ctrlNetCheckBox.setGeometry(QtCore.QRect(140, 480 + dy, 70, 20))
+            self.closepushbutton.setGeometry(QtCore.QRect(70, 620 + dy, 60, 25))
         return super().resizeEvent(a0)
 
     def set_face_prop(self, _face):
@@ -169,14 +191,7 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
         dsLabel_type_1.setObjectName("dsLabel_type_1")
         dsLabel_type_1.setText("Type: Surface")
 
-        # boundary points, boundary segments, holes and area
-        bp_list = _face.patch.getPoints()
-        uniqueList = []
-        for item in bp_list:
-            if item not in uniqueList:
-                uniqueList.append(item)
-        bp = len(uniqueList)
-
+        # boundary segments, holes and area
         bs_list = _face.patch.getSegments()
         uniqueList = []
         for item in bs_list:
@@ -188,19 +203,8 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
         Area = round(_face.patch.Area(), 3)
 
         # Labels
-        dsLabel_bp = QtWidgets.QLabel(contentDS)
-        dsLabel_bp.setGeometry(QtCore.QRect(0, 40, 200, 20))
-        dsLabel_bp.setMinimumSize(QtCore.QSize(200, 20))
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        dsLabel_bp.setFont(font)
-        dsLabel_bp.setStyleSheet("")
-        dsLabel_bp.setObjectName("dsLabel_bp")
-        dsLabel_bp.setText(f"Boundary points: {bp}")
-
         dsLabel_bs = QtWidgets.QLabel(contentDS)
-        dsLabel_bs.setGeometry(QtCore.QRect(0, 60, 200, 20))
+        dsLabel_bs.setGeometry(QtCore.QRect(0, 40, 200, 20))
         dsLabel_bs.setMinimumSize(QtCore.QSize(200, 20))
         dsLabel_bs.setFont(font)
         dsLabel_bs.setStyleSheet("")
@@ -208,7 +212,7 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
         dsLabel_bs.setText(f"Boundary segments: {bs}")
 
         dsLabel_holes = QtWidgets.QLabel(contentDS)
-        dsLabel_holes.setGeometry(QtCore.QRect(0, 80, 200, 20))
+        dsLabel_holes.setGeometry(QtCore.QRect(0, 60, 200, 20))
         dsLabel_holes.setMinimumSize(QtCore.QSize(200, 20))
         dsLabel_holes.setFont(font)
         dsLabel_holes.setStyleSheet("")
@@ -216,7 +220,7 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
         dsLabel_holes.setText(f"Holes: {holes}")
 
         dsLabel_area = QtWidgets.QLabel(contentDS)
-        dsLabel_area.setGeometry(QtCore.QRect(0, 100, 200, 20))
+        dsLabel_area.setGeometry(QtCore.QRect(0, 80, 200, 20))
         dsLabel_area.setMinimumSize(QtCore.QSize(200, 20))
         dsLabel_area.setFont(font)
         dsLabel_area.setStyleSheet("")
@@ -227,7 +231,7 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
 
         if nurbs != []:
             dsLabel_title_nurbs = QtWidgets.QLabel(contentDS)
-            dsLabel_title_nurbs.setGeometry(QtCore.QRect(0, 140, 200, 20))
+            dsLabel_title_nurbs.setGeometry(QtCore.QRect(0, 120, 200, 20))
             font = QtGui.QFont()
             font.setPointSize(9)
             font.setBold(True)
@@ -238,7 +242,7 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
             dsLabel_title_nurbs.setText("NURBS Properties")
 
             dsLabel_Degree_U = QtWidgets.QLabel(contentDS)
-            dsLabel_Degree_U.setGeometry(QtCore.QRect(0, 160, 200, 20))
+            dsLabel_Degree_U.setGeometry(QtCore.QRect(0, 140, 200, 20))
             dsLabel_Degree_U.setMinimumSize(QtCore.QSize(200, 20))
             font = QtGui.QFont()
             font.setBold(True)
@@ -249,7 +253,7 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
             dsLabel_Degree_U.setText(f"Degree U: {Degree_U}")
 
             dsLabel_Degree_V = QtWidgets.QLabel(contentDS)
-            dsLabel_Degree_V.setGeometry(QtCore.QRect(0, 180, 200, 20))
+            dsLabel_Degree_V.setGeometry(QtCore.QRect(0, 160, 200, 20))
             dsLabel_Degree_V.setMinimumSize(QtCore.QSize(200, 20))
             dsLabel_Degree_V.setFont(font)
             dsLabel_Degree_V.setStyleSheet("")
@@ -257,7 +261,7 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
             dsLabel_Degree_V.setText(f"Degree V: {Degree_V}")
 
             dsLabel_controlpoints = QtWidgets.QLabel(contentDS)
-            dsLabel_controlpoints.setGeometry(QtCore.QRect(0, 220, 200, 20))
+            dsLabel_controlpoints.setGeometry(QtCore.QRect(0, 200, 200, 20))
             dsLabel_controlpoints.setMinimumSize(QtCore.QSize(200, 20))
             dsLabel_controlpoints.setFont(font)
             dsLabel_controlpoints.setStyleSheet("")
@@ -267,7 +271,7 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
             count = 0
             index_X = 0
             for i in range(CtrlNet_Size_U):
-                index_Y = 240
+                index_Y = 220
                 for j in range(CtrlNet_Size_V):
                     LabelCtrlPt = QtWidgets.QLabel(contentDS)
                     LabelCtrlPt.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
@@ -290,25 +294,44 @@ class Prop_FaceDisplay(QMainWindow, Ui_prop_face):
             dsLabel_knotvector_U.setText("Knot Vectors U and V:")
 
             index_Y += 20
-            index_knot = int(index_Y) # copy
+            index_knotU = int(index_Y) # copy
+            index_knotV = int(index_Y) # copy
+            # for knot in KnotVector_U:
+            #     LabelKnot = QtWidgets.QLabel(contentDS)
+            #     LabelKnot.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            #     LabelKnot.setGeometry(QtCore.QRect(0, index_knot, 100, 20))
+            #     LabelKnot.setFont(font)
+            #     knot = round(knot, 3)
+            #     LabelKnot.setText(f"{knot}")
+            #     index_knot += 20
+
+            # for knot in KnotVector_V:
+            #     LabelKnot = QtWidgets.QLabel(contentDS)
+            #     LabelKnot.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            #     LabelKnot.setGeometry(QtCore.QRect(100, index_Y, 100, 20))
+            #     LabelKnot.setFont(font)
+            #     knot = round(knot, 3)
+            #     LabelKnot.setText(f"{knot}")
+            #     index_Y += 20
             for knot in KnotVector_U:
                 LabelKnot = QtWidgets.QLabel(contentDS)
                 LabelKnot.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-                LabelKnot.setGeometry(QtCore.QRect(0, index_knot, 100, 20))
+                LabelKnot.setGeometry(QtCore.QRect(0, index_knotU, 100, 20))
                 LabelKnot.setFont(font)
                 knot = round(knot, 3)
                 LabelKnot.setText(f"{knot}")
-                index_knot += 20
+                index_knotU += 20
 
             for knot in KnotVector_V:
                 LabelKnot = QtWidgets.QLabel(contentDS)
                 LabelKnot.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-                LabelKnot.setGeometry(QtCore.QRect(100, index_Y, 100, 20))
+                LabelKnot.setGeometry(QtCore.QRect(100, index_knotV, 100, 20))
                 LabelKnot.setFont(font)
                 knot = round(knot, 3)
                 LabelKnot.setText(f"{knot}")
-                index_Y += 20
+                index_knotV += 20
 
+            index_Y = int(max(index_knotU, index_knotV))
             index_Y += 20
             dsLabel_weights = QtWidgets.QLabel(contentDS)
             dsLabel_weights.setGeometry(QtCore.QRect(0, index_Y, 200, 20))

@@ -49,7 +49,7 @@ class Curve():
     # respect to the previously inserted point (if there is any).
     # Otherwise, the given parameters correspond to the given curve
     # control point coordinates.
-    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+    def buildCurve(self, _v1, _v2, _LenAndAng):
         pass
 
     # ---------------------------------------------------------------------

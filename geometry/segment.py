@@ -22,12 +22,10 @@ class Segment():
         self.nsudv = None
         self.sdvPoints = None
         self.originalNurbs = copy.deepcopy(_curve.nurbs)
-        self.originalNurbsRefine = None
+        self.directionView = False
         self.CtrlPolyView = False
         self.isReversed = False
         self.refinement = []
-        # self.currentDegree = self.curve.nurbs.degree
-        # self.currentKnotVector = self.curve.nurbs.knotvector
 
     # ---------------------------------------------------------------------
     def getCurve(self):
@@ -298,6 +296,13 @@ class Segment():
 
     # ---------------------------------------------------------------------
     def setNumberSdv(self, _nsudv):
+        # In case it is isogeometric, the number of subdivisions was not 
+        # manually set by the user, and it must be determined. It is simply
+        # given by the the number of knot spans
+        if _nsudv['properties']['isIsogeometric']:
+            knots = list(set(self.curve.nurbs.knotvector))
+            _nsudv['properties']['Value'] = len(knots) - 1
+            _nsudv['properties']['Ratio'] = 0.0
         self.nsudv = _nsudv
 
     # ---------------------------------------------------------------------
@@ -387,14 +392,8 @@ class Segment():
         new_ctrlptsw = []
         for i in range(len(beziers)):
             bezier_new_ctrlptsw = helpers.degree_elevation(crv.degree, beziers[i].ctrlptsw)
-            if len(beziers) == 2:
-                if i == 0:
-                    bezier_new_ctrlptsw.pop()
-            elif len(beziers) > 2:
-                if i == 0:
-                    bezier_new_ctrlptsw.pop()
-                elif i != 0 and i != (len(beziers) - 1):
-                    bezier_new_ctrlptsw.pop()
+            if i != (len(beziers) - 1):
+                bezier_new_ctrlptsw.pop()
             new_ctrlptsw.extend(bezier_new_ctrlptsw)
 
         # New knot vector
@@ -422,7 +421,30 @@ class Segment():
         self.refinement.append("degreeElevation")
 
     # ---------------------------------------------------------------------
-    def ReverseNurbs(self, load):
+    def knotInsertion(self):
+        knots = self.curve.nurbs.knotvector
+        knots = list(set(knots)) # Remove duplicates
+        knots.sort()
+
+        knotsToBeInserted = []
+        for i in range(len(knots) - 1):
+            mediumKnot = (knots[i] + knots[i + 1]) / 2.0
+            knotsToBeInserted.append(mediumKnot)
+
+        for knot in knotsToBeInserted:
+            operations.insert_knot(self.curve.nurbs, [knot], [1])
+
+        # Add Knot Insertion in self.refinement
+        self.refinement.append("knotInsertion")
+
+    # ---------------------------------------------------------------------
+    def rescueNurbsCurve(self):
+        self.curve.nurbs = copy.deepcopy(self.originalNurbs)
+        self.isReversed = False
+        self.refinement = []
+
+    # ---------------------------------------------------------------------
+    def reverseNurbsCurve(self, load):
         degree = copy.deepcopy(self.curve.nurbs.degree)
         ctrlpts = copy.deepcopy(self.curve.nurbs.ctrlpts)
         weights = copy.deepcopy(self.curve.nurbs.weights)
@@ -454,50 +476,13 @@ class Segment():
                 self.isReversed = False
 
     # ---------------------------------------------------------------------
-    def BackToOriginalNurbs(self):
-        if self.originalNurbs is None:
-            return
-
-        self.curve.nurbs = copy.deepcopy(self.originalNurbs)
-        self.isReversed = False
-        self.refinement = []
+    def updateDirectionView(self, status):
+        self.directionView = status
 
     # ---------------------------------------------------------------------
-    def refineUsingKnotInsertion(self):
-        # if self.nsudv is None:
-        #     return
-
-        if self.refinement == [] or self.refinement[-1] == "degreeElevation":
-            self.originalNurbsRefine = copy.deepcopy(self.curve.nurbs)
-
-        knots = self.curve.nurbs.knotvector
-        knots = list(set(knots)) # Remove duplicates
-        knots.sort()
-
-        knotsToBeInserted = []
-        for i in range(len(knots) - 1):
-            mediumKnot = (knots[i] + knots[i + 1]) / 2.0
-            knotsToBeInserted.append(mediumKnot)
-
-        for knot in knotsToBeInserted:
-            operations.insert_knot(self.curve.nurbs, [knot], [1])
-
-        # Add Knot Insertion in self.refinement
-        self.refinement.append("knotInsertion")
+    def updateCtrlPolyView(self, status):
+        self.CtrlPolyView = status
         
-    # ---------------------------------------------------------------------
-    def BackToOriginalNurbsRefine(self):
-        if self.originalNurbsRefine is None:
-            return
-
-        self.curve.nurbs = copy.deepcopy(self.originalNurbsRefine)
-
-        for i in range(len(self.refinement) - 1, -1, -1):
-            if self.refinement[i] == "knotInsertion":
-                self.refinement.pop()
-            elif self.refinement[i] == "degreeElevation":
-                break
-
     # ---------------------------------------------------------------------
     def getNurbs(self):
         return self.curve.nurbs
@@ -505,27 +490,6 @@ class Segment():
     # ---------------------------------------------------------------------
     def getCtrlPts(self):
         return self.curve.nurbs.ctrlpts
-    
-    # ---------------------------------------------------------------------
-    def updateCtrlPolyView(self, status):
-        self.CtrlPolyView = status
-
-    # ---------------------------------------------------------------------
-    # Only used to load files
-    # def conformFromKnotVector(self, upcoming_knotvector):
-    #     if self.originalNurbsRefine is None:
-    #         self.originalNurbsRefine = copy.deepcopy(self.curve.nurbs)
-            
-    #     # find remaining knots
-    #     remaining_knots = []
-    #     knots_already_have = copy.deepcopy(self.curve.nurbs.knotvector)
-    #     for k in upcoming_knotvector:
-    #         if k not in knots_already_have:
-    #             remaining_knots.append(k)
-
-    #     # insert remaining knots in each curve
-    #     for knot in remaining_knots:
-    #         operations.insert_knot(self.curve.nurbs, [knot], [1])
 
     # ---------------------------------------------------------------------
     def getDataToInitCurve(self):
@@ -559,11 +523,7 @@ class Segment():
 
     # ---------------------------------------------------------------------
     @staticmethod
-    def conformSegs(_seg_list):
-        for seg in _seg_list:
-            if seg.originalNurbsRefine is None:
-                seg.originalNurbsRefine = copy.deepcopy(seg.curve.nurbs)
-
+    def conformNurbsCurves(_seg_list):
         # check curves degree
         degrees_list = []
         for seg in _seg_list:

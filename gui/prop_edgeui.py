@@ -6,12 +6,12 @@ class Ui_prop_edge(object):
 
     def setupUi(self, prop_edge):
         prop_edge.setObjectName("prop_edge")
-        prop_edge.resize(200, 800)
+        prop_edge.resize(200, 810)
         prop_edge.setMaximumSize(QtCore.QSize(200, 16777215))
 
         # Tabs
         self.propertiesFrame = QtWidgets.QTabWidget(prop_edge)
-        self.propertiesFrame.setMinimumSize(QtCore.QSize(200, 325))
+        self.propertiesFrame.setMinimumSize(QtCore.QSize(200, 415))
         self.propertiesFrame.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.propertiesFrame.setStyleSheet("")
         self.propertiesFrame.setTabPosition(QtWidgets.QTabWidget.North)
@@ -29,7 +29,7 @@ class Ui_prop_edge(object):
         self.tabDS.setObjectName("tabDS")
 
         self.scrollAreaDS = QtWidgets.QScrollArea(self.tabDS)
-        self.scrollAreaDS.setGeometry(QtCore.QRect(0, 0, 200, 300))
+        self.scrollAreaDS.setGeometry(QtCore.QRect(0, 0, 200, 390))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -49,7 +49,7 @@ class Ui_prop_edge(object):
         self.tabAtt.setObjectName("tabDS")
 
         self.scrollAreaAtt = QtWidgets.QScrollArea(self.tabAtt)
-        self.scrollAreaAtt.setGeometry(QtCore.QRect(0, 0, 200, 300))
+        self.scrollAreaAtt.setGeometry(QtCore.QRect(0, 0, 200, 390))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -64,32 +64,71 @@ class Ui_prop_edge(object):
 
         self.propertiesFrame.addTab(self.tabAtt, "Attributes")
         
-        # Add buttons
-        self.degreeElevation = QtWidgets.QPushButton(prop_edge)
-        self.degreeElevation.setAutoDefault(True)
-        self.degreeElevation.setGeometry(QtCore.QRect(45, 330, 110, 25))
-        self.degreeElevation.setObjectName("degreeElevation")
+        # Curve refinement
+        self.refinementTitle = QtWidgets.QLabel(prop_edge)
+        self.refinementTitle.setGeometry(QtCore.QRect(0, 420, 110, 20))
+        self.refinementTitle.setAlignment(QtCore.Qt.AlignLeft)
+        self.refinementTitle.setObjectName("refinementTitle")
 
-        self.rescuepushbutton = QtWidgets.QPushButton(prop_edge)
-        self.rescuepushbutton.setAutoDefault(True)
-        self.rescuepushbutton.setGeometry(QtCore.QRect(155, 330, 25, 25))
-        self.rescuepushbutton.setObjectName("rescuepushbutton")
-        self.rescuepushbutton.setIcon(QtGui.QIcon("icons/undo-icon.png"))
+        self.degreeElevationpushbutton = QtWidgets.QPushButton(prop_edge)
+        self.degreeElevationpushbutton.setAutoDefault(True)
+        self.degreeElevationpushbutton.setGeometry(QtCore.QRect(10, 440, 85, 25))
+        self.degreeElevationpushbutton.setObjectName("degreeElevationpushbutton")
 
-        self.reversepushbutton = QtWidgets.QPushButton(prop_edge)
-        self.reversepushbutton.setAutoDefault(True)
-        self.reversepushbutton.setGeometry(QtCore.QRect(70, 360, 60, 25))
-        self.reversepushbutton.setObjectName("reversepushbutton")
+        self.knotInsertionpushbutton = QtWidgets.QPushButton(prop_edge)
+        self.knotInsertionpushbutton.setAutoDefault(True)
+        self.knotInsertionpushbutton.setGeometry(QtCore.QRect(105, 440, 85, 25))
+        self.knotInsertionpushbutton.setObjectName("knotInsertionpushbutton")
 
-        self.closepushbutton = QtWidgets.QPushButton(prop_edge)
-        self.closepushbutton.setAutoDefault(True)
-        self.closepushbutton.setGeometry(QtCore.QRect(70, 390, 60, 25))
-        self.closepushbutton.setObjectName("closepushbutton")
+        self.conformNurbsCurvespushbutton = QtWidgets.QPushButton(prop_edge)
+        self.conformNurbsCurvespushbutton.setAutoDefault(True)
+        self.conformNurbsCurvespushbutton.setGeometry(QtCore.QRect(50, 470, 100, 25))
+        self.conformNurbsCurvespushbutton.setObjectName("conformNurbsCurvespushbutton")
 
-        # Add control polygon checkbox
+        self.rescueNurbsCurvepushbutton = QtWidgets.QPushButton(prop_edge)
+        self.rescueNurbsCurvepushbutton.setAutoDefault(True)
+        self.rescueNurbsCurvepushbutton.setGeometry(QtCore.QRect(160, 470, 30, 25))
+        self.rescueNurbsCurvepushbutton.setObjectName("rescueNurbsCurvepushbutton")
+        self.rescueNurbsCurvepushbutton.setIcon(QtGui.QIcon("icons/undo-icon.png"))
+
+        # Curve direction
+        self.directionTitle = QtWidgets.QLabel(prop_edge)
+        self.directionTitle.setGeometry(QtCore.QRect(0, 515, 110, 20))
+        self.directionTitle.setAlignment(QtCore.Qt.AlignLeft)
+        self.directionTitle.setObjectName("directionTitle")
+
+        self.reverseNurbsCurveCurvepushbutton = QtWidgets.QPushButton(prop_edge)
+        self.reverseNurbsCurveCurvepushbutton.setAutoDefault(True)
+        self.reverseNurbsCurveCurvepushbutton.setGeometry(QtCore.QRect(70, 535, 60, 25))
+        self.reverseNurbsCurveCurvepushbutton.setObjectName("reverseNurbsCurveCurvepushbutton")
+
+        self.directionCheckBox = QtWidgets.QCheckBox(prop_edge)
+        self.directionCheckBox.setEnabled(True)
+        self.directionCheckBox.setGeometry(QtCore.QRect(140, 537.5, 70, 20))
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.directionCheckBox.sizePolicy().hasHeightForWidth())
+        self.directionCheckBox.setSizePolicy(sizePolicy)
+        self.directionCheckBox.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+        self.directionCheckBox.setAcceptDrops(False)
+        self.directionCheckBox.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.directionCheckBox.setAutoFillBackground(False)
+        self.directionCheckBox.setStyleSheet("image: url(icons/direction.png);")
+        self.directionCheckBox.setText("")
+        self.directionCheckBox.setObjectName("directionCheckBox")
+
+        # Control polygon
+        self.ctrlPolygonTitle = QtWidgets.QLabel(prop_edge)
+        self.ctrlPolygonTitle.setGeometry(QtCore.QRect(0, 575, 140, 20))
+        self.ctrlPolygonTitle.setAlignment(QtCore.Qt.AlignLeft)
+        self.ctrlPolygonTitle.setObjectName("ctrlPolygonTitle")
+
         self.ctrlPolygonCheckBox = QtWidgets.QCheckBox(prop_edge)
         self.ctrlPolygonCheckBox.setEnabled(True)
-        self.ctrlPolygonCheckBox.setGeometry(QtCore.QRect(10, 377, 70, 20))
+        self.ctrlPolygonCheckBox.setGeometry(QtCore.QRect(140, 575, 70, 20))
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -104,15 +143,26 @@ class Ui_prop_edge(object):
         self.ctrlPolygonCheckBox.setStyleSheet("image: url(icons/ctrlpoly.png);")
         self.ctrlPolygonCheckBox.setText("")
         self.ctrlPolygonCheckBox.setObjectName("ctrlPolygonCheckBox")
+
+        # Close push button
+        self.closepushbutton = QtWidgets.QPushButton(prop_edge)
+        self.closepushbutton.setAutoDefault(True)
+        self.closepushbutton.setGeometry(QtCore.QRect(70, 620, 60, 25))
+        self.closepushbutton.setObjectName("closepushbutton")
         self.retranslateUi(prop_edge)
 
         QtCore.QMetaObject.connectSlotsByName(prop_edge)
 
     def retranslateUi(self, prop_edge):
         _translate = QtCore.QCoreApplication.translate
-        self.degreeElevation.setText(_translate("MainWindow", "Elevate Degree"))
-        self.rescuepushbutton.setToolTip(_translate("MainWindow", "Rescue Curve"))
-        self.reversepushbutton.setText(_translate("MainWindow", "Reverse"))
+        self.refinementTitle.setText(_translate("MainWindow", "Curve refinement:"))
+        self.degreeElevationpushbutton.setText(_translate("MainWindow", "Raise Degree"))
+        self.knotInsertionpushbutton.setText(_translate("MainWindow", "Insert Knots"))
+        self.conformNurbsCurvespushbutton.setText(_translate("MainWindow", "Conform Knots"))
+        self.rescueNurbsCurvepushbutton.setToolTip(_translate("MainWindow", "Rescue Curve"))
+        self.directionTitle.setText(_translate("MainWindow", "Curve direction:"))
+        self.reverseNurbsCurveCurvepushbutton.setText(_translate("MainWindow", "Reverse"))
+        self.ctrlPolygonTitle.setText(_translate("MainWindow", "View control polygon:"))
         self.closepushbutton.setText(_translate("MainWindow", "Close"))
 
 
@@ -126,17 +176,25 @@ class Prop_EdgeDisplay(QMainWindow, Ui_prop_edge):
         if self.frame is not None:
             self.resize(self.frame.size())
             dy = self.frame.height() - self.frame.minimumHeight()
-            self.propertiesFrame.setMinimumSize(QtCore.QSize(200, 325 + dy))
-            self.scrollAreaDS.setGeometry(QtCore.QRect(0, 0, 200, 300 + dy))
-            self.scrollAreaAtt.setGeometry(QtCore.QRect(0, 0, 200, 300 + dy))
-            self.degreeElevation.setGeometry(QtCore.QRect(45, 330 + dy, 110, 25))
-            self.reversepushbutton.setGeometry(QtCore.QRect(70, 360 + dy, 60, 25))
-            self.rescuepushbutton.setGeometry(QtCore.QRect(155, 330 + dy, 25, 25))
-            self.closepushbutton.setGeometry(QtCore.QRect(70, 390 + dy, 60, 25))
-            self.ctrlPolygonCheckBox.setGeometry(QtCore.QRect(10, 377 + dy, 70, 20))
+            print(dy)
+            self.propertiesFrame.setMinimumSize(QtCore.QSize(200, 415 + dy))
+            self.scrollAreaDS.setGeometry(QtCore.QRect(0, 0, 200, 390 + dy))
+            self.scrollAreaAtt.setGeometry(QtCore.QRect(0, 0, 200, 390 + dy))
+            self.refinementTitle.setGeometry(QtCore.QRect(0, 420 + dy, 110, 20))
+            self.degreeElevationpushbutton.setGeometry(QtCore.QRect(10, 440 + dy, 85, 25)) #(45, 280, 110, 25))
+            self.knotInsertionpushbutton.setGeometry(QtCore.QRect(105, 440 + dy, 85, 25)) #(45, 310, 110, 25))
+            self.conformNurbsCurvespushbutton.setGeometry(QtCore.QRect(50, 470 + dy, 100, 25)) #(40, 470, 100, 25))
+            self.rescueNurbsCurvepushbutton.setGeometry(QtCore.QRect(160, 470 + dy, 30, 25)) #(155, 280, 25, 25))
+            self.directionTitle.setGeometry(QtCore.QRect(0, 515 + dy, 110, 20)) #(0, 510, 110, 20))
+            self.reverseNurbsCurveCurvepushbutton.setGeometry(QtCore.QRect(70, 535 + dy, 60, 25)) #(70, 370, 60, 25))
+            self.directionCheckBox.setGeometry(QtCore.QRect(140, 537.5 + dy, 70, 20)) #(110, 530, 70, 20))
+            self.ctrlPolygonTitle.setGeometry(QtCore.QRect(0, 575 + dy, 140, 20)) #(0, 570, 110, 20))
+            self.ctrlPolygonCheckBox.setGeometry(QtCore.QRect(140, 575 + dy, 70, 20)) #(10, 327, 70, 20))
+            self.closepushbutton.setGeometry(QtCore.QRect(70, 620 + dy, 60, 25)) #(70, 400, 60, 25))
         return super().resizeEvent(a0)
 
     def set_edge_prop(self, _edge):
+        self.directionCheckBox.setChecked(_edge.segment.directionView)
         self.ctrlPolygonCheckBox.setChecked(_edge.segment.CtrlPolyView)
         
         # get nurbs curve

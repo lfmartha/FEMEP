@@ -4,8 +4,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.setMinimumSize(QtCore.QSize(900, 650))
-        MainWindow.resize(900, 650)
+        MainWindow.setMinimumSize(QtCore.QSize(1000, 810))
+        MainWindow.resize(1000, 810)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -39,7 +39,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.leftToolbarFrame = QtWidgets.QFrame(self.leftFrame)
         # self.leftToolbarFrame.setMinimumSize(QtCore.QSize(200, 369))
-        self.leftToolbarFrame.setMinimumSize(QtCore.QSize(200, 414))
+        self.leftToolbarFrame.setMinimumSize(QtCore.QSize(200, 654))
         self.leftToolbarFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.leftToolbarFrame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.leftToolbarFrame.setObjectName("leftToolbarFrame")
@@ -49,7 +49,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.verticalLayout_2.addWidget(self.leftToolbarFrame)
         self.logoFrame = QtWidgets.QFrame(self.leftFrame)
-        self.logoFrame.setMaximumSize(QtCore.QSize(16777215, 90))
+        self.logoFrame.setMaximumSize(QtCore.QSize(16777215, 0))
         self.logoFrame.setStyleSheet("image: url(icons/femep-icon.png);")
         self.logoFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.logoFrame.setFrameShadow(QtWidgets.QFrame.Raised)
@@ -89,7 +89,7 @@ class Ui_MainWindow(object):
 
         self.snapcheckBox = QtWidgets.QCheckBox(self.downLeftToolbarFrame)
         self.snapcheckBox.setEnabled(True)
-        self.snapcheckBox.setGeometry(QtCore.QRect(130, 10, 70, 20))
+        self.snapcheckBox.setGeometry(QtCore.QRect(140, 10, 70, 20))
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)

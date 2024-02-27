@@ -72,7 +72,7 @@ class Polyline(Curve):
         return refPtX, refPtY, v1, v2
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+    def buildCurve(self, _v1, _v2, _LenAndAng):
         if self.nPts == 0:
             pt = Pnt2D(_v1, _v2)
             self.pts = [pt]
@@ -498,19 +498,19 @@ class Polyline(Curve):
 
     # ---------------------------------------------------------------------
     def getXinit(self):
-        return self.pts[0].getX()
+        return self.nurbs.ctrlpts[0][0]
 
     # ---------------------------------------------------------------------
     def getYinit(self):
-        return self.pts[0].getY()
+        return self.nurbs.ctrlpts[0][1]
 
     # ---------------------------------------------------------------------
     def getXend(self):
-        return self.pts[-1].getX()
+        return self.nurbs.ctrlpts[-1][0]
 
     # ---------------------------------------------------------------------
     def getYend(self):
-        return self.pts[-1].getY()
+        return self.nurbs.ctrlpts[-1][1]
 
     # ---------------------------------------------------------------------
     def getPntInit(self):

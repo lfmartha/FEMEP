@@ -3,6 +3,7 @@ from compgeom.compgeom import CompGeom
 from geometry.curves.curve import Curve
 from geometry.curves.line import Line
 from geomdl import NURBS
+from geomdl import knotvector
 from geomdl import operations
 from geomdl import fitting
 from geomdl import convert
@@ -70,7 +71,7 @@ class CubicSpline(Curve):
         return refPtX, refPtY, v1, v2
 
     # ---------------------------------------------------------------------
-    def addCtrlPoint(self, _v1, _v2, _LenAndAng):
+    def buildCurve(self, _v1, _v2, _LenAndAng):
         if self.nPts == 0:
             pt = Pnt2D(_v1, _v2)
             self.pts = [pt]
@@ -104,8 +105,12 @@ class CubicSpline(Curve):
                 ctrlPts.append([pt.getX(), pt.getY()])
 
             # Creating Nurbs
-            spline = fitting.interpolate_curve(ctrlPts, degree)
-            self.nurbs = convert.bspline_to_nurbs(spline)
+            self.nurbs = NURBS.Curve()
+            self.nurbs.degree = degree
+            self.nurbs.ctrlpts = ctrlPts
+            self.nurbs.knotvector = knotvector.generate(self.nurbs.degree, self.nurbs.ctrlpts_size)
+            # spline = fitting.interpolate_curve(ctrlPts, degree)
+            # self.nurbs = convert.bspline_to_nurbs(spline)
             self.nurbs.sample_size = 10
 
             # Generating equivalent polyline
@@ -383,8 +388,12 @@ class CubicSpline(Curve):
 
         # Creating Nurbs
         cubic_spline = CubicSpline()
-        spline = fitting.interpolate_curve(ctrlPts, degree)
-        cubic_spline.nurbs = convert.bspline_to_nurbs(spline)
+        # spline = fitting.interpolate_curve(ctrlPts, degree)
+        # cubic_spline.nurbs = convert.bspline_to_nurbs(spline)
+        cubic_spline.nurbs = NURBS.Curve()
+        cubic_spline.nurbs.degree = degree
+        cubic_spline.nurbs.ctrlpts = ctrlPts
+        cubic_spline.nurbs.knotvector = knotvector.generate(cubic_spline.nurbs.degree, cubic_spline.nurbs.ctrlpts_size)
         cubic_spline.nurbs.sample_size = 10
 
         # Generating equivalent polyline
