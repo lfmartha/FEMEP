@@ -1,6 +1,10 @@
 from compgeom.compgeom import CompGeom
+from compgeom.pnt2d import Pnt2D
 from geometry.point import Point
-from geometry.segments.polyline import Polyline
+from geometry.curves.polyline import Polyline
+from geometry.segment import Segment
+from geometry.curves.curve import Curve
+import copy
 
 
 class HeModel:
@@ -132,7 +136,7 @@ class HeModel:
                     # then point is in window
                     vertices.append(vertex)
 
-        vertices = list(set(vertices))
+        vertices = list((vertices))
 
         return vertices
 
@@ -153,11 +157,21 @@ class HeModel:
 
         return edges_targets
 
-    def edgesCrossingFence(self, _fence):
-
+    def edgesCrossingFence(self, _xmin, _xmax, _ymin, _ymax, _tol):
         edges_targets = []
 
-        xmin, xmax, ymin, ymax = _fence.getBoundBox()
+        pts = []
+        if _ymin == _ymax or _xmin == _xmax:
+            pts.append(Pnt2D(_xmin, _ymin))
+            pts.append(Pnt2D(_xmax, _ymax))
+        else:
+            # create a retangular fence
+            pts.append(Pnt2D(_xmin, _ymin))
+            pts.append(Pnt2D(_xmax, _ymin))
+            pts.append(Pnt2D(_xmax, _ymax))
+            pts.append(Pnt2D(_xmin, _ymax))
+            pts.append(Pnt2D(_xmin, _ymin))
+        fencePoly = Polyline(pts)
 
         # get segments crossing fence's bounding box
         edges_list = self.shell.edges
@@ -165,13 +179,14 @@ class HeModel:
             segment = edge.segment
             segment_xmin, segment_xmax, segment_ymin, segment_ymax = segment.getBoundBox()
 
-            if not (xmax < segment_xmin or segment_xmax < xmin or
-                    ymax < segment_ymin or segment_ymax < ymin):
+            if not (_xmax < segment_xmin or segment_xmax < _xmin or
+                    _ymax < segment_ymin or segment_ymax < _ymin):
                 edges_targets.append(edge)
 
         # Checks if the segment intersects the _fence
         for edge in edges_targets:
-            status, pi, param1, param2 = _fence.intersectSegment(edge.segment)
+            edgePolyline = Polyline(edge.segment.getPoints())
+            status = self.chkIntersectPolylines(fencePoly, edgePolyline, _tol)
 
             # If it does not, remove the edge from edgesInFence and go to next edge
             if not status:
@@ -179,25 +194,11 @@ class HeModel:
 
         return edges_targets
 
-    def edgesCrossingWindow(self, _xmin, _xmax, _ymin, _ymax):
-        pts = []
-
-        if _ymin == _ymax or _xmin == _xmax:
-            pts.append(Point(_xmin, _ymin))
-            pts.append(Point(_xmax, _ymax))
-        else:
-            # create a retangular fence
-            pts.append(Point(_xmin, _ymin))
-            pts.append(Point(_xmax, _ymin))
-            pts.append(Point(_xmax, _ymax))
-            pts.append(Point(_xmin, _ymax))
-            pts.append(Point(_xmin, _ymin))
-
-        fence_segment = Polyline(pts)
+    def edgesCrossingWindow(self, _xmin, _xmax, _ymin, _ymax, _tol):
 
         edges = self.edgesInWindow(_xmin, _xmax, _ymin, _ymax)
 
-        edges_crossing = self.edgesCrossingFence(fence_segment)
+        edges_crossing = self.edgesCrossingFence(_xmin, _xmax, _ymin, _ymax, _tol)
         edges.extend(edges_crossing)
 
         edges = list(set(edges))  # remove duplicates
@@ -256,3 +257,93 @@ class HeModel:
         self.updateSortPatches = False
 
         return sort_patches
+
+    def chkIntersectPolylines(self, _polylineA, _polylineB, _tol):
+
+        polyptsA = copy.deepcopy(_polylineA.getCtrlPoints())
+        polyptsB = copy.deepcopy(_polylineB.getCtrlPoints())
+
+        # In case the given tolerance is positive, attract the endpoints of
+        # each polyline to the other polyline (within the given tolerance).
+        status, clstPt, dmin, t, tang = _polylineB.closestPoint(polyptsA[0].getX(), polyptsA[0].getY())
+        if status:
+            if dmin <= _tol:
+                polyptsA[0].setX(clstPt.getX())
+                polyptsA[0].setY(clstPt.getY())
+        status, clstPt, dmin, t, tang = _polylineB.closestPoint(polyptsA[-1].getX(), polyptsA[-1].getY())
+        if status:
+            if dmin <= _tol:
+                polyptsA[-1].setX(clstPt.getX())
+                polyptsA[-1].setY(clstPt.getY())
+        status, clstPt, dmin, t, tang = _polylineA.closestPoint(polyptsB[0].getX(), polyptsB[0].getY())
+        if status:
+            if dmin <= _tol:
+                polyptsB[0].setX(clstPt.getX())
+                polyptsB[0].setY(clstPt.getY())
+        status, clstPt, dmin, t, tang = _polylineA.closestPoint(polyptsB[-1].getX(), polyptsB[-1].getY())
+        if status:
+            if dmin <= _tol:
+                polyptsB[-1].setX(clstPt.getX())
+                polyptsB[-1].setY(clstPt.getY())
+
+        # Perform intersection of the two polylines.
+        status, intersPts, parsA, parsB, overlap = CompGeom.computePolyPolyIntersection(
+                                                               polyptsA, polyptsB)
+        return status
+
+    def intersectSegments(self, _segA, _segB, _tol):
+        # Get the owning curves and polyline of each given segment.
+        curveA = _segA.curve
+        curveB = _segB.curve
+        polyptsA = _segA.getPoints()
+        polyptsB = _segB.getPoints()
+
+        # It is assumed that segment _segB is the one being inserted.
+        # Attract the endpoints of polyline B to the polyline A
+        # (within the given tolerance). This is done because the 
+        # intersections of the two segments are found first based
+        # on the intersection of the polylines of the two segments.
+        polylineA = Polyline(polyptsA)
+        status, clstPt, dmin, t, tang = polylineA.closestPoint(polyptsB[0].getX(), polyptsB[0].getY())
+        if status:
+            if dmin <= _tol:
+                polyptsB[0].setX(clstPt.getX())
+                polyptsB[0].setY(clstPt.getY())
+        status, clstPt, dmin, t, tang = polylineA.closestPoint(polyptsB[-1].getX(), polyptsB[-1].getY())
+        if status:
+            if dmin <= _tol:
+                polyptsB[-1].setX(clstPt.getX())
+                polyptsB[-1].setY(clstPt.getY())
+
+        # Perform intersection of the two polylines.
+        # The function CompGeom.computePolyPolyIntersection computes the intersection
+        # point coordinates and the polyline parametric values along the two segments.
+        # These parametric values range from 0.0 to 1.0 in each polyline and correspond
+        # to the ratio between the polyline arc length of the intersection point and
+        # the total polyline length.
+        # In the sequence, these parametric values will be computed on the owning
+        # curve parametric representation (if there is one) of each segment.
+        status, intersPts, parsA, parsB, overlap = CompGeom.computePolyPolyIntersection(
+                                                               polyptsA, polyptsB)
+        if not status:
+            return False, intersPts, parsA, parsB
+
+        numIntersPts = len(intersPts)
+
+        if curveA is not None:
+            for i in range (0, numIntersPts):
+                StA, clstPt, dmin, parsA[i], tang = curveA.closestPointParam(intersPts[i].getX(), intersPts[i].getY(), parsA[i])
+
+        if curveB is not None:
+            for i in range (0, numIntersPts):
+                StB, clstPt, dmin, parsB[i], tang = curveB.closestPointParam(intersPts[i].getX(), intersPts[i].getY(), parsB[i])
+
+        # If both given segments have owing curves, recompute the intersection
+        # points based on parametric description of curves. The parametric values
+        # of the intersection points on each curve are also recomputed.
+        if (curveA is not None) and (curveB is not None):
+            for i in range(0, numIntersPts):
+                status, intersPts[i], parsA[i], parsB[i] = Curve.paramCurvesIntersection(
+                                        curveA, curveB, parsA[i], parsB[i])
+
+        return status, intersPts, parsA, parsB

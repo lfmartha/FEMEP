@@ -5,7 +5,8 @@ from PyQt5.QtWidgets import QMainWindow
 class Ui_exportFile(object):
     def setupUi(self, exportFileui):
         exportFileui.setObjectName("exportFileui")
-        exportFileui.resize(200, 369)
+        # exportFileui.resize(200, 369)
+        exportFileui.resize(200, 400)
         exportFileui.setMaximumSize(QtCore.QSize(200, 16777215))
 
         self.MainTitle = QtWidgets.QLabel(exportFileui)
@@ -73,12 +74,23 @@ class Ui_exportFile(object):
         self.Q8Label.setObjectName("Q8Label")
         self.Q8comboBox = QtWidgets.QComboBox(exportFileui)
         self.Q8comboBox.setGeometry(QtCore.QRect(40, 280, 50, 20))
-        self.Q8comboBox.setObjectName("Q4comboBox")
+        self.Q8comboBox.setObjectName("Q8comboBox")
         self.Q8comboBox.addItem("2x2")
+
+        self.IsoLabel = QtWidgets.QLabel(exportFileui)
+        self.IsoLabel.setGeometry(QtCore.QRect(0, 310, 200, 20))
+        self.IsoLabel.setObjectName("IsoLabel")
+        self.IsocomboBox = QtWidgets.QComboBox(exportFileui)
+        self.IsocomboBox.setGeometry(QtCore.QRect(100, 310, 50, 20))
+        self.IsocomboBox.setObjectName("IsocomboBox")
+        self.IsocomboBox.addItem("1x1")
+        self.IsocomboBox.addItem("2x2")
+        self.IsocomboBox.addItem("3x3")
+        self.IsocomboBox.addItem("4x4")
 
         self.exportpushButton = QtWidgets.QPushButton(exportFileui)
         self.exportpushButton.setAutoDefault(True)
-        self.exportpushButton.setGeometry(QtCore.QRect(60, 320, 80, 23))
+        self.exportpushButton.setGeometry(QtCore.QRect(60, 350, 80, 23))
         self.exportpushButton.setObjectName("exportpushButton")
 
         self.retranslateUi(exportFileui)
@@ -94,6 +106,7 @@ class Ui_exportFile(object):
         self.T6Label.setText(_translate("MainWindow", "T6 :"))
         self.Q4Label.setText(_translate("MainWindow", "Q4 :"))
         self.Q8Label.setText(_translate("MainWindow", "Q8 :"))
+        self.IsoLabel.setText(_translate("MainWindow", "Isogeometric :"))
         self.optionscomboBox.setItemText(0, _translate(
             "MainWindow", "Femoolab"))
         self.aloptionscomboBox.setItemText(0, _translate(

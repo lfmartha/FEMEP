@@ -1,3 +1,4 @@
+from geometry.curves.cubicspline import CubicSpline
 from he.hemodel import HeModel
 from OpenGL.error import Error
 from he.eulerOperators.MEF_KEF import MEF, KEF
@@ -7,14 +8,19 @@ from he.eulerOperators.MVR_KVR import MVR, KVR
 from he.eulerOperators.MEV_KEV import MEV
 from he.eulerOperators.MVSE_KVJE import MVSE, KVJE
 from he.auxoperations import *
+from compgeom.pnt2d import Pnt2D
 from geometry.point import Point
-from geometry.segments.polyline import Polyline
+from geometry.curves.polyline import Polyline
 from he.undoredo import UndoRedo
 from compgeom.compgeom import CompGeom
 import math
 from he.hefile import HeFile
+from geometry.segment import Segment
 from geometry.attributes.attribmanager import AttribManager
 from mesh.mesh import Mesh, MeshGeneration
+from geometry.curves.curve import Curve
+from geomdl import NURBS
+from PyQt5.QtWidgets import QMessageBox
 
 
 class HeController:
@@ -59,8 +65,8 @@ class HeController:
     def addPoint(self, _pt, _tol):
         # check whether there is already a point with the same coordinates
         for point in self.hemodel.points:
-            tol = Point(_tol, _tol)
-            if Point.equal(_pt, point, tol):
+            tol = Pnt2D(_tol, _tol)
+            if Pnt2D.equal(_pt, point, tol):
                 # in this case there is already a vertex with the same coordinates
                 return
 
@@ -76,14 +82,13 @@ class HeController:
 
         if intersec:
             # if there is an intersection, then split the edge
-            segments = edge_target.segment.splitSegment(param, pi)
+            segments = edge_target.segment.split([param], [pi])
+            pi = Point(pi.getX(), pi.getY())
             mvse = self.splitEdge(pi, edge_target, segments[0], segments[1])
 
             # copy edge_split attributes
             mvse.edge1.segment.attributes = edge_target.segment.attributes.copy()
             mvse.edge2.segment.attributes = edge_target.segment.attributes.copy()
-            mvse.edge1.segment.nsudv = edge_target.segment.nsudv
-            mvse.edge2.segment.nsudv = edge_target.segment.nsudv
 
         else:
             # if it do not intersect, then find the face where it lies on.
@@ -91,45 +96,25 @@ class HeController:
             face_target = self.hemodel.whichFace(_pt)
             self.makeVertexInsideFace(_pt, face_target)
 
-    def insertSegment(self, _segment, _tol):
+    def insertSegment(self, _curve, _tol):
         self.undoredo.begin()
+        segmentPts = _curve.getEquivPolyline()
+        segment = Segment(segmentPts, _curve)
+        # self.addSegment(segment, _tol)
 
-        if type(_segment) == list:
-            pts = []
-            while len(_segment) > 0:
-                pts.append(Point(_segment.pop(0), _segment.pop(0)))
-            _segment = Polyline(pts)
-
-        status, pts, params = _segment.selfIntersect()
-        if status:
-            # if there are self-intersections, split the segment in segments and
-            # then insert each segment at a time
-            segment_segments = _segment.split(params, pts)
-
-            for segment in segment_segments:
-                if segment is not None:
-                    self.addSegment(segment, _tol)
-        else:
-            self.addSegment(_segment, _tol)
-
-        self.undoredo.end()
-        self.update()
-
-    def addSegment(self, _segment, _tol):
-        segmentPts = _segment.getPoints()
-        init_pt = segmentPts[0]
-        end_pt = segmentPts[-1]
-        is_closed = (Point.euclidiandistance(init_pt, end_pt) <= _tol)
+        init_pt = Point(segment.polyline[0].getX(), segment.polyline[0].getY())
+        end_pt = Point(segment.polyline[-1].getX(), segment.polyline[-1].getY())
+        is_closed = (Pnt2D.euclidiandistance(init_pt, end_pt) <= _tol)
 
         if self.hemodel.isEmpty():
             if is_closed:
                 # in this case insert the initial point and then the closed segment
                 shell = self.makeVertexFace(init_pt)
-                self.makeEdge(_segment, init_pt, init_pt)
+                self.makeEdge(segment, init_pt, init_pt)
             else:
                 shell = self.makeVertexFace(init_pt)
                 self.makeVertexInsideFace(end_pt, shell.face)
-                self.makeEdge(_segment, init_pt, end_pt)
+                self.makeEdge(segment, init_pt, end_pt)
 
         else:
             if is_closed:
@@ -138,14 +123,17 @@ class HeController:
 
             # intersect incoming edge with existing model
             incoming_edge_split_map, existent_edges_split_map = self.intersectModel(
-                _segment, _tol)
+                segment, _tol)
 
             # split the existing edges
             self.splitExistingEdges(existent_edges_split_map)
 
             # insert incoming segments
             self.insertIncomingSegments(
-                _segment, incoming_edge_split_map, _tol)
+                segment, incoming_edge_split_map, _tol)
+            
+        self.undoredo.end()
+        self.update()
 
     def update(self):
 
@@ -229,16 +217,14 @@ class HeController:
 
         if initpoint_belongs and endpoint_belongs:
 
-            begin_tan = _segment.tangent(0.0)
+            begin_tan = _segment.getInitTangent()
             begin_seg = _segment.curvature(0.0)
-            begin_tan = Point.normalize(begin_tan)
 
             he1 = self.getHalfEdge(init_vertex, begin_tan.getX(), begin_tan.getY(),
                                    -begin_tan.getY(), begin_tan.getX(), begin_seg)
 
-            end_tan = _segment.tangent(1.0)
+            end_tan = _segment.getEndTangent()
             end_seg = _segment.curvature(1.0)
-            end_tan = Point.normalize(end_tan)
 
             he2 = self.getHalfEdge(end_vertex, - end_tan.getX(), -end_tan.getY(),
                                    -end_tan.getY(), end_tan.getX(), end_seg)
@@ -304,6 +290,11 @@ class HeController:
                         flip.execute()
                         self.undoredo.insertOperation(flip)
 
+                    # copy existent_face attributes
+                    if existent_face.patch is not None:
+                        mef.face.patch.attributes = existent_face.patch.attributes.copy()
+                        mef.face.patch.isDeleted = existent_face.patch.isDeleted
+
                     # insert the entities into the hemodel data structure
                     insertEdge = InsertEdge(mef.edge, self.hemodel)
                     insertEdge.execute()
@@ -327,16 +318,14 @@ class HeController:
                     if existent_face.patch.mesh is not None:
                         self.delMesh(existent_face)
 
-                    # copy existent_face attributes
-                    if existent_face.patch is not None:
-                        mef.face.patch.attributes = existent_face.patch.attributes.copy()
-                        mef.face.patch.isDeleted = existent_face.patch.isDeleted
-
             else:
                 # case 1.2: points are the same, then it is a closed segment
-                split_point = _segment.getPoint(0.5)
+                split_point = _segment.evalPoint(0.5)
+                split_point = Point(split_point.getX(), split_point.getY())
                 _, param, _ = _segment.intersectPoint(split_point, 0.01)
-                seg1, seg2 = _segment.splitSegment(param, split_point)
+                segsSplit = _segment.split([param], [split_point])
+                seg1 = segsSplit[0]
+                seg2 = segsSplit[1]
 
                 if seg1 is None or seg2 is None:
                     print('ERROR: Size of segments are less than geometric tolerance')
@@ -371,16 +360,14 @@ class HeController:
 
                 # --------- Insert second segment ---------------------
 
-                begin_tan = seg2.tangent(0.0)
+                begin_tan = seg2.getInitTangent()
                 begin_seg = seg2.curvature(0.0)
-                begin_tan = Point.normalize(begin_tan)
 
                 he1 = self.getHalfEdge(mev.vertex, begin_tan.getX(), begin_tan.getY(),
                                        -begin_tan.getY(), begin_tan.getX(), begin_seg)
 
-                end_tan = seg2.tangent(1.0)
+                end_tan = seg2.getEndTangent()
                 end_seg = seg2.curvature(1.0)
-                end_tan = Point.normalize(end_tan)
 
                 he2 = self.getHalfEdge(end_vertex, - end_tan.getX(), -end_tan.getY(),
                                        -end_tan.getY(), end_tan.getX(), end_seg)
@@ -406,6 +393,11 @@ class HeController:
                     flip.execute()
                     self.undoredo.insertOperation(flip)
 
+                # copy existent_face attributes
+                if existent_face.patch is not None:
+                    mef.face.patch.attributes = existent_face.patch.attributes.copy()
+                    mef.face.patch.isDeleted = existent_face.patch.isDeleted
+
                 # insert the entities into the hemodel data structure
                 insertEdge2 = InsertEdge(mef.edge, self.hemodel)
                 insertEdge2.execute()
@@ -429,18 +421,12 @@ class HeController:
                 if existent_face.patch.mesh is not None:
                     self.delMesh(existent_face)
 
-                # copy existent_face attributes
-                if existent_face.patch is not None:
-                    mef.face.patch.attributes = existent_face.patch.attributes.copy()
-                    mef.face.patch.isDeleted = existent_face.patch.isDeleted
-
         elif initpoint_belongs and not endpoint_belongs:
             # case 2: only the initial point of the segment belongs to a vertex of the model
 
             # get the half-edge of the vertex
-            begin_tan = _segment.tangent(0.0)
+            begin_tan = _segment.getInitTangent()
             begin_seg = _segment.curvature(0.0)
-            begin_tan = Point.normalize(begin_tan)
             he = self.getHalfEdge(init_vertex, begin_tan.getX(), begin_tan.getY(),
                                   -begin_tan.getY(), begin_tan.getX(), begin_seg)
 
@@ -473,9 +459,8 @@ class HeController:
             # case 3: only the end point of the segment belongs to a vertex of the model
 
             # get the half-edge of the vertex
-            end_tan = _segment.tangent(1.0)
+            end_tan = _segment.getEndTangent()
             end_seg = _segment.curvature(1.0)
-            end_tan = Point.normalize(end_tan)
             he = self.getHalfEdge(
                 end_vertex, - end_tan.getX(), -end_tan.getY(), -end_tan.getY(), end_tan.getX(), end_seg)
 
@@ -540,9 +525,10 @@ class HeController:
             if face.patch.mesh is not None:
                 self.delMesh(face)
 
-    def delSelectedEntities(self):
+    def delSelectedEntities(self, _tol):
 
         self.undoredo.begin()
+        error_text = None
 
         selectedEdges = self.hemodel.selectedEdges()
         selectedVertices = self.hemodel.selectedVertices()
@@ -563,9 +549,12 @@ class HeController:
             edges = vertex.incidentEdges()
             check = False
             if len(edges) == 2:
-                check = self.joinEdges(edges[0], edges[1], vertex)
+                check, error_text = self.joinEdges(edges[0], edges[1], vertex, _tol)
 
             if not check:
+                if error_text is not None:
+                    return error_text
+
                 for edge in edges:
                     vertices = edge.incidentVertices()
                     self.killEdge(edge)
@@ -584,6 +573,8 @@ class HeController:
 
         self.undoredo.end()
         self.update()
+
+        return None
 
     def killVertex(self, _vertex):
         he = _vertex.he
@@ -738,13 +729,18 @@ class HeController:
         curv_vec_norm_min_first = True
         angleRef = math.atan2(_tany, _tanx)
 
-        if angleRef < 0:
-            angleRef += 2*CompGeom.PI
+        # if angleRef < 0:
+        #     angleRef += 2.0 * CompGeom.PI
+        if angleRef >= -0.01 and angleRef <= 0.01:
+            angleRef = 0.0
+
+        if angleRef < 0.0:
+            angleRef += 2.0 * CompGeom.PI
 
         # find vector normal to given tangent
-        ref_norm = Point.normalize(Point(-_tany, _tany))
-        curv_vec_ref = Point(_normx*_curvature, _normy*_curvature)
-        dotprod_ref = Point.dotprod(curv_vec_ref, ref_norm)
+        ref_norm = Pnt2D.normalize(Pnt2D(-_tany, _tany))
+        curv_vec_ref = Pnt2D(_normx*_curvature, _normy*_curvature)
+        dotprod_ref = Pnt2D.dotprod(curv_vec_ref, ref_norm)
 
         # loops over the vertex edges to identify the desired half-edge
         he_i = vertex.he
@@ -754,36 +750,46 @@ class HeController:
             # get the correct tangent
 
             if he_i == he_i.edge.he1:
-                tan = Point.normalize(he_i.edge.segment.tangent(0.0))
+                tan = he_i.edge.segment.getInitTangent()
                 segment_curvature = he_i.edge.segment.curvature(0.0)
-                curv_vec_i = Point(-tan.getY() * segment_curvature,
+                curv_vec_i = Pnt2D(-tan.getY() * segment_curvature,
                                    tan.getX() * segment_curvature)
                 angle_i = math.atan2(tan.getY(), tan.getX())
             else:
-                tan = Point.normalize(he_i.edge.segment.tangent(1.0))
+                tan = he_i.edge.segment.getEndTangent()
                 segment_curvature = he_i.edge.segment.curvature(1.0)
-                curv_vec_i = Point(-tan.getY() * segment_curvature,
+                curv_vec_i = Pnt2D(-tan.getY() * segment_curvature,
                                    tan.getX() * segment_curvature)
                 angle_i = math.atan2(-tan.getY(), -tan.getX())
 
+            # Adicionado
+            if angle_i >= -0.01 and angle_i <= 0.01:
+                angle_i = 0.0
+            # Adicionado
+
             if angle_i < 0:
-                angle_i += 2 * CompGeom.PI
+                angle_i += 2.0 * CompGeom.PI
 
             # obtains only positive values from reference edge in ccw
             angle_i = angleRef - angle_i
 
+            # Adicionado
+            if angle_i >= -0.01 and angle_i <= 0.01:
+                angle_i = 0.0
+            # Adicionado
+
             if angle_i < 0:
-                angle_i = angle_i + 2.0 * CompGeom.PI
+                angle_i += 2.0 * CompGeom.PI
 
             # check if model segment is above incoming
-            if angle_i == 0.0 and Point.dotprod(curv_vec_i, ref_norm) > dotprod_ref:
+            if angle_i == 0.0 and Pnt2D.dotprod(curv_vec_i, ref_norm) > dotprod_ref:
                 angle_i = 2.0 * CompGeom.PI
 
             if angle_i < angle_min:
                 angle_min = angle_i
                 he_min = he_i
             elif angle_i == angle_min:  # tie break using curvature
-                curv_vec_norm_i = Point.dotprod(curv_vec_i, curv_vec_i)
+                curv_vec_norm_i = Pnt2D.dotprod(curv_vec_i, curv_vec_i)
 
                 if curv_vec_norm_min_first:
                     curv_vec_norm_min_first = False
@@ -806,25 +812,30 @@ class HeController:
         # gets the incoming segment bounding box
         xmin, xmax, ymin, ymax = _segment.getBoundBox()
 
+        # expand segment bounding box with tolerance value
+        xmin -= _tol
+        xmax += _tol
+        ymin -= _tol
+        ymax += _tol
+
         # -------------------------VERTEX INTERSECTION-------------------------
         # OBS: only floating vertices
         verticesInBound = self.hemodel.verticesCrossingWindow(
             xmin, xmax, ymin, ymax)
         for vertex in verticesInBound:
             if vertex.he.edge is None:
-                status, param, pi = _segment.intersectPoint(
-                    vertex.point, _tol)
+                status, param, pi = _segment.intersectPoint(vertex.point, _tol)
                 if status:
+                    #param = 1.0
                     incoming_edge_split_map.append([param, vertex.point])
 
         # -------------------------EDGE INTERSECTION---------------------------
-        edgesInBound = self.hemodel.edgesCrossingWindow(
-            xmin, xmax, ymin, ymax)
+        edgesInBound = self.hemodel.edgesCrossingWindow(xmin, xmax, ymin, ymax, _tol)
         for edge in edgesInBound:
             existent_edge_split_map = []
-            segment = edge.segment
-            status, pts, existent_params, incoming_params = segment.intersectSegment(
-                _segment)
+            segA = edge.segment
+            segB = _segment
+            status, pts, existent_params, incoming_params = self.hemodel.intersectSegments(segA, segB, _tol)
 
             if status:
                 for i in range(0, len(pts)):
@@ -833,7 +844,7 @@ class HeController:
                     elif abs(existent_params[i]-1.0) <= CompGeom.ABSTOL:
                         point = edge.he2.vertex.point
                     else:
-                        point = pts[i]
+                        point = Point(pts[i].getX(), pts[i].getY())
                         # insert at existent params map
                         existent_edge_split_map.append(
                             [existent_params[i], point])
@@ -850,8 +861,8 @@ class HeController:
                         insert = True
                         for unique_item in uniqueList:
                             if abs(item[0]-unique_item[0]) <= _tol:
-                                tol = Point(_tol, _tol)
-                                if Point.equal(item[1], unique_item[1], tol):
+                                tol = Pnt2D(_tol, _tol)
+                                if Pnt2D.equal(item[1], unique_item[1], tol):
                                     insert = False
                                     break
 
@@ -876,13 +887,17 @@ class HeController:
         # try to insert init and end points
         segment_pts = _segment.getPoints()
         if len(incoming_edge_split_map) == 0:
-            incoming_edge_split_map.append([0.0, segment_pts[0]])
-            incoming_edge_split_map.append([1.0, segment_pts[-1]])
+            initSegPt = Point(segment_pts[0].getX(), segment_pts[0].getY())
+            incoming_edge_split_map.append([0.0, initSegPt])
+            endSegPt = Point(segment_pts[-1].getX(), segment_pts[-1].getY())
+            incoming_edge_split_map.append([1.0, endSegPt])
         else:
             if incoming_edge_split_map[0][0] != 0.0:
-                incoming_edge_split_map.insert(0, [0.0, segment_pts[0]])
+                initSegPt = Point(segment_pts[0].getX(), segment_pts[0].getY())
+                incoming_edge_split_map.insert(0, [0.0, initSegPt])
             if incoming_edge_split_map[-1][0] != 1.0:
-                incoming_edge_split_map.append([1.0, segment_pts[-1]])
+                endSegPt = Point(segment_pts[-1].getX(), segment_pts[-1].getY())
+                incoming_edge_split_map.append([1.0, endSegPt])
 
         return incoming_edge_split_map, existent_edges_split_map
 
@@ -907,12 +922,14 @@ class HeController:
             # have geometric and topological information
             # this loop go as far as there is more than 2 segments remaining
 
-            initial_segment = existent_edge.segment.clone()
+            # ORIGINALLY IT WAS LIKE THIS:
+            #initial_segment = existent_edge.segment.clone()
+            # NOW TESTING USING NO CLONE
+            initial_segment = existent_edge.segment
             while len(segments) > 2:
 
                 # split the existent segment
-                segment1, segment2 = initial_segment.splitSegment(
-                    split_params[0], split_pts[0])
+                segment1, segment2 = initial_segment.split([split_params[0]], [split_pts[0]])
 
                 # split the edge
                 mvse = self.splitEdge(split_pts[0],
@@ -921,8 +938,6 @@ class HeController:
                 # copy edge_split attributes
                 mvse.edge1.segment.attributes = existent_edge.segment.attributes.copy()
                 mvse.edge2.segment.attributes = existent_edge.segment.attributes.copy()
-                mvse.edge1.segment.nsudv = existent_edge.segment.nsudv
-                mvse.edge2.segment.nsudv = existent_edge.segment.nsudv
 
                 # update the next segment to be splitted
                 existent_edge = mvse.edge2
@@ -939,8 +954,6 @@ class HeController:
             # copy edge_split attributes
             mvse.edge1.segment.attributes = existent_edge.segment.attributes.copy()
             mvse.edge2.segment.attributes = existent_edge.segment.attributes.copy()
-            mvse.edge1.segment.nsudv = existent_edge.segment.nsudv
-            mvse.edge2.segment.nsudv = existent_edge.segment.nsudv
 
     def splitEdge(self, _pt, _split_edge, _seg1, _seg2):
 
@@ -983,7 +996,7 @@ class HeController:
 
         return mvse
 
-    def joinEdges(self, _edge1, _edge2, _vertex):
+    def joinEdges(self, _edge1, _edge2, _vertex, _tol):
 
         # update mesh face
         face_1 = _edge1.he1.loop.face
@@ -997,42 +1010,15 @@ class HeController:
         loop2 = _edge1.he2.loop
 
         if self.checkClosedSegment(loop1) or self.checkClosedSegment(loop2):
-            return False
+            return False, 'Cannot join segments:\n This operation would create a closed segment.'
 
-        seg1_pts = _edge1.segment.getPoints().copy()
-        seg2_pts = _edge2.segment.getPoints().copy()
-        joinned_pts = []
+        ###### JOIN SEGMENTS ######
+        seg1 = _edge1.segment
+        seg2 = _edge2.segment
+        segment, error_text = Segment.joinTwoSegments(seg1, seg2, _vertex.point, _tol)
 
-        if seg1_pts[0] == _vertex.point:
-            init_pt1 = True
-        else:
-            init_pt1 = False
-
-        if seg2_pts[0] == _vertex.point:
-            init_pt2 = True
-        else:
-            init_pt2 = False
-
-        if init_pt1 and init_pt2:
-            seg1_pts.reverse()
-            seg1_pts.pop()
-            joinned_pts.extend(seg1_pts)
-            joinned_pts.extend(seg2_pts)
-        elif not init_pt1 and not init_pt2:
-            seg1_pts.pop()
-            joinned_pts.extend(seg1_pts)
-            seg2_pts.reverse()
-            joinned_pts.extend(seg2_pts)
-        elif init_pt1 and not init_pt2:
-            joinned_pts.extend(seg2_pts)
-            joinned_pts.pop()
-            joinned_pts.extend(seg1_pts)
-        elif not init_pt1 and init_pt2:
-            joinned_pts.extend(seg1_pts)
-            joinned_pts.pop()
-            joinned_pts.extend(seg2_pts)
-
-        segment = Polyline(joinned_pts)
+        if segment == None:
+            return False, error_text
 
         # removes entities
         removeVertex = RemoveVertex(_vertex, self.hemodel)
@@ -1074,17 +1060,15 @@ class HeController:
         # copy attributes
         if len(kvje.edge1.segment.attributes) > 0:
             kvje.new_edge.segment.attributes = kvje.edge1.segment.attributes.copy()
-            kvje.new_edge.segment.nsudv = kvje.edge1.segment.nsudv
         else:
             kvje.new_edge.segment.attributes = kvje.edge2.segment.attributes.copy()
-            kvje.new_edge.segment.nsudv = kvje.edge2.segment.nsudv
 
         # insert joinned edge in model data structure
         insertEdge = InsertEdge(kvje.new_edge, self.hemodel)
         insertEdge.execute()
         self.undoredo.insertOperation(insertEdge)
 
-        return True
+        return True, None
 
     def checkClosedSegment(self, _loop):
         he_begin = _loop.he
@@ -1156,17 +1140,17 @@ class HeController:
                     end_point = end_vertex.point
 
             make_segment = True
-            if seg.length(0, 1) <= _tol:
+            if seg.length() <= _tol:
                 make_segment = False
 
-            # check if the segment to be inserted already exists in the model
-            elif init_vertex is not None and end_vertex is not None:
-                if init_vertex.he is not None and end_vertex.he is not None:
-                    edgesBetween = self.edgesBetween(init_vertex, end_vertex)
-                    for edge in edgesBetween:
-                        if seg.isEqual(edge.segment, _tol):
-                            make_segment = False
-                            break
+            # # check if the segment to be inserted already exists in the model
+            # elif init_vertex is not None and end_vertex is not None:
+            #     if init_vertex.he is not None and end_vertex.he is not None:
+            #         edgesBetween = self.edgesBetween(init_vertex, end_vertex)
+            #         for edge in edgesBetween:
+            #             if seg.isEqual(edge.segment, _tol):
+            #                 make_segment = False
+            #                 break
 
             # insert the segment
             if make_segment:
@@ -1322,7 +1306,7 @@ class HeController:
             for i in range(0, len(segments)):
                 # Compute distance between given point and segment and
                 # update minimum distance
-                xC, yC, d = segments[i].closestPoint(_x, _y)
+                status, xC, yC, d = segments[i].closestPoint(_x, _y)
                 if d < dmin:
                     dmin = d
                     id_target = i
@@ -1471,9 +1455,25 @@ class HeController:
         for face_dict in faces:
             mesh_dict = face_dict['attributes']['mesh']
             if mesh_dict is not None:
-                coords = mesh_dict['coords']
-                conn = mesh_dict['conn']
-                lines = MeshGeneration.meshLines(coords, conn)
+
+                if mesh_dict['properties']['Element type'] == 'Isogeometric':
+                    coonsSurf = NURBS.Surface()
+                    coonsSurf.degree_u = face_dict['dataSurf']['degree_u']
+                    coonsSurf.degree_v = face_dict['dataSurf']['degree_v']
+                    coonsSurf.ctrlpts_size_u = face_dict['dataSurf']['ctrlpts_size_u']
+                    coonsSurf.ctrlpts_size_v = face_dict['dataSurf']['ctrlpts_size_v']
+                    coonsSurf.ctrlpts = face_dict['dataSurf']['ctrlpts']
+                    coonsSurf.weights = face_dict['dataSurf']['weights']
+                    coonsSurf.knotvector_u = face_dict['dataSurf']['knotvector_u']
+                    coonsSurf.knotvector_v = face_dict['dataSurf']['knotvector_v']
+                    coonsSurf.sample_size = 10
+                    face_dict['face'].patch.nurbs = coonsSurf
+                    lines = MeshGeneration.getIsoCurves(coonsSurf)
+                else:
+                    coords = mesh_dict['coords']
+                    conn = mesh_dict['conn']
+                    lines = MeshGeneration.meshLines(coords, conn)
+
                 model = HeModel()
                 hecontroller = HeController(model)
                 mesh = Mesh(model, hecontroller)
@@ -1482,8 +1482,11 @@ class HeController:
                 setAtt = SetAttribute(face_dict['face'].patch, mesh_dict)
                 setAtt.execute()
 
-                repeatedPts = hecontroller.repeatedMeshPoints(
-                    face_dict['face'], mesh_dict['properties']['Element type'])
+                if mesh_dict['properties']['Element type'] == 'Isogeometric':
+                    repeatedPts = []
+                else:
+                    repeatedPts = hecontroller.repeatedMeshPoints(
+                        face_dict['face'], mesh_dict['properties']['Element type'])
 
                 hecontroller.makeMesh(lines, repeatedPts)
 
@@ -1692,7 +1695,7 @@ class HeController:
         self.isChanged = True
         return True
 
-    def setNumberOfSubdivisions(self, _number, _ratio):
+    def setNumberSdv(self, _number, _ratio, _isIsogeometric):
         nsudv_dict = {
             "type": "Number of Subdivisions",
             "symbol": "Nsbdvs",
@@ -1700,9 +1703,10 @@ class HeController:
             "properties": {
                 "Value": _number,
                 "Ratio": _ratio,
+                "isIsogeometric": _isIsogeometric,
                 "Color": [0, 0, 0]
             },
-            "properties_type": ["int", "float", "color"],
+            "properties_type": ["int", "float", "bool", "color"],
             "applyOnVertex": False,
             "applyOnEdge": True,
             "applyOnFace": False
@@ -1714,7 +1718,7 @@ class HeController:
         for seg in segments:
             if seg.isSelected():
 
-                setNumber = SetNumberOfSubdivisions(seg, nsudv_dict)
+                setNumber = SetNumberSdv(seg, nsudv_dict)
                 setNumber.execute()
                 self.undoredo.insertOperation(setNumber)
 
@@ -1735,8 +1739,267 @@ class HeController:
         self.undoredo.end()
         self.isChanged = True
 
-    def generateMesh(self, _mesh_type, _shape_type,  _elem_type, _diag_type, _bc_flag):
+    def degreeElevation(self):
+        self.undoredo.begin()
+        segments = self.hemodel.getSegments()
 
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) == 0:
+            error_text = "Please select at least one curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.degreeElevation()
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+    
+    def knotInsertion(self):
+        self.undoredo.begin()
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) == 0:
+            error_text = "Please select at least one curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.knotInsertion()
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+    
+    def conformNurbsCurves(self):
+        self.undoredo.begin()
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) < 2:
+            error_text = "Please select two or more curves"
+            return False, error_text
+        
+        check, error_text = Segment.conformNurbsCurves(seg_list)
+
+        self.undoredo.end()
+        self.isChanged = True
+        return check, error_text
+
+    def rescueNurbsCurve(self):
+        self.undoredo.begin()
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) == 0:
+            error_text = "Please select at least one curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.rescueNurbsCurve()
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+    
+    def reverseNurbsCurve(self):
+        self.undoredo.begin()
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) == 0:
+            error_text = "Please select at least one curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.reverseNurbsCurve(False)
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+
+    def updateDirectionView(self, status):
+        self.undoredo.begin()
+        segments = self.hemodel.getSegments()
+
+        seg_list = []
+        for seg in segments:
+            if seg.isSelected():
+                seg_list.append(seg)
+
+        if len(seg_list) == 0:
+            error_text = "Please select at least one curve"
+            return False, error_text
+        
+        for seg in segments:
+            if seg.isSelected():
+                seg.updateDirectionView(status)
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+    
+    def updateCtrlPolyView(self, status):
+        self.undoredo.begin()
+
+        selectedEntities = []
+        selectedEdges = self.hemodel.selectedEdges()
+        selectedFaces = self.hemodel.selectedFaces()
+        selectedEntities.extend(selectedEdges)
+        selectedEntities.extend(selectedFaces)
+
+        if len(selectedEntities) == 1:
+            if len(selectedEdges) == 1:
+                selectedEntities[0].segment.updateCtrlPolyView(status)
+            elif (not selectedEntities[0].patch.isDeleted and 
+                  selectedEntities[0].patch.mesh is not None):
+                selectedEntities[0].patch.updateCtrlNetView(status)
+            else:
+                error_text = "Please check surface"
+                return False, error_text
+        
+        elif len(selectedEntities) > 1:
+            error_text = "Please select just one entity"
+            return False, error_text
+        
+        elif len(selectedEntities) == 0:
+            error_text = "Please select an entity"
+            return False, error_text
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+    
+    def knotInsertionSurf(self):
+        self.undoredo.begin()
+        faces = self.hemodel.selectedFaces()
+
+        seg_list = []
+        for face in faces:
+            if face.patch.isSelected() and face.patch.nurbs != []:
+                segments = face.patch.segments
+                seg_list.extend(segments)
+
+        if len(faces) == 0:
+            error_text = "Please select at least one NURBS surface"
+            return False, error_text
+
+        for seg in seg_list:
+            seg.knotInsertion()
+
+        # for patch in patch_list:
+        #     patch.knotInsertionSurf()
+
+        #self.generateMesh("Isogeometric", "Quadrilateral", "Linear", "Right", "Optimal")
+
+        for face in faces:
+            nsudv_dict = {
+                "type": "Number of Subdivisions",
+                "symbol": "Nsbdvs",
+                "name": "Nsbdvs",
+                "properties": {
+                    "Value": None,
+                    "Ratio": None,
+                    "isIsogeometric": True,
+                    "Color": [0, 0, 0]
+                },
+                "properties_type": ["int", "float", "bool", "color"],
+                "applyOnVertex": False,
+                "applyOnEdge": True,
+                "applyOnFace": False
+            }
+
+            segments = face.patch.segments
+            for seg in segments:
+                setNumber = SetNumberSdv(seg, nsudv_dict)
+                setNumber.execute()
+                self.undoredo.insertOperation(setNumber)
+
+                setAtt = SetAttribute(seg, nsudv_dict)
+                setAtt.execute()
+                self.undoredo.insertOperation(setAtt)
+
+                # update mesh
+                face1 = seg.edge.he1.loop.face
+                face2 = seg.edge.he2.loop.face
+
+                if face1.patch.mesh is not None:
+                    self.delMesh(face1)
+
+                if face2.patch.mesh is not None:
+                    self.delMesh(face2)
+
+            if not face.patch.isDeleted:
+                nurbsSurf = face.patch.knotInsertionSurf()
+                check, lines, coords, conn, nno, nel, iso_dict = MeshGeneration.isogeometricMesh(nurbsSurf)
+
+            if check:
+                model = HeModel()
+                hecontroller = HeController(model)
+                mesh = Mesh(model, hecontroller)
+
+                mesh_dict = {
+                    "type": "Mesh",
+                    "symbol": "Mesh",
+                    "name": "Isogeometric",
+                    "coords": coords,
+                    "conn": conn,
+                    "IsoGe": iso_dict,
+                    "properties": {
+                        "Element type": "Isogeometric",
+                        "Number of nodes": nno,
+                        "Number of elements": nel
+                    },
+                    "properties_type": ["string", "int", "int"],
+                    "applyOnVertex": False,
+                    "applyOnEdge": False,
+                    "applyOnFace": True
+                }
+                mesh.mesh_dict = mesh_dict
+
+                repeatedPts = []
+                hecontroller.makeMesh(lines, repeatedPts)
+
+                if face.patch.mesh is not None:
+                    self.delMesh(face)
+
+                setMesh = SetMesh(face.patch, mesh)
+                setMesh.execute()
+                self.undoredo.insertOperation(setMesh)
+
+                setAtt = SetAttribute(face.patch, mesh_dict)
+                setAtt.execute()
+                self.undoredo.insertOperation(setAtt)
+
+        self.undoredo.end()
+        self.isChanged = True
+        return True, None
+
+    def generateMesh(self, _mesh_type, _shape_type,  _elem_type, _diag_type, _bc_flag):
         if _shape_type == "Triangular":
             if _elem_type == "Linear":
                 elem_type = 3
@@ -1752,6 +2015,13 @@ class HeController:
                 elem_type = 8
                 elem = "Q8"
 
+        if _mesh_type == "Isogeometric":
+            elem = "Isogeometric"
+            elem_type = None
+        elif _mesh_type == "Isogeometric Template":
+            elem = "Isogeometric Template"
+            elem_type = "TSpline"
+
         if _mesh_type == "Triangular Boundary Contraction":
             mesh_name = "Triangular Boundary C."
         else:
@@ -1759,7 +2029,39 @@ class HeController:
 
         self.undoredo.begin()
         selectedFaces = self.hemodel.selectedFaces()
+
         for face in selectedFaces:
+            # If Isogeometric set subdivison dict
+            if elem == "Isogeometric" or elem == "Isogeometric Template":
+                number = None
+                ratio = None
+                isIsogeometric = True
+
+                nsudv_dict = {
+                    "type": "Number of Subdivisions",
+                    "symbol": "Nsbdvs",
+                    "name": "Nsbdvs",
+                    "properties": {
+                        "Value": number,
+                        "Ratio": ratio,
+                        "isIsogeometric": isIsogeometric,
+                        "Color": [0, 0, 0]
+                    },
+                    "properties_type": ["int", "float", "bool", "color"],
+                    "applyOnVertex": False,
+                    "applyOnEdge": True,
+                    "applyOnFace": False
+                }
+
+                segments = face.patch.segments
+                for seg in segments:
+                    setNumber = SetNumberSdv(seg, nsudv_dict)
+                    setNumber.execute()
+                    self.undoredo.insertOperation(setNumber)
+
+                    setAtt = SetAttribute(seg, nsudv_dict)
+                    setAtt.execute()
+                    self.undoredo.insertOperation(setAtt)
 
             # verification of adjacent and internal meshes
             adjacentFaces = face.adjacentFaces()
@@ -1776,11 +2078,10 @@ class HeController:
                         raise Error
 
             if not face.patch.isDeleted:
-                check, lines, coords, conn, nno, nel = MeshGeneration.generation(
+                check, lines, coords, conn, nno, nel, iso_dict = MeshGeneration.generation(
                     face, _mesh_type, elem_type, _diag_type, _bc_flag)
 
                 if check:
-
                     model = HeModel()
                     hecontroller = HeController(model)
                     mesh = Mesh(model, hecontroller)
@@ -1791,6 +2092,7 @@ class HeController:
                         "name": mesh_name,
                         "coords": coords,
                         "conn": conn,
+                        "IsoGe": iso_dict,
                         "properties": {
                             "Element type": elem,
                             "Number of nodes": nno,
@@ -1803,17 +2105,20 @@ class HeController:
                     }
                     mesh.mesh_dict = mesh_dict
 
-                    repeatedPts = hecontroller.repeatedMeshPoints(
-                        face, _elem_type)
+                    if elem == "Isogeometric":
+                        repeatedPts = []
+                    else:
+                        repeatedPts = hecontroller.repeatedMeshPoints(
+                            face, _elem_type)
 
                     hecontroller.makeMesh(lines, repeatedPts)
 
-                    gen_check = (len(model.shell.faces) -
-                                 len(face.patch.holes) - 1)
+                    # gen_check = (len(model.shell.faces) -
+                    #              len(face.patch.holes) - 1)
 
-                    if gen_check != nel:
-                        self.undoredo.end()
-                        raise Error
+                    # if gen_check != nel:
+                    #     self.undoredo.end()
+                    #     raise Error
 
                     if face.patch.mesh is not None:
                         self.delMesh(face)
@@ -1896,16 +2201,25 @@ class HeController:
     def makeMesh(self, _lines, _repeatedPts):
 
         # initialize the data structure
-        self.makeMeshVertexFace(_lines[0].pt1)
+        self.makeMeshVertexFace(_lines[0].getPntInit())
+        # self.makeMeshVertexFace(_lines[0].curve.pt0)
 
         tol = Point(CompGeom.ABSTOL, CompGeom.ABSTOL)
 
         for line in _lines:
             make_segment = True
-            init_vertex = line.pt1.vertex
-            end_vertex = line.pt2.vertex
-            init_point = line.pt1
-            end_point = line.pt2
+
+            init_point = line.getPntInit()
+            end_point = line.getPntEnd()
+
+            # init_vertex = line.curve.pt0.vertex
+            # end_vertex = line.curve.pt1.vertex
+
+            init_vertex = init_point.vertex
+            end_vertex = end_point.vertex
+
+            # init_point = line.curve.pt0
+            # end_point = line.curve.pt1
 
             for pt in _repeatedPts:
                 if Point.equal(pt, init_point, tol) or Point.equal(pt, end_point, tol):
@@ -1925,16 +2239,17 @@ class HeController:
                     edgesBetween = self.edgesBetween(
                         init_vertex, end_vertex)
                     for edge in edgesBetween:
-                        if line.isEqual(edge.segment, 0.01):
+                        if line.isEqual(edge.segment, Curve.COORD_TOL):
                             make_segment = False
                             break
 
             if make_segment:
-                try:
-                    self.makeMeshEdge(
-                        line, init_point, end_point)
-                except:
-                    continue
+                # try:
+                # linePts = [init_point, end_point]
+                # lineSegment = Segment(linePts, line)
+                self.makeMeshEdge(line, init_point, end_point)
+                # except:
+                #     continue
 
     def makeMeshVertexFace(self, _point):
 
@@ -1966,16 +2281,14 @@ class HeController:
 
         if initpoint_belongs and endpoint_belongs:
 
-            begin_tan = _segment.tangent(0.0)
+            begin_tan = _segment.getInitTangent()
             begin_seg = _segment.curvature(0.0)
-            begin_tan = Point.normalize(begin_tan)
 
             he1 = self.getHalfEdge(init_vertex, begin_tan.getX(), begin_tan.getY(),
                                    -begin_tan.getY(), begin_tan.getX(), begin_seg)
 
-            end_tan = _segment.tangent(1.0)
+            end_tan = _segment.getEndTangent()
             end_seg = _segment.curvature(1.0)
-            end_tan = Point.normalize(end_tan)
 
             he2 = self.getHalfEdge(end_vertex, - end_tan.getX(), -end_tan.getY(),
                                    -end_tan.getY(), end_tan.getX(), end_seg)
@@ -2065,7 +2378,9 @@ class HeController:
                 pts = _segment.getPoints()
                 split_point = pts[1]
                 _, param, _ = _segment.intersectPoint(split_point, 0.01)
-                seg1, seg2 = _segment.splitSegment(param, split_point)
+                segsSplit = _segment.split([param], [split_point])
+                seg1 = segsSplit[0]
+                seg2 = segsSplit[1]
 
                 # --------- Insert first segment ---------------------
 
@@ -2086,16 +2401,14 @@ class HeController:
 
                 # --------- Insert second segment ---------------------
 
-                begin_tan = seg2.tangent(0.0)
+                begin_tan = seg2.getInitTangent()
                 begin_seg = seg2.curvature(0.0)
-                begin_tan = Point.normalize(begin_tan)
 
                 he1 = self.getHalfEdge(mev.vertex, begin_tan.getX(), begin_tan.getY(),
                                        -begin_tan.getY(), begin_tan.getX(), begin_seg)
 
-                end_tan = seg2.tangent(1.0)
+                end_tan = seg2.getEndTangent()
                 end_seg = seg2.curvature(1.0)
-                end_tan = Point.normalize(end_tan)
 
                 he2 = self.getHalfEdge(end_vertex, - end_tan.getX(), -end_tan.getY(),
                                        -end_tan.getY(), end_tan.getX(), end_seg)
@@ -2148,9 +2461,8 @@ class HeController:
             # case 2: only the initial point of the segment belongs to a vertex of the model
 
             # get the half-edge of the vertex
-            begin_tan = _segment.tangent(0.0)
+            begin_tan = _segment.getInitTangent()
             begin_seg = _segment.curvature(0.0)
-            begin_tan = Point.normalize(begin_tan)
             he = self.getHalfEdge(init_vertex, begin_tan.getX(), begin_tan.getY(),
                                   -begin_tan.getY(), begin_tan.getX(), begin_seg)
 
@@ -2180,9 +2492,8 @@ class HeController:
             # case 3: only the end point of the segment belongs to a vertex of the model
 
             # get the half-edge of the vertex
-            end_tan = _segment.tangent(1.0)
+            end_tan = _segment.getEndTangent()
             end_seg = _segment.curvature(1.0)
-            end_tan = Point.normalize(end_tan)
             he = self.getHalfEdge(
                 end_vertex, - end_tan.getX(), -end_tan.getY(), -end_tan.getY(), end_tan.getX(), end_seg)
 

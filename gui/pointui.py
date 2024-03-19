@@ -5,57 +5,73 @@ from PyQt5.QtWidgets import QMainWindow
 class Ui_point(object):
     def setupUi(self, pointui):
         pointui.setObjectName("pointui")
-        pointui.resize(200, 300)
+        pointui.resize(200, 800)
         pointui.setMaximumSize(QtCore.QSize(200, 16777215))
 
-        self.pointMainTitle = QtWidgets.QLabel(pointui)
-        self.pointMainTitle.setGeometry(QtCore.QRect(50, 10, 100, 20))
+        # Main Title
+        self.PointMainTitle = QtWidgets.QLabel(pointui)
+        self.PointMainTitle.setGeometry(QtCore.QRect(35, 10, 130, 20))
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.pointMainTitle.setFont(font)
-        self.pointMainTitle.setAlignment(QtCore.Qt.AlignCenter)
-        self.pointMainTitle.setObjectName("pointMainTitle")
-        self.coordinatesTitle = QtWidgets.QLabel(pointui)
-        self.coordinatesTitle.setGeometry(QtCore.QRect(70, 40, 70, 20))
-        self.coordinatesTitle.setObjectName("coordinatesTitle")
-        self.xlineEdit = QtWidgets.QLineEdit(pointui)
-        self.xlineEdit.setGeometry(QtCore.QRect(15, 80, 70, 20))
-        self.xlineEdit.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.xlineEdit.setObjectName("xlineEdit")
-        self.xlineEdit.setValidator(QtGui.QDoubleValidator())
-        self.ylineEdit = QtWidgets.QLineEdit(pointui)
-        self.ylineEdit.setGeometry(QtCore.QRect(115, 80, 70, 20))
-        self.ylineEdit.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.ylineEdit.setObjectName("ylineEdit")
-        self.ylineEdit.setValidator(QtGui.QDoubleValidator())
-        self.yTitle = QtWidgets.QLabel(pointui)
-        self.yTitle.setGeometry(QtCore.QRect(120, 60, 70, 20))
-        self.yTitle.setAlignment(QtCore.Qt.AlignCenter)
-        self.yTitle.setObjectName("yTitle")
-        self.xTitle = QtWidgets.QLabel(pointui)
-        self.xTitle.setGeometry(QtCore.QRect(20, 60, 70, 20))
-        self.xTitle.setAlignment(QtCore.Qt.AlignCenter)
-        self.xTitle.setObjectName("xTitle")
+        self.PointMainTitle.setFont(font)
+        self.PointMainTitle.setAlignment(QtCore.Qt.AlignCenter)
+        self.PointMainTitle.setObjectName("PointMainTitle")
 
-        self.addpointpushButton = QtWidgets.QPushButton(pointui)
-        self.addpointpushButton.setAutoDefault(True)
-        self.addpointpushButton.setGeometry(QtCore.QRect(60, 120, 80, 23))
-        self.addpointpushButton.setObjectName("addlinepushButton")
+        # Point
+        self.PointTitle = QtWidgets.QLabel(pointui)
+        self.PointTitle.setGeometry(QtCore.QRect(50, 40, 100, 20))
+        self.PointTitle.setAlignment(QtCore.Qt.AlignCenter)
+        self.PointTitle.setObjectName("PointTitle")
+
+        self.PointXTitle = QtWidgets.QLabel(pointui)
+        self.PointXTitle.setGeometry(QtCore.QRect(15, 55, 70, 20))
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        self.PointXTitle.setFont(font)
+        self.PointXTitle.setStyleSheet("color: rgb(0, 0, 0);\n""")
+        self.PointXTitle.setAlignment(QtCore.Qt.AlignCenter)
+        self.PointXTitle.setObjectName("PointXTitle")
+
+        self.PointXlineEdit = QtWidgets.QLineEdit(pointui)
+        self.PointXlineEdit.setValidator(QtGui.QDoubleValidator())
+        self.PointXlineEdit.setGeometry(QtCore.QRect(15, 75, 70, 20))
+        self.PointXlineEdit.setStyleSheet("background-color: rgb(255, 255, 255);\n""color: rgb(0, 0, 0);\n""")
+        self.PointXlineEdit.setObjectName("PointXlineEdit")
+
+        self.PointYTitle = QtWidgets.QLabel(pointui)
+        self.PointYTitle.setGeometry(QtCore.QRect(115, 55, 70, 20))
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        self.PointYTitle.setFont(font)
+        self.PointYTitle.setStyleSheet("color: rgb(0, 0, 0);\n""")
+        self.PointYTitle.setAlignment(QtCore.Qt.AlignCenter)
+        self.PointYTitle.setObjectName("PointYTitle")
+
+        self.PointYlineEdit = QtWidgets.QLineEdit(pointui)
+        self.PointYlineEdit.setValidator(QtGui.QDoubleValidator())
+        self.PointYlineEdit.setGeometry(QtCore.QRect(115, 75, 70, 20))
+        self.PointYlineEdit.setStyleSheet("background-color: rgb(255, 255, 255);\n""color: rgb(0, 0, 0);\n""")
+        self.PointYlineEdit.setObjectName("PointYlineEdit")
+
+        # Add Button
+        self.addPointpushButton = QtWidgets.QPushButton(pointui)
+        self.addPointpushButton.setAutoDefault(True)
+        self.addPointpushButton.setGeometry(QtCore.QRect(65, 100, 70, 25))
+        self.addPointpushButton.setObjectName("addPointpushButton")
 
         self.retranslateUi(pointui)
         QtCore.QMetaObject.connectSlotsByName(pointui)
 
     def retranslateUi(self, pointui):
         _translate = QtCore.QCoreApplication.translate
-        self.pointMainTitle.setText(_translate("MainWindow", "Point"))
-        self.coordinatesTitle.setText(
-            _translate("MainWindow", "Coordinates :"))
-        self.yTitle.setText(_translate("MainWindow", "Y :"))
-        self.xTitle.setText(_translate("MainWindow", "X : "))
-        self.addpointpushButton.setText(_translate("MainWindow", "Add Point"))
+        self.PointMainTitle.setText(_translate("MainWindow", "Point"))
 
+        self.PointTitle.setText(_translate("MainWindow", "Set Point:"))
+        self.PointXTitle.setText(_translate("MainWindow", "X:"))
+        self.PointYTitle.setText(_translate("MainWindow", "Y:"))
+        self.addPointpushButton.setText(_translate("MainWindow", "Add Point"))
 
 class PointDisplay(QMainWindow, Ui_point):
     def __init__(self, parent=None):

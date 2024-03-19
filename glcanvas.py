@@ -42,7 +42,7 @@ class Canvas(QtOpenGL.QGLWidget):
         self.pt0W = QtCore.QPointF(0.0, 0.0)  # first point to calculate dist
         self.pt0 = QtCore.QPointF(0.0, 0.0)  # first mouse position
         self.pt1 = QtCore.QPointF(0.0, 0.0)  # current mouse position
-        self.pickTolFac = 0.01  # factor for pick tolerance
+        self.pickTolFac = 0.015  # factor for pick tolerance w.r.t max window size
         self.mouseMoveTol = 2  # tolerance for mouse move
 
         # Pressed key properties
@@ -57,11 +57,13 @@ class Canvas(QtOpenGL.QGLWidget):
         # Defined colors
         self.colorCollecting = [1.00, 0.00, 0.00]  # red
         self.colorsegment = [0.00, 0.00, 0.00]  # black
+        self.colorControlPolygon = [0.00, 0.00, 1.00] # blue
         self.colorVertex = [0.00, 0.00, 0.50]  # dark blue
         self.colorSelection = [1.00, 0.00, 0.00]  # red
         self.colorGrid = [0.00, 0.00, 0.00]  # black
         self.colorSdvPoint = [0.00, 0.00, 0.50]  # dark blue
         self.colorPatcheSelection = [1.00, 0.75, 0.75]  # light red
+        # self.colorPatch = [0.75, 0.75, 0.75]
         self.colorPatch = [0.50, 0.75, 0.50]  # medium green
         self.colorHole = [1.00, 1.00, 1.00]  # White
         self.colorHoleSelection = [0.75, 0.75, 0.75]  # light gray
@@ -126,7 +128,15 @@ class Canvas(QtOpenGL.QGLWidget):
 
     def delSelectedEntities(self):
         if not ((self.view is None) and (self.view.isEmpty())):
-            self.hecontroller.delSelectedEntities()
+            max_size = max(abs(self.right-self.left),
+                            abs(self.top-self.bottom))
+            pick_tol = max_size * self.pickTolFac
+            error_text = self.hecontroller.delSelectedEntities(pick_tol)
+            if error_text is not None:
+                msg = QMessageBox(self.Apptools)
+                msg.setWindowTitle('Error')
+                msg.setText(error_text)
+                msg.exec()
             self.updatedDsp = False
             self.update()
 
@@ -186,6 +196,33 @@ class Canvas(QtOpenGL.QGLWidget):
         self.hecontroller.delSelectedMesh()
         self.updatedDsp = False
         self.update()
+
+    def snapMousePt(self, _xW, _yW, _pick_tol):
+        xW = _xW
+        yW = _yW
+
+        # Snap point to grid (if it is visible). Also check for
+        # snap-to-grid flag (which will be inverted by control key)
+        if self.viewGrid:
+            isSnapOn = self.grid.getSnapInfo()
+            if ((not self.controlKeyPressed and isSnapOn) or
+                (self.controlKeyPressed and not isSnapOn)):
+                    xW, yW = self.grid.snapTo(xW, yW)
+
+        if (self.view is not None) and not(self.view.isEmpty()):
+            # Try to attract point to a point
+            check, _x, _y = self.view.snapToPoint(xW,  yW, _pick_tol)
+            if check:
+                xW = _x
+                yW = _y
+            else:
+                # Try to attract point to a segment
+                check, _x, _y = self.view.snapToSegment(xW,  yW, _pick_tol)
+                if check:
+                    xW = _x
+                    yW = _y
+
+        return xW, yW
 
     # ---------------------------------------------------------------------
     # ---------------------------------------------------------------------
@@ -353,11 +390,11 @@ class Canvas(QtOpenGL.QGLWidget):
 
                     # Draw mesh segments
                     glLineWidth(0.5)
-                    for i in range(0, len(mesh_segments)):
+                    for j in range(0, len(mesh_segments)):
 
                         # Display segments lines
-                        Pts = mesh_segments[i].getPointsToDraw()
-                        if mesh_segments[i].isSelected():
+                        Pts = mesh_segments[j].getPoints()
+                        if mesh_segments[j].isSelected():
                             glColor3d(self.colorSelection[0],
                                       self.colorSelection[1], self.colorSelection[2])
                         else:
@@ -366,8 +403,64 @@ class Canvas(QtOpenGL.QGLWidget):
 
                         glBegin(GL_LINE_STRIP)
 
-                        for j in range(0, len(Pts)):
-                            glVertex2d(Pts[j].getX(), Pts[j].getY())
+                        for k in range(0, len(Pts)):
+                            x = Pts[k].getX()
+                            y = Pts[k].getY()
+                            glVertex2f(x, y)
+
+                        glEnd()
+
+                        ###
+                        # glPointSize(10.0)
+                        # for ptsapagar in Pts:
+                        #     glBegin(GL_POINTS)
+                        #     glVertex2d(ptsapagar.getX(), ptsapagar.getY())
+                        #     glEnd()
+                        ###
+
+                    # Draw Control Net
+                    if patches[i].CtrlNetView:
+
+                        # Draw lines
+                        CtrlNet_Size_U = patches[i].getCtrlNet_Size_U()
+                        CtrlNet_Size_V = patches[i].getCtrlNet_Size_V()
+                        ctrlPts = patches[i].getCtrlPts()
+
+                        count = 0
+                        for u in range(CtrlNet_Size_U):
+                            glColor3d(self.colorControlPolygon[0],
+                                    self.colorControlPolygon[1], self.colorControlPolygon[2])
+                            
+                            glBegin(GL_LINE_STRIP)
+                            for v in range(CtrlNet_Size_V):
+                                glVertex2d(ctrlPts[count][0], ctrlPts[count][1])
+                                count += 1
+                            glEnd()
+
+                        count = 0 
+                        count2 = 0
+                        for v in range(CtrlNet_Size_V):
+                            glColor3d(self.colorControlPolygon[0],
+                                    self.colorControlPolygon[1], self.colorControlPolygon[2])
+                            
+                            glBegin(GL_LINE_STRIP)
+
+                            count = int(count2)
+                            for u in range(CtrlNet_Size_U):
+                                glVertex2d(ctrlPts[count][0], ctrlPts[count][1])
+                                count += CtrlNet_Size_V
+                            count2 += 1
+                            glEnd()
+
+                        # Draw Control points
+                        glColor3d(self.colorControlPolygon[0],
+                                self.colorControlPolygon[1], self.colorControlPolygon[2])
+                        glPointSize(5.0)
+                        
+                        glBegin(GL_POINTS)
+
+                        for ctPt in ctrlPts:
+                            glVertex2d(ctPt[0], ctPt[1])
                         glEnd()
 
         # Draw segments
@@ -376,7 +469,7 @@ class Canvas(QtOpenGL.QGLWidget):
         for i in range(0, len(segments)):
 
             # Display segments lines
-            Pts = segments[i].getPointsToDraw()
+            Pts = segments[i].getPoints()
             if segments[i].isSelected():
                 glColor3d(self.colorSelection[0],
                           self.colorSelection[1], self.colorSelection[2])
@@ -389,6 +482,42 @@ class Canvas(QtOpenGL.QGLWidget):
             for j in range(0, len(Pts)):
                 glVertex2d(Pts[j].getX(), Pts[j].getY())
             glEnd()
+
+            # Display segment direction
+            if segments[i].directionView:
+                att = {
+                    'symbol': 'Arrow',
+                    'type': 'Direction',
+                    'properties': {
+                        'Color': [0, 0, 0]
+                    },
+                    'properties_type': ["color"]
+                }
+                symbol = AttribSymbols.getSymbol(att, scale, _seg=segments[i])
+                if symbol['time'] == 'before':
+                    self.drawSymbol(symbol)
+                else:
+                    symbols.append(symbol)
+                pass
+
+            # Display control polygon
+            if segments[i].CtrlPolyView:
+                ctrlPts = segments[i].getCtrlPts()
+                
+                if ((segments[i].curve.type == "LINE" or
+                    segments[i].curve.type == "POLYLINE") and
+                    segments[i].isSelected()):
+                    pass
+
+                else:
+                    glColor3d(self.colorControlPolygon[0],
+                            self.colorControlPolygon[1], self.colorControlPolygon[2])
+                    
+                    glBegin(GL_LINE_STRIP)
+
+                    for j in range(0, len(ctrlPts)):
+                        glVertex2d(ctrlPts[j][0], ctrlPts[j][1])
+                    glEnd()
 
             # get segment attributes
             attributes = segments[i].attributes
@@ -424,6 +553,26 @@ class Canvas(QtOpenGL.QGLWidget):
             glBegin(GL_POINTS)
             glVertex2d(points[i].getX(), points[i].getY())
             glEnd()
+
+
+        # Display Nurbs Control Points
+        segments = self.view.getSegments()
+        for i in range(0, len(segments)):
+            if segments[i].CtrlPolyView:
+                ctrlPts = segments[i].getCtrlPts()
+                
+                # glColor3d(self.colorControlPolygon[0],
+                #         self.colorControlPolygon[1], self.colorControlPolygon[2])
+
+                #glBegin(GL_POINTS)
+
+                for j in range(0, len(ctrlPts)):
+                    glColor3d(self.colorControlPolygon[0],
+                            self.colorControlPolygon[1], self.colorControlPolygon[2])
+                    glBegin(GL_POINTS)
+                    glVertex2d(ctrlPts[j][0], ctrlPts[j][1])
+                    glEnd()
+                #glEnd()
 
         # draws remaining symbols
         for symbol in symbols:
@@ -570,8 +719,11 @@ class Canvas(QtOpenGL.QGLWidget):
     def drawCollectedsegment(self):
         # It is assumed that the current mouse
         # action if for segment collection
-        if not(self.collector.isActive()
-                or self.collector.isCollecting()):
+
+        pts = self.collector.getDrawPoints()
+        ctrl_pts = self.collector.getPoints()
+
+        if (pts is None) and (ctrl_pts is None):
             return 0
 
         list = glGenLists(1)
@@ -584,7 +736,6 @@ class Canvas(QtOpenGL.QGLWidget):
         glLineWidth(0.5)
         glBegin(GL_LINE_STRIP)
 
-        pts = self.collector.getDrawPoints()
         for i in range(0, len(pts)):
             glVertex2d(pts[i].getX(), pts[i].getY())
         glEnd()
@@ -592,9 +743,10 @@ class Canvas(QtOpenGL.QGLWidget):
         # Display control points of segment being collected
         glPointSize(4.0)
         glBegin(GL_POINTS)
-        ctrl_pts = self.collector.getPoints()
+
         for i in range(0, len(ctrl_pts)):
-            glVertex2d(ctrl_pts[i].getX(), ctrl_pts[i].getY())
+            if ctrl_pts[i] is not None:
+                glVertex2d(ctrl_pts[i].getX(), ctrl_pts[i].getY())
         glEnd()
         glEndList()
         return list
@@ -773,62 +925,46 @@ class Canvas(QtOpenGL.QGLWidget):
             self.setCursor(QtGui.QCursor(QtCore.Qt.SizeAllCursor))
             self.panmove_flag = True
             self.tempPanPoint.append(self.pt0)
+            return
 
         # Treat mouse move event according to current mouse action type
         if self.curMouseAction == 'SELECTION':
             return
 
         if (self.curMouseAction == 'COLLECTION' and
-                self.mouseButton == QtCore.Qt.LeftButton):
+            self.mouseButton == QtCore.Qt.LeftButton):
 
             if not self.collector.isActive():
                 # In case of left mouse button
                 # if not doing any segment collection,
                 # start a new segment collection
                 self.collector.startGeoCollection()
+                pt0W = self.convertPtCoordsToUniverse(self.pt0)
                 max_size = max(abs(self.right-self.left),
                                abs(self.top-self.bottom))
                 pick_tol = max_size * self.pickTolFac
-                pt0W = self.convertPtCoordsToUniverse(self.pt0)
                 xW = pt0W.x()
                 yW = pt0W.y()
 
                 # Snap point to grid (if it is visible). Also check for
-                # snap-to-grid flag (which will be inverted by control key)
-                if self.viewGrid:
-                    isSnapOn = self.grid.getSnapInfo()
-                    if ((not self.controlKeyPressed and isSnapOn) or
-                            (self.controlKeyPressed and not isSnapOn)):
-                        xW, yW = self.grid.snapTo(xW, yW)
-
-                if (self.view is not None) and not(self.view.isEmpty()):
-                    # Try to attract point to a point
-                    check, _x, _y = self.view.snapToPoint(
-                        xW,  yW, pick_tol)
-                    if check:
-                        xW = _x
-                        yW = _y
-                    else:
-                        # Try to attract point to a segment
-                        check, _x, _y = self.view.snapToSegment(
-                            xW,  yW, pick_tol)
-                        if check:
-                            xW = _x
-                            yW = _y
+                # snap-to-grid flag (which will be inverted by control key).
+                # Try to attract point to a point.
+                # Try to attract point to a segment.
+                xW, yW = self.snapMousePt(xW, yW, pick_tol)
 
                 # Add point to collected geometry
                 if self.collector.getGeoType() == 'POINT':
-                    self.hecontroller.insertPoint(Point(xW, yW), 0.01)
+                    self.hecontroller.insertPoint(Point(xW, yW), pick_tol)
                     self.collector.endGeoCollection()
                     self.updatedDsp = False
                     self.update()
                 else:
-                    self.collector.insertPoint(xW, yW, pick_tol)
+                    self.collector.insertPoint(xW, yW, False, pick_tol)
                     self.collector.addTempPoint(xW, yW)
                     self.pt0W = QtCore.QPointF(xW, yW)
 
                     # set text in LineEdit
-                    self.Apptools.setFirstLineEditText(xW, yW, self)
+                    self.Apptools.set_curves_lineEdits()
 
             elif ((abs(self.pt0.x() - self.pt1.x()) <= self.mouseMoveTol) and
                   (abs(self.pt0.y() - self.pt1.y()) <= self.mouseMoveTol)):
@@ -839,27 +975,10 @@ class Canvas(QtOpenGL.QGLWidget):
                 yW = pt1W.y()
 
                 # Snap point to grid (if it is visible). Also check for
-                # snap-to-grid flag (which will be inverted by control key)
-                if self.viewGrid:
-                    isSnapOn = self.grid.getSnapInfo()
-                    if ((not self.controlKeyPressed and isSnapOn) or
-                            (self.controlKeyPressed and not isSnapOn)):
-                        xW, yW = self.grid.snapTo(xW, yW)
-
-                if (self.view) and not(self.view.isEmpty()):
-                    # Try to attract point to a point
-                    check, _x, _y = self.view.snapToPoint(
-                        xW,  yW, pick_tol)
-                    if check:
-                        xW = _x
-                        yW = _y
-                    else:
-                        # Try to attract point to a segment
-                        check, _x, _y = self.view.snapToSegment(
-                            xW,  yW, pick_tol)
-                        if check:
-                            xW = _x
-                            yW = _y
+                # snap-to-grid flag (which will be inverted by control key).
+                # Try to attract point to a point.
+                # Try to attract point to a segment.
+                xW, yW = self.snapMousePt(xW, yW, pick_tol)
 
                 # try to attract point to current segment
                 check, _x, _y = self.collector.SnaptoCurrentSegment(
@@ -869,11 +988,12 @@ class Canvas(QtOpenGL.QGLWidget):
                     yW = _y
 
                 # Add point to collected segment
-                self.collector.insertPoint(xW, yW, pick_tol)
+                self.collector.insertPoint(xW, yW, False, pick_tol)
+                self.collector.addTempPoint(xW, yW)
                 self.pt0W = QtCore.QPointF(xW, yW)
 
                 # set text in LineEdit
-                self.Apptools.setFirstLineEditText(xW, yW, self)
+                self.Apptools.set_curves_lineEdits()
 
     def mouseMoveEvent(self, event):
 
@@ -887,84 +1007,57 @@ class Canvas(QtOpenGL.QGLWidget):
             self.PanMove()
             if self.curMouseAction == 'COLLECTION':
                 self.mouseButton = QtCore.Qt.LeftButton
-        else:
-            # Line coords text
-            self.Apptools.lineXCoords.setText(f'X:  {str(round(pt1W.x(), 3))}')
-            self.Apptools.lineYCoords.setText(f'Y:  {str(round(pt1W.y(), 3))}')
-
+            return
+ 
         # Treat mouse move event according to current mouse action type
         if self.curMouseAction == 'SELECTION':
-            # Disregard mouse move event if left mouse button is not pressed
+            # Mouse cursor coords text
+            self.Apptools.lineXCoords.setText(f'X:  {str(round(pt1W.x(), 3))}')
+            self.Apptools.lineYCoords.setText(f'Y:  {str(round(pt1W.y(), 3))}')
+           # Disregard mouse move event if left mouse button is not pressed
             if ((self.mouseButton == QtCore.Qt.LeftButton)
                     and self.mousebuttonPressed):
                 self.update()
                 return
 
         if self.curMouseAction == 'COLLECTION':
-            # Only consider current point if left mouse button was used,
-            # if not button pressed, and if current point is not at the
-            # same location of button press point.
+            max_size = max(abs(self.right-self.left),
+                           abs(self.top-self.bottom))
+            pick_tol = max_size * self.pickTolFac
+            xW = pt1W.x()
+            yW = pt1W.y()
 
-            if (self.mouseButton == QtCore.Qt.LeftButton
-                    and not (self.mousebuttonPressed)):
-                if (abs(self.pt0.x() - self.pt1.x()) > self.mouseMoveTol
-                        or abs(self.pt0.y() - self.pt1.y()) > self.mouseMoveTol):
-                    if self.collector.isCollecting():
-                        xW = pt1W.x()
-                        yW = pt1W.y()
+            # If collecting a curve control point, disregard mouse move event
+            # if mouse button is pressed. This is because the mouse move position
+            # when button is not pressed is used only for a temporary control
+            # point position while collecting a curve. The actual control point
+            # will be collected at the next mouse button pressed event.
+            # Mouse position at each move event is used to draw a temporary
+            # curve shape using the temporary control point.
+            if self.mousebuttonPressed:
+                return
 
-                        # Snap point to grid (if it is visible). Also check for
-                        # Snap-to-grid flag (which will be inverted by control key)
-                        if self.viewGrid:
-                            isSnapOn = self.grid.getSnapInfo()
-                            if ((not self.controlKeyPressed and isSnapOn) or
-                                    (self.controlKeyPressed and not isSnapOn)):
-                                xW, yW = self.grid.snapTo(xW, yW)
+            # Snap point to grid (if it is visible). Also check for
+            # snap-to-grid flag (which will be inverted by control key).
+            # Try to attract point to a point.
+            # Try to attract point to a segment.
+            xW, yW = self.snapMousePt(xW, yW, pick_tol)
 
-                        max_size = max(abs(self.right-self.left),
-                                       abs(self.top-self.bottom))
-                        pick_tol = max_size * self.pickTolFac
-
-                        if (self.view) and not(self.view.isEmpty()):
-
-                            # Try to attract point to a point
-                            check, _x, _y = self.view.snapToPoint(
-                                xW,  yW, pick_tol)
-                            if check:
-                                xW = _x
-                                yW = _y
-                            else:
-                                # Try to attract point to a segment
-                                check, _x, _y = self.view.snapToSegment(
-                                    xW,  yW, pick_tol)
-                                if check:
-                                    xW = _x
-                                    yW = _y
-
-                        # try to attract point to current segment
-                        check, _x, _y = self.collector.SnaptoCurrentSegment(
+            # try to attract point to current segment being collected
+            if self.collector.isCollecting():
+                check, _x, _y = self.collector.SnaptoCurrentSegment(
                             xW,  yW, pick_tol)
-                        if check:
-                            xW = _x
-                            yW = _y
+                if check:
+                    xW = _x
+                    yW = _y
 
-                        self.Apptools.lineXCoords.setText(
-                            f'X:  {str(round(xW, 3))}')
-                        self.Apptools.lineYCoords.setText(
-                            f'Y:  {str(round(yW, 3))}')
+            # Add point as a temporary point for segment collection
+            self.collector.addTempPoint(xW, yW)
+            self.update()
 
-                        # Add point as a temporary point for segment collection
-                        self.collector.addTempPoint(xW, yW)
-                        dist = round(math.sqrt((self.pt0W.x()-xW)*(self.pt0W.x()-xW) +
-                                               (self.pt0W.y()-yW)*(self.pt0W.y()-yW)), 3)
-
-                        # Set text in LenghtLineEdit
-                        self.Apptools.lineLenght.setText(
-                            f'Lenght: {str(dist)}')
-
-                        # set text in LineEdit
-                        self.Apptools.setEndLineEditText(xW, yW, self)
-                        self.update()
+            self.Apptools.lineXCoords.setText(f'X:  {str(round(xW, 3))}')
+            self.Apptools.lineYCoords.setText(f'Y:  {str(round(yW, 3))}')
+            self.Apptools.set_curves_lineEdits_text(xW, yW)
 
     def mouseReleaseEvent(self, event):
 
@@ -1007,10 +1100,10 @@ class Canvas(QtOpenGL.QGLWidget):
                 self.updatedDsp = False
                 self.update()
 
-        if self.curMouseAction == 'COLLECTION':
+            if self.prop_disp == True:
+                self.Apptools.properties()
 
-            # clear Lenght line edit
-            self.Apptools.lineLenght.clear()
+        if self.curMouseAction == 'COLLECTION':
 
             # Check for end of segment collection, which occurs in two situations:
             # (a) If left mouse button was used, and current collected segment has
@@ -1020,10 +1113,6 @@ class Canvas(QtOpenGL.QGLWidget):
             #     no limit in the number of points, verify whether previously
             #     collected points can finish collection of current segment
             endCollection = False
-
-            if self.mouseButton == QtCore.Qt.RightButton:
-                # set enable and clear line Edits
-                self.Apptools.setEnableLineEdits(self)
 
             if self.mouseButton == QtCore.Qt.LeftButton:
                 if not self.collector.isUnlimited():
@@ -1038,17 +1127,22 @@ class Canvas(QtOpenGL.QGLWidget):
                     # previously collected points cannot finish
                     # collection of segment, reset current
                     # segment collection
+                    if not self.collector.isCollecting():
+                        # If there is no previously collected point, setup selection
+                        # mouse action.
+                        self.Apptools.on_actionSelect()
                     self.collector.reset()
+                    self.Apptools.set_curves_lineEdits()
                     self.update()
 
             if endCollection:
-                segment = self.collector.getCollectedGeo()
+                curve = self.collector.getCollectedGeo()
                 max_size = max(abs(self.right-self.left),
                                abs(self.top-self.bottom))
                 pick_tol = max_size * self.pickTolFac
 
                 try:
-                    self.hecontroller.insertSegment(segment, 0.01)
+                    self.hecontroller.insertSegment(curve, pick_tol)
                 except:
                     msg = QMessageBox(self.Apptools)
                     msg.setWindowTitle('Error')
@@ -1056,11 +1150,9 @@ class Canvas(QtOpenGL.QGLWidget):
                     msg.exec()
 
                 self.collector.endGeoCollection()
+                self.Apptools.set_curves_lineEdits()
                 self.updatedDsp = False
                 self.update()
-
-                # set enable and clear line Edits
-                self.Apptools.setEnableLineEdits(self)
 
     def wheelEvent(self, event):
         if event.angleDelta().y() > 0:

@@ -1,6 +1,7 @@
 from geometry.point import Point
-from geometry.segments.line import Line
+from geometry.curves.line import Line
 from compgeom.compgeom import CompGeom
+from mesh.mesh1d import Mesh1D
 import math
 
 
@@ -43,6 +44,12 @@ class AttribSymbols:
                 if _patch is not None:
                     lines, triangles = AttribSymbols.arrowPressure(
                         _attribute, _patch, _scale)
+                    
+            elif _attribute['type'] == "Direction":
+                time = "after"
+                if _seg is not None:
+                    lines, triangles = AttribSymbols.arrowSegmentDirec(
+                        _seg, _scale)
 
         elif _attribute['symbol'] == 'Nsbdvs':
             time = "after"
@@ -74,8 +81,7 @@ class AttribSymbols:
 
         for att_type in _attribute['properties_type']:
             if att_type == "color":
-                colors.append(list(_attribute['properties'].values())[
-                    index].copy())
+                colors.append(list(_attribute['properties'].values())[index].copy())
             index += 1
 
         symbol = {
@@ -188,6 +194,58 @@ class AttribSymbols:
         pt_d = pt + x
 
         return [pt, pt_d], [pt, pt_b, pt_c]
+    
+    @ staticmethod
+    def arrowSymbol3(_pt, _scale, _ang):
+
+        _ang = _ang*CompGeom.PI/180
+        x = AttribSymbols.rotateCoord(Point(3*_scale, 0), -_ang)
+        y = AttribSymbols.rotateCoord(Point(0, 3*_scale), -_ang)
+
+        pt = _pt + x*0.1
+        pt_d = pt + x*0.6
+        pt_a = pt_d - x*0.1
+        pt_b = pt_a + y*0.1
+        pt_c = pt_a - y*0.1
+
+        return [pt, pt_d], [pt_d, pt_b, pt_c]
+
+    def arrowSegmentDirec(_seg, _scale):
+        point = Point(_seg.getXinit(), _seg.getYinit())
+        tan = _seg.getInitTangent()
+
+        # Compute angle
+        ang = math.atan2(tan.getY(), tan.getX())  # -PI < angle <= +PI
+        if ang <= 0.0:
+            ang += 2.0 * math.pi  # 0 <= angle < +2PI
+
+        ang_norm1 = ang + math.pi / 2.0
+        if ang_norm1 <= 0.0:
+            ang_norm1 += 2.0 * math.pi  # 0 <= angle < +2PI
+
+        ang_norm2 = ang - math.pi / 2.0
+        if ang_norm2 <= 0.0:
+            ang_norm2 += 2.0 * math.pi  # 0 <= angle < +2PI
+
+        pt1 = AttribSymbols.rotateCoord(Point(point.getX() + 0.3*_scale, point.getY()), -ang_norm1)
+        pt1 = AttribSymbols.rotateCoord(Point(0.3*_scale, 0), -ang_norm1)
+        pt1 = point + pt1
+
+        # pt2 = AttribSymbols.rotateCoord(Point(point.getX() + 0.3*_scale, point.getY()), -ang_norm2)
+        # pt2 = AttribSymbols.rotateCoord(Point(0.3*_scale, 0), -ang_norm2)
+        # pt2 = point + pt2
+
+        ang = ang * 180.0 / math.pi
+        line1, tr1 = AttribSymbols.arrowSymbol3(pt1, _scale, ang)
+        #line2, tr2 = AttribSymbols.arrowSymbol3(pt2, _scale, ang)
+        # line, tr = AttribSymbols.arrowSymbol3(point, _scale, ang)
+
+        lines = [line1]
+        triangles = [tr1]
+        # lines = [line]
+        # triangles = [tr]
+
+        return lines, triangles
 
     def arrowPointCL(_attribute, _pt, _scale):
 
@@ -315,7 +373,7 @@ class AttribSymbols:
             displc = _displc*(-1)
 
         while cont <= _end:
-            pt = _seg.getPoint(cont)
+            pt = _seg.evalPoint(cont)
             pt = pt - displc*0.2
             l, tr = AttribSymbols.arrowSymbol(
                 pt, _scale, _ang)
@@ -500,7 +558,7 @@ class AttribSymbols:
         seg_pts = _seg.getPoints()
         points.append(seg_pts[0])
         points.append(seg_pts[-1])
-        points.append(_seg.getPoint(0.5))
+        points.append(_seg.evalPoint(0.5))
 
         for pt in points:
             l, tr, sq, circ = AttribSymbols.supportPoint(
@@ -517,7 +575,8 @@ class AttribSymbols:
         properties = _attribute['properties']
         nsudv = properties['Value']
         ratio = properties['Ratio']
-        points = CompGeom.getNumberOfSudvisions(_seg, nsudv, ratio, False)
+        isIsogeometric = properties['isIsogeometric']
+        points = Mesh1D.subdivideSegment(_seg, nsudv, ratio, False, isIsogeometric)
 
         return points
 
@@ -549,7 +608,7 @@ class AttribSymbols:
         seg_pts = _seg.getPoints()
         points.append(seg_pts[0])
         points.append(seg_pts[-1])
-        points.append(_seg.getPoint(0.5))
+        points.append(_seg.evalPoint(0.5))
 
         for pt in points:
             l = AttribSymbols.temperaturePoint(pt, _scale)
@@ -586,9 +645,9 @@ class AttribSymbols:
         points = []
         seg_pts = _seg.getPoints()
         points.append(seg_pts[0])
-        points.append(_seg.getPoint(0.25))
-        points.append(_seg.getPoint(0.5))
-        points.append(_seg.getPoint(0.75))
+        points.append(_seg.evalPoint(0.25))
+        points.append(_seg.evalPoint(0.5))
+        points.append(_seg.evalPoint(0.75))
         points.append(seg_pts[-1])
         for pt in points:
             t, c = AttribSymbols.fluxPoint(pt, _scale)

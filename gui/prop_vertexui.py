@@ -192,9 +192,10 @@ class Prop_VertexDisplay(QMainWindow, Ui_prop_vertex):
 
                 value = properties[key]
                 if type(value) == list:
-                    continue
-                elif type(value) == dict:
-                    value = properties[key]["list"][properties[key]["index"]]
+                    if len(value) == 3:
+                        continue
+                    else:
+                        value = properties[key][0][properties[key][1]]
 
                 propLabel = QtWidgets.QLabel(content)
                 propLabel.setGeometry(QtCore.QRect(0, index*20, 200, 20))

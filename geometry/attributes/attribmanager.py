@@ -20,7 +20,7 @@ class AttribManager:
         invalid_prototypes = []
         # valid attribute prototypes
         for prototype in self.prototypes:
-            check = self.validate_attribute(prototype, schemas)
+            check = AttribManager.validate_attribute(prototype, schemas)
             if not check:
                 invalid_prototypes.append(prototype)
 
@@ -64,6 +64,7 @@ class AttribManager:
                 return True
 
     def setAttributeValues(self, _name, _values):
+
         attribute = self.getAttributeByName(_name)
         attValues = attribute['properties']
 
@@ -72,14 +73,8 @@ class AttribManager:
             attValues[key] = _values[index]
             index += 1
 
-    def validate_attribute(self, _attribute, _schemas):
-
-        for prototype in self.prototypes:
-            if _attribute['type'] == prototype['type']:
-                if _attribute != prototype:
-                    print(
-                        f"There cannot be two prototypes of the same type: {_attribute['type']}")
-                    return False
+    @staticmethod
+    def validate_attribute(_attribute, _schemas):
 
         check = AttribManager.validate_schema(
             _attribute, _schemas['att_schema'])
@@ -133,3 +128,4 @@ class AttribManager:
             print(_objetc)
             print(err)
             return False
+

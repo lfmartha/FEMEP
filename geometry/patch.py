@@ -1,6 +1,9 @@
-from geometry.point import Point
+from compgeom.pnt2d import Pnt2D
 from compgeom.tesselation import Tesselation
 from compgeom.compgeom import CompGeom
+from geomdl import NURBS
+from geomdl import operations
+import copy
 
 
 class Patch:
@@ -19,6 +22,9 @@ class Patch:
         self.isDeleted = False
         self.face = None
         self.attributes = []
+        self.CtrlNetView = False
+        self.nurbs = []
+        self.originalNurbs = []
 
     def __del__(self):
         if self.mesh:
@@ -153,11 +159,11 @@ class Patch:
         pts = self.pts
         triangs = Tesselation.triangleParing(pts)
         for j in range(0, len(triangs)):
-            a = Point(pts[triangs[j][0]].getX(),
+            a = Pnt2D(pts[triangs[j][0]].getX(),
                       pts[triangs[j][0]].getY())
-            b = Point(pts[triangs[j][1]].getX(),
+            b = Pnt2D(pts[triangs[j][1]].getX(),
                       pts[triangs[j][1]].getY())
-            c = Point(pts[triangs[j][2]].getX(),
+            c = Pnt2D(pts[triangs[j][2]].getX(),
                       pts[triangs[j][2]].getY())
 
             Area += (a.getX()*b.getY() - a.getY()*b.getX()
@@ -176,3 +182,137 @@ class Patch:
                             Area -= adjface.patch.Area()
 
         return Area
+    
+    def getNurbs(self):
+        return self.nurbs
+
+    def updateCtrlNetView(self, status):
+        self.CtrlNetView = status
+
+    def getCtrlNet_Size_U(self):
+        return self.nurbs.ctrlpts_size_u
+    
+    def getCtrlNet_Size_V(self):
+        return self.nurbs.ctrlpts_size_v
+
+    def getCtrlPts(self):
+        return self.nurbs.ctrlpts
+
+    def getDataToInitSurface(self):
+        if self.nurbs != []:
+            data ={'degree_u': self.nurbs.degree_u,
+                'degree_v': self.nurbs.degree_v,
+                'ctrlpts_size_u': self.nurbs.ctrlpts_size_u,
+                'ctrlpts_size_v': self.nurbs.ctrlpts_size_v,
+                'ctrlpts': self.nurbs.ctrlpts,
+                'weights': self.nurbs.weights,
+                'knotvector_u': self.nurbs.knotvector_u,
+                'knotvector_v': self.nurbs.knotvector_v}
+        else:
+            data = {}
+        return data
+    
+    def knotInsertionSurf(self):
+        # ctrlpts = self.nurbs.ctrlpts.copy()
+        # ctrlpts_new1 = []
+        # ctrlpts_new2 = []
+
+        # # Refine in v direction
+        # degree_u = int(self.nurbs.degree_u)
+        # knotvector_u = self.nurbs.knotvector_u.copy()
+        # for i in range(self.nurbs.ctrlpts_size_v):
+        #     ctrlpts_u = ctrlpts[i]
+
+        #     # Create a temporary curve in u direction
+        #     temporaryCurve_u = NURBS.Curve()
+        #     temporaryCurve_u.degree = degree_u
+        #     temporaryCurve_u.ctrlpts = ctrlpts_u
+        #     temporaryCurve_u.knotvector = knotvector_u
+        #     temporaryCurve_u.sample_size = 10
+
+        #     # Perform knot insertion
+        #     knots = list(set(knotvector_u))
+        #     knots.sort()
+
+        #     knotsToBeInserted = []
+        #     for j in range(len(knots) - 1):
+        #         mediumKnot = (knots[j] + knots[j + 1]) / 2.0
+        #         knotsToBeInserted.append(mediumKnot)
+
+        #     for knot in knotsToBeInserted:
+        #         operations.insert_knot(temporaryCurve_u, [knot], [1])
+
+        #     # Update new control points in ctrlpts_v_refinement
+        #     ctrlpts_u_new = temporaryCurve_u.ctrlpts.copy()
+        #     ctrlpts_new1.append(ctrlpts_u_new)
+
+        # # Refine in u direction
+        # degree_v = int(self.nurbs.degree_v)
+        # knotvector_v = self.nurbs.knotvector_v.copy()
+        # for i in range(temporaryCurve_u.ctrlpts_size):
+        #     ctrlpts_v = [row[i] for row in ctrlpts_new1]
+
+        #     # Create a temporary curve in v direction
+        #     temporaryCurve_v = NURBS.Curve()
+        #     temporaryCurve_v.degree = degree_v
+        #     temporaryCurve_v.ctrlpts = ctrlpts_v
+        #     temporaryCurve_v.knotvector = knotvector_v
+        #     temporaryCurve_v.sample_size = 10
+
+        #     # Perform knot insertion
+        #     knots = list(set(knotvector_v))
+        #     knots.sort()
+
+        #     knotsToBeInserted = []
+        #     for j in range(len(knots) - 1):
+        #         mediumKnot = (knots[j] + knots[j + 1]) / 2.0
+        #         knotsToBeInserted.append(mediumKnot)
+
+        #     for knot in knotsToBeInserted:
+        #         operations.insert_knot(temporaryCurve_v, [knot], [1])
+
+        #     # Update new control points in ctrlpts_new2
+        #     ctrlpts_v_new = temporaryCurve_v.ctrlpts.copy()
+        #     ctrlpts_new2.append(ctrlpts_v_new)
+
+        # ctrlpts_new3 = [[row[i] for row in ctrlpts_new2] for i in range(len(ctrlpts_new2[0]))]
+
+        # surf = NURBS.Surface()
+        # surf.degree_u = degree_u
+        # surf.degree_v = degree_v
+        # surf.ctrlpts_size_u = int(temporaryCurve_u.ctrlpts_size)
+        # surf.ctrlpts_size_v = int(temporaryCurve_v.ctrlpts_size)
+        # surf.ctrlpts = ctrlpts_new3
+        # surf.knotvector_u = temporaryCurve_u.knotvector.copy()
+        # surf.knotvector_v = temporaryCurve_v.knotvector.copy()
+
+        # self.nurbs = surf
+
+
+
+
+        knotvector_u = self.nurbs.knotvector_u.copy()
+        knots = list(set(knotvector_u)) # Remove duplicates
+        knots.sort()
+
+        knotsToBeInserted = []
+        for i in range(len(knots) - 1):
+            mediumKnot = (knots[i] + knots[i + 1]) / 2.0
+            knotsToBeInserted.append(mediumKnot)
+
+        for knot in knotsToBeInserted:
+            operations.insert_knot(self.nurbs, [knot, None], [1, 0])
+
+        knotvector_v = self.nurbs.knotvector_v.copy()
+        knots = list(set(knotvector_v)) # Remove duplicates
+        knots.sort()
+
+        knotsToBeInserted = []
+        for i in range(len(knots) - 1):
+            mediumKnot = (knots[i] + knots[i + 1]) / 2.0
+            knotsToBeInserted.append(mediumKnot)
+
+        for knot in knotsToBeInserted:
+            operations.insert_knot(self.nurbs, [None, knot], [0, 1])
+
+        return self.nurbs

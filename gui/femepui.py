@@ -4,8 +4,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.setMinimumSize(QtCore.QSize(900, 600))
-        MainWindow.resize(900, 600)
+        MainWindow.setMinimumSize(QtCore.QSize(1000, 810))
+        MainWindow.resize(1000, 810)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -38,7 +38,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.leftToolbarFrame = QtWidgets.QFrame(self.leftFrame)
-        self.leftToolbarFrame.setMinimumSize(QtCore.QSize(200, 369))
+        # self.leftToolbarFrame.setMinimumSize(QtCore.QSize(200, 369))
+        self.leftToolbarFrame.setMinimumSize(QtCore.QSize(200, 654))
         self.leftToolbarFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.leftToolbarFrame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.leftToolbarFrame.setObjectName("leftToolbarFrame")
@@ -48,7 +49,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.verticalLayout_2.addWidget(self.leftToolbarFrame)
         self.logoFrame = QtWidgets.QFrame(self.leftFrame)
-        self.logoFrame.setMaximumSize(QtCore.QSize(16777215, 100))
+        self.logoFrame.setMaximumSize(QtCore.QSize(16777215, 0))
         self.logoFrame.setStyleSheet("image: url(icons/femep-icon.png);")
         self.logoFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.logoFrame.setFrameShadow(QtWidgets.QFrame.Raised)
@@ -80,20 +81,15 @@ class Ui_MainWindow(object):
         self.lineYCoords.setStyleSheet("color: rgb(0, 0, 0);")
         self.lineYCoords.setAlignment(QtCore.Qt.AlignCenter)
         self.lineYCoords.setObjectName("lineYCoords")
-        self.lineLenght = QtWidgets.QLineEdit(self.downRightToolbarFrame)
-        self.lineLenght.setEnabled(False)
-        self.lineLenght.setGeometry(QtCore.QRect(190, 10, 120, 20))
-        self.lineLenght.setStyleSheet("color: rgb(255, 0, 0);")
-        self.lineLenght.setAlignment(QtCore.Qt.AlignCenter)
-        self.lineLenght.setObjectName("lineLenght")
         self.horizontalLayout_3.addWidget(self.downRightToolbarFrame)
         self.downLeftToolbarFrame = QtWidgets.QFrame(self.downToolbarFrame)
         self.downLeftToolbarFrame.setMinimumSize(QtCore.QSize(200, 38))
         self.downLeftToolbarFrame.setMaximumSize(QtCore.QSize(200, 16777215))
         self.downLeftToolbarFrame.setObjectName("downLeftToolbarFrame")
+
         self.snapcheckBox = QtWidgets.QCheckBox(self.downLeftToolbarFrame)
         self.snapcheckBox.setEnabled(True)
-        self.snapcheckBox.setGeometry(QtCore.QRect(130, 10, 70, 20))
+        self.snapcheckBox.setGeometry(QtCore.QRect(140, 10, 70, 20))
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -108,6 +104,26 @@ class Ui_MainWindow(object):
         self.snapcheckBox.setStyleSheet("image: url(icons/Snap-to-grid.png);")
         self.snapcheckBox.setText("")
         self.snapcheckBox.setObjectName("snapcheckBox")
+
+        # # Add control polygon checkbox
+        # self.ctrlPolygonCheckBox = QtWidgets.QCheckBox(self.downLeftToolbarFrame)
+        # self.ctrlPolygonCheckBox.setEnabled(True)
+        # self.ctrlPolygonCheckBox.setGeometry(QtCore.QRect(60, 10, 70, 20))
+        # sizePolicy = QtWidgets.QSizePolicy(
+        #     QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        # sizePolicy.setHorizontalStretch(0)
+        # sizePolicy.setVerticalStretch(0)
+        # sizePolicy.setHeightForWidth(
+        #     self.ctrlPolygonCheckBox.sizePolicy().hasHeightForWidth())
+        # self.ctrlPolygonCheckBox.setSizePolicy(sizePolicy)
+        # self.ctrlPolygonCheckBox.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+        # self.ctrlPolygonCheckBox.setAcceptDrops(False)
+        # self.ctrlPolygonCheckBox.setLayoutDirection(QtCore.Qt.LeftToRight)
+        # self.ctrlPolygonCheckBox.setAutoFillBackground(False)
+        # self.ctrlPolygonCheckBox.setStyleSheet("image: url(icons/ctrlpoly.png);")
+        # self.ctrlPolygonCheckBox.setText("")
+        # self.ctrlPolygonCheckBox.setObjectName("ctrlPolygonCheckBox")
+
         self.horizontalLayout_3.addWidget(self.downLeftToolbarFrame)
         self.verticalLayout.addWidget(self.downToolbarFrame)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -230,6 +246,47 @@ class Ui_MainWindow(object):
                          QtGui.QIcon.Normal, QtGui.QIcon.On)
         self.actionPolyline.setIcon(icon12)
         self.actionPolyline.setObjectName("actionPolyline")
+
+        self.actionCubicSpline = QtWidgets.QAction(MainWindow)
+        self.actionCubicSpline.setCheckable(True)
+        icon21 = QtGui.QIcon()
+        icon21.addPixmap(QtGui.QPixmap("icons/cubicspline.png"),
+                         QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.actionCubicSpline.setIcon(icon21)
+        self.actionCubicSpline.setObjectName("actionCubicSpline")
+
+        self.actionCircle = QtWidgets.QAction(MainWindow)
+        self.actionCircle.setCheckable(True)
+        icon22 = QtGui.QIcon()
+        icon22.addPixmap(QtGui.QPixmap("icons/circle.png"),
+                         QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.actionCircle.setIcon(icon22)
+        self.actionCircle.setObjectName("actionCircle")
+
+        self.actionCircleArc = QtWidgets.QAction(MainWindow)
+        self.actionCircleArc.setCheckable(True)
+        icon23 = QtGui.QIcon()
+        icon23.addPixmap(QtGui.QPixmap("icons/circlearc.png"),
+                         QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.actionCircleArc.setIcon(icon23)
+        self.actionCircleArc.setObjectName("actionCircleArc")
+
+        self.actionEllipse = QtWidgets.QAction(MainWindow)
+        self.actionEllipse.setCheckable(True)
+        icon24 = QtGui.QIcon()
+        icon24.addPixmap(QtGui.QPixmap("icons/ellipse.png"),
+                         QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.actionEllipse.setIcon(icon24)
+        self.actionEllipse.setObjectName("actionEllipse")
+
+        self.actionEllipseArc = QtWidgets.QAction(MainWindow)
+        self.actionEllipseArc.setCheckable(True)
+        icon25 = QtGui.QIcon()
+        icon25.addPixmap(QtGui.QPixmap("icons/ellipsearc.png"),
+                         QtGui.QIcon.Normal, QtGui.QIcon.On)
+        self.actionEllipseArc.setIcon(icon25)
+        self.actionEllipseArc.setObjectName("actionEllipseArc")
+
         self.actionDelete = QtWidgets.QAction(MainWindow)
         icon13 = QtGui.QIcon()
         icon13.addPixmap(QtGui.QPixmap("icons/delete-icon.png"),
@@ -335,6 +392,11 @@ class Ui_MainWindow(object):
         self.modelingToolBar.addAction(self.actionPoint)
         self.modelingToolBar.addAction(self.actionLine)
         self.modelingToolBar.addAction(self.actionPolyline)
+        self.modelingToolBar.addAction(self.actionCubicSpline)
+        self.modelingToolBar.addAction(self.actionCircle)
+        self.modelingToolBar.addAction(self.actionCircleArc)
+        self.modelingToolBar.addAction(self.actionEllipse)
+        self.modelingToolBar.addAction(self.actionEllipseArc)
         self.modelingToolBar.addSeparator()
         self.modelingToolBar.addAction(self.actionCreatePatch)
 
@@ -394,6 +456,32 @@ class Ui_MainWindow(object):
         self.actionPolyline.setToolTip(_translate(
             "MainWindow", "Polyline (Shift + P)"))
         self.actionPolyline.setShortcut(_translate("MainWindow", "Shift+P"))
+
+        self.actionCubicSpline.setText(_translate("MainWindow", "CubicSpline"))
+        self.actionCubicSpline.setToolTip(_translate(
+            "MainWindow", "CubicSpline (Shift + S)"))
+        self.actionCubicSpline.setShortcut(_translate("MainWindow", "Shift + S"))
+
+        self.actionCircle.setText(_translate("MainWindow", "Circle"))
+        self.actionCircle.setToolTip(_translate(
+            "MainWindow", "Circle (C)"))
+        self.actionCircle.setShortcut(_translate("MainWindow", "C"))
+
+        self.actionCircleArc.setText(_translate("MainWindow", "CircleArc"))
+        self.actionCircleArc.setToolTip(_translate(
+            "MainWindow", "CircleArc (Shift + C)"))
+        self.actionCircleArc.setShortcut(_translate("MainWindow", "Shift+C"))
+
+        self.actionEllipse.setText(_translate("MainWindow", "Ellipse"))
+        self.actionEllipse.setToolTip(_translate(
+            "MainWindow", "Ellipse (E)"))
+        self.actionEllipse.setShortcut(_translate("MainWindow", "E"))
+
+        self.actionEllipseArc.setText(_translate("MainWindow", "EllipseArc"))
+        self.actionEllipseArc.setToolTip(_translate(
+            "MainWindow", "EllipseArc (Shift + E)"))
+        self.actionEllipseArc.setShortcut(_translate("MainWindow", "Shift+E"))
+
         self.actionDelete.setText(_translate("MainWindow", "Delete (Del)"))
         self.actionDelete.setShortcut(_translate("MainWindow", "Del"))
         self.actionSelect.setText(_translate("MainWindow", "Select"))
